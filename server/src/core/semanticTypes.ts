@@ -251,8 +251,8 @@ export const DATA_TYPE_DEFINITIONS: DataTypeDefinition[] = [
     groups: ['Commerce'],
   },
   {
-    value: 'currency',
-    displayName: 'Currency',
+    value: 'currencyName',
+    displayName: 'Currency Name',
     description: 'Currency name.\nExample: Dollar',
     groups: ['Commerce'],
   },

@@ -657,7 +657,7 @@ function generateScalarValue(
       return localeFaker.finance.creditCardNumber();
     case 'creditCardType':
       return localeFaker.finance.creditCardIssuer().toLowerCase();
-    case 'currency':
+    case 'currencyName':
       return localeFaker.finance.currency().name;
     case 'currencyCode':
       return localeFaker.finance.currency().code;

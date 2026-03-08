@@ -52,7 +52,6 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
   });
   const [columnRules, setColumnRules] = useState<TableColumnRules>({});
   const [designerModel, setDesignerModel] = useState<ColumnDesignerModel | null>(null);
-  const [schemaFocused, setSchemaFocused] = useState(false);
   const [generalExpanded, setGeneralExpanded] = useState(false);
   const [relationshipsExpanded, setRelationshipsExpanded] = useState(false);
   const [schemasExpanded, setSchemasExpanded] = useState(true);
@@ -787,8 +786,6 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     setForm,
     columnRules,
     designerModel,
-    schemaFocused,
-    setSchemaFocused,
     generalExpanded,
     setGeneralExpanded,
     relationshipsExpanded,

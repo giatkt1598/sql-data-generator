@@ -11,7 +11,7 @@ export const SEMANTIC_DATA_TYPES = [
   'base64ImageUrl',
   'creditCardNumber',
   'creditCardType',
-  'currency',
+  'currencyName',
   'currencyCode',
   'departmentRetail',
   'domainName',
