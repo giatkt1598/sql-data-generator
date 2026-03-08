@@ -1,4 +1,4 @@
-import { randomUUID } from 'crypto';
+import { createHash, randomUUID } from 'crypto';
 import dayjs from 'dayjs';
 import { faker } from '@faker-js/faker';
 import { normalizeSqlType, SQL_TYPE_DEFAULT_CLASSIFICATION } from '../core/semanticTypes';
@@ -50,6 +50,42 @@ const PRODUCT_SUBCATEGORIES = [
   'Outdoor',
   'Clothing - Outerwear',
 ];
+const MIME_TYPES = ['text/plain', 'image/png', 'application/pdf', 'application/json', 'text/csv'];
+const TOP_LEVEL_DOMAINS = ['com', 'org', 'net', 'edu', 'gov'];
+
+function buildHash(algorithm: 'md5' | 'sha1' | 'sha256', value: string): string {
+  return createHash(algorithm).update(value).digest('hex');
+}
+
+function randomAppVersion(): string {
+  const parts = faker.helpers.arrayElement([2, 3]);
+  return Array.from({ length: parts }, () => String(faker.number.int({ min: 0, max: 20 }))).join(
+    '.',
+  );
+}
+
+function randomAppBundleId(): string {
+  return `com.${faker.internet.domainWord()}.${faker.internet.domainWord()}`;
+}
+
+function randomBase64ImageUrl(): string {
+  const payload = Buffer.from(faker.string.alphanumeric(48)).toString('base64');
+  return `data:image/png;base64,${payload}`;
+}
+
+function randomDummyImageUrl(): string {
+  const width = faker.number.int({ min: 100, max: 800 });
+  const height = faker.number.int({ min: 100, max: 800 });
+  return `https://dummyimage.com/${width}x${height}`;
+}
+
+function randomIpv4Cidr(): string {
+  return `${faker.internet.ipv4()}/${faker.number.int({ min: 8, max: 32 })}`;
+}
+
+function randomIpv6Cidr(): string {
+  return `${faker.internet.ipv6()}/${faker.number.int({ min: 32, max: 128 })}`;
+}
 
 function inferFallbackSemanticType(column: ColumnSchema): SemanticDataType {
   const normalized = normalizeSqlType(column.dbType);
@@ -305,6 +341,14 @@ function generateScalarValue(
       const repeat = Math.max(1, Math.floor(rule.sequenceOptions?.repeat ?? 1));
       return startAt + Math.floor(rowIndex / repeat) * step;
     }
+    case 'appBundleId':
+      return randomAppBundleId();
+    case 'appName':
+      return faker.commerce.productName();
+    case 'appVersion':
+      return randomAppVersion();
+    case 'base64ImageUrl':
+      return randomBase64ImageUrl();
     case 'creditCardNumber':
       return faker.finance.creditCardNumber();
     case 'creditCardType':
@@ -315,8 +359,28 @@ function generateScalarValue(
       return faker.finance.currency().code;
     case 'departmentRetail':
       return faker.commerce.department();
+    case 'domainName':
+      return faker.internet.domainName();
+    case 'dummyImageUrl':
+      return randomDummyImageUrl();
+    case 'fileName':
+      return faker.system.fileName();
     case 'iban':
       return faker.finance.iban({ formatted: true });
+    case 'ipAddressV4':
+      return faker.internet.ipv4();
+    case 'ipAddressV4Cidr':
+      return randomIpv4Cidr();
+    case 'ipAddressV6':
+      return faker.internet.ipv6();
+    case 'ipAddressV6Cidr':
+      return randomIpv6Cidr();
+    case 'macAddress':
+      return faker.internet.mac();
+    case 'md5':
+      return buildHash('md5', `${tableName}.${column.name}.${rowIndex}.${salt}`);
+    case 'mimeType':
+      return faker.helpers.arrayElement(MIME_TYPES);
     case 'money':
       return faker.finance.amount({
         min: 1,
@@ -334,6 +398,10 @@ function generateScalarValue(
       return faker.finance.amount({ min: 1, max: 1000, dec: 2, symbol: '$' });
     case 'productSubcategory':
       return faker.helpers.arrayElement(PRODUCT_SUBCATEGORIES);
+    case 'sha1':
+      return buildHash('sha1', `${tableName}.${column.name}.${rowIndex}.${salt}`);
+    case 'sha256':
+      return buildHash('sha256', `${tableName}.${column.name}.${rowIndex}.${salt}`);
     case 'stockIndustry':
       return faker.helpers.arrayElement(STOCK_INDUSTRIES);
     case 'stockMarket':
@@ -349,6 +417,12 @@ function generateScalarValue(
       return faker.helpers.arrayElement(STOCK_SECTORS);
     case 'stockSymbol':
       return faker.string.alpha({ length: { min: 3, max: 5 }, casing: 'upper' });
+    case 'topLevelDomain':
+      return faker.helpers.arrayElement(TOP_LEVEL_DOMAINS);
+    case 'userAgent':
+      return faker.internet.userAgent();
+    case 'username':
+      return faker.internet.username();
     case 'number': {
       const min = rule.numberOptions?.min ?? 0;
       const max = rule.numberOptions?.max ?? 100;

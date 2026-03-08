@@ -95,7 +95,7 @@ export interface DataTypeDefinition {
   value: DataTypeCatalogValue;
   displayName: string;
   description: string;
-  group: DataTypeGroup;
+  groups: DataTypeGroup[];
 }
 
 export interface SchemaRelationshipNode {

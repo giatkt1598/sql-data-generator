@@ -1,4 +1,4 @@
-import { memo, useCallback, useDeferredValue, useMemo, useState } from 'react';
+import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Box,
   Card,
@@ -19,18 +19,14 @@ import CloseIcon from '@mui/icons-material/Close';
 import SearchIcon from '@mui/icons-material/Search';
 import { useRequestDetailContext } from './RequestDetailContext';
 import { DATA_TYPE_GROUPS } from '../../models/apiModels';
-import type {
-  DataTypeCatalogValue,
-  DataTypeGroup,
-  SemanticDataType,
-} from '../../models/apiModels';
+import type { DataTypeCatalogValue, DataTypeGroup, SemanticDataType } from '../../models/apiModels';
 
 type PickerItem =
   | {
       key: string;
       kind: 'semantic';
       value: DataTypeCatalogValue;
-      group: DataTypeGroup;
+      groups: DataTypeGroup[];
       title: string;
       description: string;
     }
@@ -38,7 +34,7 @@ type PickerItem =
       key: string;
       kind: 'reference';
       value: string;
-      group: 'Table Primary Key';
+      groups: DataTypeGroup[];
       title: string;
       description: string;
     };
@@ -103,13 +99,27 @@ export const DataTypePickerDialog = memo(function DataTypePickerDialog() {
   const [selectedGroup, setSelectedGroup] = useState<GroupName>('All');
   const [searchText, setSearchText] = useState('');
   const deferredSearchText = useDeferredValue(searchText);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (!typePickerOpen) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      searchInputRef.current?.focus();
+      searchInputRef.current?.select();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [typePickerOpen]);
 
   const items = useMemo<PickerItem[]>(() => {
     const semanticItems: PickerItem[] = semanticTypes.map((option) => ({
       key: option.value,
       kind: 'semantic',
       value: option.value,
-      group: option.group,
+      groups: option.groups,
       title: option.displayName,
       description: option.description,
     }));
@@ -118,7 +128,7 @@ export const DataTypePickerDialog = memo(function DataTypePickerDialog() {
       key: option.value,
       kind: 'reference',
       value: option.value,
-      group: 'Table Primary Key',
+      groups: ['Table Primary Key'],
       title: option.value,
       description: `${option.description}\nExample: ${option.value}`,
     }));
@@ -129,14 +139,14 @@ export const DataTypePickerDialog = memo(function DataTypePickerDialog() {
   const filteredItems = useMemo(() => {
     const keyword = deferredSearchText.trim().toLowerCase();
     return items.filter((item) => {
-      const matchesGroup = selectedGroup === 'All' || item.group === selectedGroup;
+      const matchesGroup = selectedGroup === 'All' || item.groups.includes(selectedGroup);
       if (!matchesGroup) {
         return false;
       }
       if (!keyword) {
         return true;
       }
-      return [item.title, item.description, item.group]
+      return [item.title, item.description, item.groups.join(' ')]
         .join(' ')
         .toLowerCase()
         .includes(keyword);
@@ -144,16 +154,16 @@ export const DataTypePickerDialog = memo(function DataTypePickerDialog() {
   }, [deferredSearchText, items, selectedGroup]);
 
   const countsByGroup = useMemo(() => {
-    const counts = new Map<GroupName, number>([
-      ['All', items.length],
-      ['Basic', 0],
-      ['Personal', 0],
-      ['Commerce', 0],
-      ['Table Primary Key', 0],
-    ]);
+    const counts = new Map<GroupName, number>();
+    counts.set('All', items.length);
+    for (const group of DATA_TYPE_GROUPS) {
+      counts.set(group, 0);
+    }
 
     for (const item of items) {
-      counts.set(item.group, (counts.get(item.group) ?? 0) + 1);
+      for (const group of item.groups) {
+        counts.set(group, (counts.get(group) ?? 0) + 1);
+      }
     }
 
     return counts;
@@ -224,6 +234,7 @@ export const DataTypePickerDialog = memo(function DataTypePickerDialog() {
               size="small"
               value={searchText}
               onChange={(event) => setSearchText(event.target.value)}
+              inputRef={searchInputRef}
               sx={{
                 minWidth: 280,
                 '& .MuiOutlinedInput-root': {
@@ -285,7 +296,10 @@ export const DataTypePickerDialog = memo(function DataTypePickerDialog() {
                       primary={
                         <Typography sx={{ color: '#1f2933', fontWeight: 700, fontSize: 15 }}>
                           {group}
-                          <Typography component="span" sx={{ color: '#64748b', ml: 0.75, fontSize: 14 }}>
+                          <Typography
+                            component="span"
+                            sx={{ color: '#64748b', ml: 0.75, fontSize: 14 }}
+                          >
                             ({countsByGroup.get(group) ?? 0})
                           </Typography>
                         </Typography>
