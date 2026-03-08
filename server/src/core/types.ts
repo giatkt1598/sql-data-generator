@@ -72,9 +72,16 @@ export interface ColumnGenerationRule {
 
 export type TableColumnRules = Record<string, Record<string, ColumnGenerationRule>>;
 
-export interface GenerationOptions {
-  rowsPerTable: number;
+export interface SchemaRelationshipNode {
+  count?: number;
+  distribution?: number[];
+  [childTableName: string]: SchemaRelationshipNode | number[] | number | undefined;
 }
+
+export type SchemaRelationshipsRoot = Record<string, SchemaRelationshipNode>;
+export type SchemaRelationshipsConfig = SchemaRelationshipsRoot[];
+
+export interface GenerationOptions {}
 
 export interface GeneratedTableRows {
   tableName: string;

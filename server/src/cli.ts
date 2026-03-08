@@ -20,7 +20,7 @@ function printHelp(): void {
   console.log('Usage:');
   console.log('  ts-node src/cli.ts build-prompt --schema <schema.sql> [--context <context.txt>]');
   console.log(
-    '  ts-node src/cli.ts generate --schema <schema.sql> --classification <classification.json> --out <outputDir> [--rows 10]',
+    '  ts-node src/cli.ts generate --schema <schema.sql> --classification <classification.json> --out <outputDir>',
   );
 }
 
@@ -44,14 +44,9 @@ function runGenerate(): void {
   const schemaPath = getArgValue('--schema');
   const classificationPath = getArgValue('--classification');
   const outputDir = getArgValue('--out');
-  const rowsArg = getArgValue('--rows');
-  const rowsPerTable = rowsArg ? Number(rowsArg) : 10;
 
   if (!schemaPath || !classificationPath || !outputDir) {
     throw new Error('Missing required args. Need --schema --classification --out.');
-  }
-  if (!Number.isInteger(rowsPerTable) || rowsPerTable < 1) {
-    throw new Error('--rows must be a positive integer.');
   }
 
   const schemaSql = fs.readFileSync(schemaPath, 'utf-8');
@@ -71,7 +66,7 @@ function runGenerate(): void {
 
   const columnRules = buildDefaultColumnRules(schema.tables, classification);
   const orderedTables = resolveTableOrder(schema.tables, columnRules);
-  const generatedRows = generateDataByTableOrder(orderedTables, { rowsPerTable }, columnRules);
+  const generatedRows = generateDataByTableOrder(orderedTables, {}, columnRules);
   const files = writeInsertFiles(generatedRows, path.resolve(outputDir));
 
   console.log('Generated SQL files:');

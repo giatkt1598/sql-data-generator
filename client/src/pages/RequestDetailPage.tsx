@@ -22,6 +22,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { generateClassificationPrompt, getColumnDesignerModel, getGenerationRequests, updateGenerationRequest } from '../apis';
 import { parseRule, stringifyRule } from '../utilities/ruleUtils';
 import { tableAnchorId } from '../utilities/schemaAnchor';
+import { buildDefaultSchemaRelationshipsJson } from '../utilities/schemaRelationships';
 import type {
   ColumnDesignerModel,
   GenerationRequestEntity,
@@ -31,9 +32,9 @@ import type { RequestDetailPageProps } from './pageProps';
 
 interface RequestDetailForm {
   name: string;
-  rowsPerTable: string;
   schemaSql: string;
   classificationJson: string;
+  schemaRelationshipsJson: string;
 }
 
 export function RequestDetailPage(props: RequestDetailPageProps) {
@@ -42,14 +43,15 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
   const [request, setRequest] = useState<GenerationRequestEntity | null>(null);
   const [form, setForm] = useState<RequestDetailForm>({
     name: '',
-    rowsPerTable: '10',
     schemaSql: '',
     classificationJson: '',
+    schemaRelationshipsJson: '',
   });
   const [columnRules, setColumnRules] = useState<TableColumnRules>({});
   const [designerModel, setDesignerModel] = useState<ColumnDesignerModel | null>(null);
   const [schemaFocused, setSchemaFocused] = useState(false);
   const [generalExpanded, setGeneralExpanded] = useState(false);
+  const [relationshipsExpanded, setRelationshipsExpanded] = useState(false);
   const [schemasExpanded, setSchemasExpanded] = useState(true);
 
   useEffect(() => {
@@ -68,12 +70,13 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         }
         setForm({
           name: found.name,
-          rowsPerTable: String(found.rowsPerTable),
           schemaSql: found.schemaSql,
           classificationJson: found.classificationJson,
+          schemaRelationshipsJson: found.schemaRelationshipsJson ?? '',
         });
         setColumnRules(found.columnRules ?? {});
         setGeneralExpanded(false);
+        setRelationshipsExpanded(false);
         setSchemasExpanded(true);
 
         if (found.schemaSql.trim() && found.classificationJson.trim()) {
@@ -119,10 +122,10 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
       const updated = await updateGenerationRequest(requestId, {
         projectId,
         name: form.name,
-        rowsPerTable: Number(form.rowsPerTable),
         schemaSql: form.schemaSql,
         classificationJson: form.classificationJson,
         columnRules,
+        schemaRelationshipsJson: form.schemaRelationshipsJson,
       });
       setRequest(updated);
       props.setSnack('Request detail saved.');
@@ -160,8 +163,13 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
       });
       setDesignerModel(model);
       setColumnRules(model.columnRules);
+      setForm((prev) => ({
+        ...prev,
+        schemaRelationshipsJson: buildDefaultSchemaRelationshipsJson(model, model.columnRules),
+      }));
+      setRelationshipsExpanded(true);
       setSchemasExpanded(true);
-      props.setSnack('Schemas analyzed and built.');
+      props.setSnack('Schemas and schema relationships analyzed and built.');
     } catch (exception) {
       props.setError('Failed to analyze schemas.');
       console.error(exception);
@@ -235,13 +243,6 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
               onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
             />
             <TextField
-              label="Rows per table"
-              value={form.rowsPerTable}
-              onChange={(event) =>
-                setForm((prev) => ({ ...prev, rowsPerTable: event.target.value }))
-              }
-            />
-            <TextField
               label="Create Table SQL"
               value={form.schemaSql}
               multiline
@@ -272,6 +273,29 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
               Analyze & Build Schemas
             </Button>
           </Stack>
+        </AccordionDetails>
+      </Accordion>
+
+      <Accordion
+        expanded={relationshipsExpanded}
+        onChange={(_event, value) => setRelationshipsExpanded(value)}
+      >
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography sx={{ fontWeight: 700 }}>Schema Relationships</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <TextField
+            label="Schema Relationships JSON"
+            value={form.schemaRelationshipsJson}
+            multiline
+            minRows={10}
+            maxRows={20}
+            onChange={(event) =>
+              setForm((prev) => ({ ...prev, schemaRelationshipsJson: event.target.value }))
+            }
+            helperText='Use strict JSON array format (no comments). Default distribution is [1].'
+            fullWidth
+          />
         </AccordionDetails>
       </Accordion>
 

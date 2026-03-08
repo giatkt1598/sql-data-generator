@@ -44,8 +44,8 @@ export interface GenerationRequestEntity {
   name: string;
   schemaSql: string;
   classificationJson: string;
-  rowsPerTable: number;
   columnRules?: TableColumnRules;
+  schemaRelationshipsJson?: string;
   createdAt: string;
   updatedAt: string;
 }

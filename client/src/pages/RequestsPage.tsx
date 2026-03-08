@@ -34,10 +34,9 @@ import type { RequestsPageProps } from './pageProps';
 
 interface RequestDialogForm {
   name: string;
-  rowsPerTable: string;
 }
 
-const emptyRequestDialogForm: RequestDialogForm = { name: '', rowsPerTable: '10' };
+const emptyRequestDialogForm: RequestDialogForm = { name: '' };
 
 export function RequestsPage(props: RequestsPageProps) {
   const { projectId } = useParams();
@@ -75,7 +74,7 @@ export function RequestsPage(props: RequestsPageProps) {
 
   function openEditDialog(request: GenerationRequestEntity) {
     setEditingRequest(request);
-    setForm({ name: request.name, rowsPerTable: String(request.rowsPerTable) });
+    setForm({ name: request.name });
     setDialogOpen(true);
   }
 
@@ -89,19 +88,19 @@ export function RequestsPage(props: RequestsPageProps) {
         await updateGenerationRequest(editingRequest.id, {
           projectId,
           name: form.name,
-          rowsPerTable: Number(form.rowsPerTable),
           schemaSql: editingRequest.schemaSql,
           classificationJson: editingRequest.classificationJson,
           columnRules: editingRequest.columnRules,
+          schemaRelationshipsJson: editingRequest.schemaRelationshipsJson,
         });
       } else {
         await createGenerationRequest({
           projectId,
           name: form.name,
-          rowsPerTable: Number(form.rowsPerTable),
           schemaSql: '',
           classificationJson: '',
           columnRules: {},
+          schemaRelationshipsJson: '',
         });
       }
       await reloadRequests();
@@ -164,7 +163,6 @@ export function RequestsPage(props: RequestsPageProps) {
             <TableHead>
               <TableRow>
                 <TableCell>Name</TableCell>
-                <TableCell>Rows/Table</TableCell>
                 <TableCell>Updated</TableCell>
                 <TableCell align="right">Actions</TableCell>
               </TableRow>
@@ -178,7 +176,6 @@ export function RequestsPage(props: RequestsPageProps) {
                   onClick={() => navigate(`/projects/${projectId}/requests/${request.id}`)}
                 >
                   <TableCell>{request.name}</TableCell>
-                  <TableCell>{request.rowsPerTable}</TableCell>
                   <TableCell>{new Date(request.updatedAt).toLocaleString()}</TableCell>
                   <TableCell align="right">
                     <IconButton
@@ -216,13 +213,6 @@ export function RequestsPage(props: RequestsPageProps) {
               label="Name"
               value={form.name}
               onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
-            />
-            <TextField
-              label="Rows per table"
-              value={form.rowsPerTable}
-              onChange={(event) =>
-                setForm((prev) => ({ ...prev, rowsPerTable: event.target.value }))
-              }
             />
           </Stack>
         </DialogContent>

@@ -46,14 +46,14 @@ export function buildApiRouter(service: GenerationService): Router {
       const body = parseBody<{
         schemaSql?: string;
         classificationJson?: string;
-        rowsPerTable?: number;
         columnRules?: TableColumnRules;
+        schemaRelationshipsJson?: string;
       }>(req);
       const result = service.generatePreviewFromInput({
         schemaSql: body.schemaSql ?? '',
         classificationJson: body.classificationJson ?? '',
-        rowsPerTable: Number(body.rowsPerTable ?? 10),
         columnRules: body.columnRules,
+        schemaRelationshipsJson: body.schemaRelationshipsJson,
       });
       res.json(result);
     } catch (error) {
@@ -66,14 +66,14 @@ export function buildApiRouter(service: GenerationService): Router {
       const body = parseBody<{
         schemaSql?: string;
         classificationJson?: string;
-        rowsPerTable?: number;
         columnRules?: TableColumnRules;
+        schemaRelationshipsJson?: string;
       }>(req);
       const script = service.exportCombinedScriptFromInput({
         schemaSql: body.schemaSql ?? '',
         classificationJson: body.classificationJson ?? '',
-        rowsPerTable: Number(body.rowsPerTable ?? 10),
         columnRules: body.columnRules,
+        schemaRelationshipsJson: body.schemaRelationshipsJson,
       });
       res.setHeader('Content-Type', 'application/sql; charset=utf-8');
       res.setHeader('Content-Disposition', 'attachment; filename="generated.sql"');
@@ -141,16 +141,16 @@ export function buildApiRouter(service: GenerationService): Router {
         name?: string;
         schemaSql?: string;
         classificationJson?: string;
-        rowsPerTable?: number;
         columnRules?: TableColumnRules;
+        schemaRelationshipsJson?: string;
       }>(req);
       const item = service.createGenerationRequest({
         projectId: body.projectId ?? '',
         name: body.name ?? '',
         schemaSql: body.schemaSql ?? '',
         classificationJson: body.classificationJson ?? '',
-        rowsPerTable: Number(body.rowsPerTable ?? 10),
         columnRules: body.columnRules,
+        schemaRelationshipsJson: body.schemaRelationshipsJson,
       });
       res.status(201).json(item);
     } catch (error) {
@@ -165,14 +165,10 @@ export function buildApiRouter(service: GenerationService): Router {
         name?: string;
         schemaSql?: string;
         classificationJson?: string;
-        rowsPerTable?: number;
         columnRules?: TableColumnRules;
+        schemaRelationshipsJson?: string;
       }>(req);
-      const item = service.updateGenerationRequest(req.params.id, {
-        ...body,
-        rowsPerTable:
-          typeof body.rowsPerTable === 'undefined' ? undefined : Number(body.rowsPerTable),
-      });
+      const item = service.updateGenerationRequest(req.params.id, body);
       res.json(item);
     } catch (error) {
       handleError(error, res);

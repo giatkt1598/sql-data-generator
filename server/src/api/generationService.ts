@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto';
 import { parseClassificationJson } from '../ai/classificationLoader';
 import { buildClassificationPrompt } from '../ai/promptBuilder';
-import { TableColumnRules, TableSchema } from '../core/types';
+import { SchemaRelationshipsConfig, TableColumnRules, TableSchema } from '../core/types';
 import { generateDataByTableOrder } from '../generator/valueGenerator';
 import { buildDefaultColumnRules, sanitizeColumnRules } from '../schema/columnRules';
 import { resolveTableOrder } from '../schema/dependencyResolver';
@@ -25,8 +25,8 @@ export interface CreateGenerationRequestInput {
   name: string;
   schemaSql: string;
   classificationJson: string;
-  rowsPerTable: number;
   columnRules?: TableColumnRules;
+  schemaRelationshipsJson?: string;
 }
 
 export interface UpdateGenerationRequestInput {
@@ -34,8 +34,8 @@ export interface UpdateGenerationRequestInput {
   name?: string;
   schemaSql?: string;
   classificationJson?: string;
-  rowsPerTable?: number;
   columnRules?: TableColumnRules;
+  schemaRelationshipsJson?: string;
 }
 
 export interface PreviewResult {
@@ -51,10 +51,36 @@ function asText(value: unknown): string {
   return value.trim();
 }
 
-function assertRows(rowsPerTable: number): void {
-  if (!Number.isInteger(rowsPerTable) || rowsPerTable < 1) {
-    throw new Error('rowsPerTable must be a positive integer.');
+function parseSchemaRelationshipsJson(rawJson: string | undefined): SchemaRelationshipsConfig | undefined {
+  const trimmed = (rawJson ?? '').trim();
+  if (!trimmed) {
+    return undefined;
   }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(trimmed);
+  } catch {
+    throw new Error('schemaRelationshipsJson is not valid JSON.');
+  }
+
+  if (Array.isArray(parsed)) {
+    for (const item of parsed) {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) {
+        throw new Error(
+          'schemaRelationshipsJson array items must be objects like { "users": { ... } }.',
+        );
+      }
+    }
+    return parsed as SchemaRelationshipsConfig;
+  }
+
+  if (!parsed || typeof parsed !== 'object') {
+    throw new Error('schemaRelationshipsJson must be a JSON array or JSON object.');
+  }
+
+  // Backward compatibility: allow old object format and convert to new array format.
+  return [parsed as Record<string, unknown>] as SchemaRelationshipsConfig;
 }
 
 function buildSchemaAndRules(input: {
@@ -74,6 +100,10 @@ function buildSchemaAndRules(input: {
     tables: schema.tables,
     columnRules: mergedRules,
   };
+}
+
+function canBuildSchemaAndRules(schemaSql: string, classificationJson: string): boolean {
+  return schemaSql.trim().length > 0 && classificationJson.trim().length > 0;
 }
 
 export class GenerationService {
@@ -155,15 +185,20 @@ export class GenerationService {
     const name = asText(input.name);
     const schemaSql = asText(input.schemaSql);
     const classificationJson = asText(input.classificationJson);
-    assertRows(input.rowsPerTable);
-    if (!name || !schemaSql || !classificationJson) {
-      throw new Error('name, schemaSql, classificationJson are required.');
+    const schemaRelationshipsJson = asText(input.schemaRelationshipsJson);
+    if (!name) {
+      throw new Error('name is required.');
     }
-    const { columnRules } = buildSchemaAndRules({
-      schemaSql,
-      classificationJson,
-      columnRules: input.columnRules,
-    });
+
+    let columnRules = input.columnRules;
+    if (canBuildSchemaAndRules(schemaSql, classificationJson)) {
+      const built = buildSchemaAndRules({
+        schemaSql,
+        classificationJson,
+        columnRules: input.columnRules,
+      });
+      columnRules = built.columnRules;
+    }
 
     const now = new Date().toISOString();
     const request: GenerationRequestEntity = {
@@ -172,8 +207,8 @@ export class GenerationService {
       name,
       schemaSql,
       classificationJson,
-      rowsPerTable: input.rowsPerTable,
       columnRules,
+      schemaRelationshipsJson,
       createdAt: now,
       updatedAt: now,
     };
@@ -209,32 +244,27 @@ export class GenerationService {
     }
     if (typeof input.schemaSql !== 'undefined') {
       const schemaSql = asText(input.schemaSql);
-      if (!schemaSql) {
-        throw new Error('schemaSql is required.');
-      }
       request.schemaSql = schemaSql;
     }
     if (typeof input.classificationJson !== 'undefined') {
       const classificationJson = asText(input.classificationJson);
-      if (!classificationJson) {
-        throw new Error('classificationJson is required.');
-      }
       request.classificationJson = classificationJson;
-    }
-    if (typeof input.rowsPerTable !== 'undefined') {
-      assertRows(input.rowsPerTable);
-      request.rowsPerTable = input.rowsPerTable;
     }
     if (typeof input.columnRules !== 'undefined') {
       request.columnRules = input.columnRules;
     }
+    if (typeof input.schemaRelationshipsJson !== 'undefined') {
+      request.schemaRelationshipsJson = asText(input.schemaRelationshipsJson);
+    }
 
-    const { columnRules } = buildSchemaAndRules({
-      schemaSql: request.schemaSql,
-      classificationJson: request.classificationJson,
-      columnRules: request.columnRules,
-    });
-    request.columnRules = columnRules;
+    if (canBuildSchemaAndRules(request.schemaSql, request.classificationJson)) {
+      const { columnRules } = buildSchemaAndRules({
+        schemaSql: request.schemaSql,
+        classificationJson: request.classificationJson,
+        columnRules: request.columnRules,
+      });
+      request.columnRules = columnRules;
+    }
 
     request.updatedAt = new Date().toISOString();
     this.storage.write(state);
@@ -260,26 +290,25 @@ export class GenerationService {
     return this.generatePreviewFromInput({
       schemaSql: request.schemaSql,
       classificationJson: request.classificationJson,
-      rowsPerTable: request.rowsPerTable,
       columnRules: request.columnRules,
+      schemaRelationshipsJson: request.schemaRelationshipsJson,
     });
   }
 
   generatePreviewFromInput(input: {
     schemaSql: string;
     classificationJson: string;
-    rowsPerTable: number;
     columnRules?: TableColumnRules;
+    schemaRelationshipsJson?: string;
   }): PreviewResult {
-    assertRows(input.rowsPerTable);
     const { tables, columnRules } = buildSchemaAndRules(input);
+    const relationships = parseSchemaRelationshipsJson(input.schemaRelationshipsJson);
     const orderedTables = resolveTableOrder(tables, columnRules);
     const generatedRows = generateDataByTableOrder(
       orderedTables,
-      {
-        rowsPerTable: input.rowsPerTable,
-      },
+      {},
       columnRules,
+      relationships,
     );
     const files = buildInsertFileArtifacts(generatedRows);
     const fullText = files.map((file) => `-- file: ${file.fileName}\n${file.content}`).join('\n');
@@ -319,8 +348,8 @@ export class GenerationService {
   exportCombinedScriptFromInput(input: {
     schemaSql: string;
     classificationJson: string;
-    rowsPerTable: number;
     columnRules?: TableColumnRules;
+    schemaRelationshipsJson?: string;
   }): string {
     const preview = this.generatePreviewFromInput(input);
     return preview.files.map((file) => `-- ${file.fileName}\n${file.content}`).join('\n');

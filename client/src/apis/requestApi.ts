@@ -18,8 +18,8 @@ export async function createGenerationRequest(payload: {
   name: string;
   schemaSql: string;
   classificationJson: string;
-  rowsPerTable: number;
   columnRules?: TableColumnRules;
+  schemaRelationshipsJson?: string;
 }): Promise<GenerationRequestEntity> {
   const response = await httpClient.post<GenerationRequestEntity>('/generation-requests', payload);
   return response.data;
@@ -32,8 +32,8 @@ export async function updateGenerationRequest(
     name: string;
     schemaSql: string;
     classificationJson: string;
-    rowsPerTable: number;
     columnRules?: TableColumnRules;
+    schemaRelationshipsJson?: string;
   },
 ): Promise<GenerationRequestEntity> {
   const response = await httpClient.put<GenerationRequestEntity>(
