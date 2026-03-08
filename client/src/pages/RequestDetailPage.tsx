@@ -15,7 +15,6 @@ import type {
   GenerationRequestEntity,
   TableColumnRules,
 } from '../models/apiModels';
-import { estimateRelationshipRows } from '../utilities/relationshipEstimate';
 import { buildDefaultSchemaRelationshipsJson } from '../utilities/schemaRelationships';
 import { getErrorMessage } from '../utilities/errorUtils';
 import { AnalyzeConfirmDialog } from '../components/request-detail/AnalyzeConfirmDialog';
@@ -215,24 +214,6 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         })),
     );
   }, [designerModel]);
-
-  const relationshipEstimate = useMemo(
-    () => estimateRelationshipRows(form.schemaRelationshipsJson, designerModel),
-    [form.schemaRelationshipsJson, designerModel],
-  );
-
-  const relationshipEstimateTooltip = useMemo(() => {
-    if (!relationshipEstimate) {
-      return '';
-    }
-    if (relationshipEstimate.error) {
-      return relationshipEstimate.error;
-    }
-    return Object.entries(relationshipEstimate.rowCountByTable)
-      .sort((left, right) => right[1] - left[1])
-      .map(([tableName, rowCount]) => `${tableName}: ${rowCount.toLocaleString()} rows`)
-      .join('\n');
-  }, [relationshipEstimate]);
 
   async function flushPendingInput(): Promise<void> {
     const activeElement = document.activeElement;
@@ -806,9 +787,6 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     semanticTypes: props.semanticTypes,
     supportedLocales: props.supportedLocales,
     primaryKeyOptions,
-    relationshipEstimateSummary: relationshipEstimate?.summary,
-    relationshipEstimateTooltip,
-    relationshipEstimateError: relationshipEstimate?.error,
     openTypePicker,
     onFieldNameChange,
     onBlankPercentageChange,

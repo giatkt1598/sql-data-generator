@@ -9,6 +9,8 @@ type RelationshipNode = {
 type RelationshipConfig = Array<Record<string, RelationshipNode>>;
 
 const DEFAULT_TABLE_ROWS = 10;
+const MAX_ESTIMATED_ROWS = 9_999_999;
+const OVERFLOW_SUMMARY = 'Estimated rows: 9999999+';
 
 function sanitizeDistribution(input: number[] | undefined): number[] {
   if (!input || input.length === 0) {
@@ -22,6 +24,9 @@ function buildChildCount(parentCount: number, distribution: number[]): number {
   let total = 0;
   for (let index = 0; index < parentCount; index += 1) {
     total += distribution[index % distribution.length];
+    if (total > MAX_ESTIMATED_ROWS) {
+      return MAX_ESTIMATED_ROWS + 1;
+    }
   }
   return total;
 }
@@ -30,6 +35,7 @@ export interface RelationshipEstimateResult {
   summary: string;
   rowCountByTable: Record<string, number>;
   error?: string;
+  overflow?: boolean;
 }
 
 export function estimateRelationshipRows(
@@ -51,8 +57,12 @@ export function estimateRelationshipRows(
     const plain = Object.fromEntries(rowCountByTable);
     const totalRows = Object.values(plain).reduce((sum, value) => sum + value, 0);
     return {
-      summary: `Estimated rows: ${totalRows.toLocaleString()}`,
+      summary:
+        totalRows > MAX_ESTIMATED_ROWS
+          ? OVERFLOW_SUMMARY
+          : `Estimated rows: ${totalRows.toLocaleString()}`,
       rowCountByTable: plain,
+      overflow: totalRows > MAX_ESTIMATED_ROWS,
     };
   }
 
@@ -90,6 +100,10 @@ export function estimateRelationshipRows(
           ? (node.count as number)
           : DEFAULT_TABLE_ROWS;
 
+    if (nextCount > MAX_ESTIMATED_ROWS) {
+      throw new Error('__ESTIMATE_OVERFLOW__');
+    }
+
     rowCountByTable.set(tableName, Math.max(rowCountByTable.get(tableName) ?? 0, nextCount));
 
     for (const [key, value] of Object.entries(node)) {
@@ -118,6 +132,13 @@ export function estimateRelationshipRows(
       }
     }
   } catch (error) {
+    if (error instanceof Error && error.message === '__ESTIMATE_OVERFLOW__') {
+      return {
+        summary: OVERFLOW_SUMMARY,
+        rowCountByTable: Object.fromEntries(rowCountByTable),
+        overflow: true,
+      };
+    }
     return {
       summary: 'Estimated rows: unavailable',
       rowCountByTable: Object.fromEntries(rowCountByTable),
@@ -134,7 +155,11 @@ export function estimateRelationshipRows(
   const plain = Object.fromEntries(rowCountByTable);
   const totalRows = Object.values(plain).reduce((sum, value) => sum + value, 0);
   return {
-    summary: `Estimated rows: ${totalRows.toLocaleString()}`,
+    summary:
+      totalRows > MAX_ESTIMATED_ROWS
+        ? OVERFLOW_SUMMARY
+        : `Estimated rows: ${totalRows.toLocaleString()}`,
     rowCountByTable: plain,
+    overflow: totalRows > MAX_ESTIMATED_ROWS,
   };
 }

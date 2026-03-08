@@ -37,9 +37,6 @@ export interface RequestDetailContextValue {
   semanticTypes: DataTypeDefinition[];
   supportedLocales: SupportedLocaleDefinition[];
   primaryKeyOptions: Array<{ value: string; description: string }>;
-  relationshipEstimateSummary?: string;
-  relationshipEstimateTooltip?: string;
-  relationshipEstimateError?: string;
   openTypePicker: (tableName: string, columnName: string) => void;
   onFieldNameChange: (tableName: string, columnName: string, value: string) => void;
   onBlankPercentageChange: (tableName: string, columnName: string, value: string) => void;

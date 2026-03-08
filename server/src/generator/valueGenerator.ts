@@ -44,8 +44,8 @@ interface DigitSequenceFormatPart {
 }
 
 const DEFAULT_TABLE_ROWS = 10;
-const MAX_ROWS_PER_TABLE = 100_000;
-const MAX_TOTAL_ROWS = 200_000;
+const MAX_ROWS_PER_TABLE = 10_000_000;
+const MAX_TOTAL_ROWS = 10_000_000;
 const DEFAULT_DATE_TIME_FORMAT = 'yyyy-MM-dd';
 const STOCK_INDUSTRIES = [
   'Semiconductors',
