@@ -27,8 +27,8 @@ export const SUPPORTED_SEMANTIC_TYPES: SemanticDataType[] = [
 export const DATA_TYPE_DEFINITIONS: DataTypeDefinition[] = [
   {
     value: 'unknown',
-    displayName: 'Unknown',
-    description: 'Fallback text value.\nExample: value_1',
+    displayName: 'NULL',
+    description: 'Always generates NULL.\nExample: NULL',
     group: 'Basic',
   },
   {

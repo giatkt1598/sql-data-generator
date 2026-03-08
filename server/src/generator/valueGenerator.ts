@@ -270,7 +270,7 @@ function generateScalarValue(
   rowIndex: number,
   runSalt: string,
   row: Record<string, string | number | boolean | null>,
-): string | number | boolean {
+): string | number | boolean | null {
   const salt = runSalt.slice(0, 8).toLowerCase();
 
   switch (semanticType) {
@@ -367,6 +367,7 @@ function generateScalarValue(
       }
       return faker.lorem.words(textLength);
     case 'unknown':
+      return null;
     default:
       return `${faker.lorem.word()}_${salt}_${rowIndex + 1}`;
   }

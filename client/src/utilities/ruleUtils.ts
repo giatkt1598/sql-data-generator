@@ -10,7 +10,7 @@ export function stringifyRule(
   rule?: ColumnGenerationRule,
 ): string {
   if (!rule) {
-    return 'unknown';
+    return 'NULL';
   }
   if (rule.kind === 'customList') {
     return 'Custom List';
@@ -18,7 +18,7 @@ export function stringifyRule(
   if (rule.kind === 'reference' && rule.reference) {
     return `${rule.reference.tableName}.${rule.reference.columnName}`;
   }
-  return semanticTypes.find((x) => x.value === rule.semanticType)?.displayName ?? 'unknown';
+  return semanticTypes.find((x) => x.value === rule.semanticType)?.displayName ?? 'NULL';
 }
 
 export function parseRule(value: DataTypeCatalogValue | string): ColumnGenerationRule {
