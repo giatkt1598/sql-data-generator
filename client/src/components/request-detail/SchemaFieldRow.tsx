@@ -35,6 +35,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
   const isDateTimeRule = rule?.kind === 'semantic' && rule.semanticType === 'dateTime';
   const isSequenceRule = rule?.kind === 'semantic' && rule.semanticType === 'sequence';
   const isDigitSequenceRule = rule?.kind === 'semantic' && rule.semanticType === 'digitSequence';
+  const isEmailRule = rule?.kind === 'semantic' && rule.semanticType === 'email';
   const isTextRule = rule?.kind === 'semantic' && rule.semanticType === 'text';
   const numberOptions = rule?.numberOptions ?? {
     min: 0,
@@ -54,6 +55,9 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
   };
   const digitSequenceOptions = rule?.digitSequenceOptions ?? {
     format: '',
+  };
+  const emailOptions = rule?.emailOptions ?? {
+    domains: [],
   };
   const textOptions = rule?.textOptions ?? {
     minLength: 1,
@@ -271,6 +275,18 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
             }}
           />
         </Stack>
+      )}
+      {isEmailRule && (
+        <TextField
+          size="small"
+          label="Domains"
+          defaultValue={(emailOptions.domains ?? []).join(', ')}
+          placeholder="example: outlook.com, gmail.com"
+          onBlur={(event) =>
+            context.onEmailOptionChange(tableName, column.name, 'domains', event.target.value)
+          }
+          sx={{ minWidth: 300 }}
+        />
       )}
       {isTextRule && (
         <Stack direction="row" spacing={1} alignItems="center">

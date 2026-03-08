@@ -119,8 +119,11 @@ function generateScalarValue(
     case 'gender':
       return faker.person.sexType();
     case 'email':
+      const domains =
+        rule.emailOptions?.domains?.filter((domain) => typeof domain === 'string' && domain.trim()) ??
+        [];
       return faker.internet.email({
-        provider: 'example.com',
+        provider: domains.length > 0 ? faker.helpers.arrayElement(domains) : 'example.com',
         firstName: `user${rowIndex + 1}`,
         lastName: salt,
       });

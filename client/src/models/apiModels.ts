@@ -61,6 +61,9 @@ export interface ColumnGenerationRule {
   digitSequenceOptions?: {
     format?: string;
   };
+  emailOptions?: {
+    domains?: string[];
+  };
   textOptions?: {
     minLength?: number;
     maxLength?: number;

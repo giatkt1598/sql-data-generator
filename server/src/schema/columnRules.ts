@@ -127,6 +127,20 @@ function normalizeDigitSequenceOptions(
   return { format };
 }
 
+function normalizeEmailOptions(
+  rule: ColumnGenerationRule | undefined,
+  fallback: { domains?: string[] } | undefined,
+) {
+  const domains = Array.isArray(rule?.emailOptions?.domains)
+    ? rule.emailOptions.domains
+        .filter((value): value is string => typeof value === 'string')
+        .map((value) => value.trim())
+        .filter((value) => value.length > 0)
+    : (fallback?.domains ?? []);
+
+  return { domains };
+}
+
 function normalizeTextOptions(
   rule: ColumnGenerationRule | undefined,
   fallback: { minLength?: number; maxLength?: number; unit?: 'words' | 'characters' } | undefined,
@@ -206,6 +220,9 @@ export function buildDefaultColumnRules(
         },
         digitSequenceOptions: {
           format: '',
+        },
+        emailOptions: {
+          domains: [],
         },
         textOptions: {
           minLength: 1,
@@ -287,7 +304,14 @@ export function sanitizeColumnRules(
             candidate,
             fallbackRules[table.name][column.name].digitSequenceOptions,
           ),
-          textOptions: normalizeTextOptions(candidate, fallbackRules[table.name][column.name].textOptions),
+          emailOptions: normalizeEmailOptions(
+            candidate,
+            fallbackRules[table.name][column.name].emailOptions,
+          ),
+          textOptions: normalizeTextOptions(
+            candidate,
+            fallbackRules[table.name][column.name].textOptions,
+          ),
         };
         continue;
       }
@@ -323,6 +347,10 @@ export function sanitizeColumnRules(
               candidate,
               fallbackRules[table.name][column.name].digitSequenceOptions,
             ),
+            emailOptions: normalizeEmailOptions(
+              candidate,
+              fallbackRules[table.name][column.name].emailOptions,
+            ),
             textOptions: normalizeTextOptions(
               candidate,
               fallbackRules[table.name][column.name].textOptions,
@@ -355,7 +383,14 @@ export function sanitizeColumnRules(
             candidate,
             fallbackRules[table.name][column.name].digitSequenceOptions,
           ),
-          textOptions: normalizeTextOptions(candidate, fallbackRules[table.name][column.name].textOptions),
+          emailOptions: normalizeEmailOptions(
+            candidate,
+            fallbackRules[table.name][column.name].emailOptions,
+          ),
+          textOptions: normalizeTextOptions(
+            candidate,
+            fallbackRules[table.name][column.name].textOptions,
+          ),
         };
         continue;
       }
@@ -385,7 +420,14 @@ export function sanitizeColumnRules(
           candidate,
           fallbackRules[table.name][column.name].digitSequenceOptions,
         ),
-        textOptions: normalizeTextOptions(candidate, fallbackRules[table.name][column.name].textOptions),
+        emailOptions: normalizeEmailOptions(
+          candidate,
+          fallbackRules[table.name][column.name].emailOptions,
+        ),
+        textOptions: normalizeTextOptions(
+          candidate,
+          fallbackRules[table.name][column.name].textOptions,
+        ),
       };
     }
   }

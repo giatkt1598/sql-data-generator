@@ -98,6 +98,9 @@ export function SchemasAccordion() {
                             digitSequenceOptions: rule?.digitSequenceOptions ?? {
                               format: '',
                             },
+                            emailOptions: rule?.emailOptions ?? {
+                              domains: [],
+                            },
                             textOptions: rule?.textOptions ?? {
                               minLength: 1,
                               maxLength: 4,

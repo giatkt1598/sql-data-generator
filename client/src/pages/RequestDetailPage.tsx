@@ -87,6 +87,9 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
       digitSequenceOptions: {
         format: '',
       },
+      emailOptions: {
+        domains: [],
+      },
       textOptions: {
         minLength: 1,
         maxLength: 4,
@@ -126,6 +129,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
       dateTimeOptions: rule?.dateTimeOptions ?? fallbackRule.dateTimeOptions,
       sequenceOptions: rule?.sequenceOptions ?? fallbackRule.sequenceOptions,
       digitSequenceOptions: rule?.digitSequenceOptions ?? fallbackRule.digitSequenceOptions,
+      emailOptions: rule?.emailOptions ?? fallbackRule.emailOptions,
       textOptions: rule?.textOptions ?? fallbackRule.textOptions,
     };
   }
@@ -640,6 +644,30 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     });
   }
 
+  function onEmailOptionChange(
+    tableName: string,
+    columnName: string,
+    key: 'domains',
+    value: string,
+  ) {
+    const fallbackRule = mergeRuleDefaults(columnRules[tableName]?.[columnName], columnName, 'email');
+    const currentOptions = fallbackRule.emailOptions ?? {
+      domains: [],
+    };
+
+    onRuleChange(tableName, columnName, {
+      ...fallbackRule,
+      fieldName: fallbackRule.fieldName ?? columnName,
+      emailOptions: {
+        ...currentOptions,
+        [key]: value
+          .split(',')
+          .map((item) => item.trim())
+          .filter((item) => item.length > 0),
+      },
+    });
+  }
+
   if (!project || !request) {
     return (
       <Card>
@@ -696,6 +724,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     onDateTimeOptionChange,
     onSequenceOptionChange,
     onDigitSequenceOptionChange,
+    onEmailOptionChange,
     onTextOptionChange,
     applyRule,
     applyCustomListRule,
