@@ -74,6 +74,7 @@ export interface GenerationRequestEntity {
   name: string;
   schemaSql: string;
   classificationJson: string;
+  locale?: string;
   columnRules?: TableColumnRules;
   schemaRelationshipsJson?: string;
   createdAt: string;
@@ -103,4 +104,9 @@ export interface DataTypeDefinition {
   displayName: string;
   description: string;
   groups: DataTypeGroup[];
+}
+
+export interface SupportedLocaleDefinition {
+  value: string;
+  label: string;
 }

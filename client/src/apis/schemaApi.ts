@@ -2,6 +2,7 @@ import { httpClient } from './httpClient';
 import type {
   ColumnDesignerModel,
   DataTypeDefinition,
+  SupportedLocaleDefinition,
   TableColumnRules,
 } from '../models/apiModels';
 
@@ -18,6 +19,11 @@ export async function getSemanticTypes(): Promise<DataTypeDefinition[]> {
   return response.data.items;
 }
 
+export async function getSupportedLocales(): Promise<SupportedLocaleDefinition[]> {
+  const response = await httpClient.get<{ items: SupportedLocaleDefinition[] }>('/locales');
+  return response.data.items;
+}
+
 export async function getColumnDesignerModel(payload: {
   schemaSql: string;
   classificationJson: string;
@@ -30,6 +36,7 @@ export async function getColumnDesignerModel(payload: {
 export async function generateSqlScript(payload: {
   schemaSql: string;
   classificationJson: string;
+  locale?: string;
   columnRules?: TableColumnRules;
   schemaRelationshipsJson?: string;
 }): Promise<string> {

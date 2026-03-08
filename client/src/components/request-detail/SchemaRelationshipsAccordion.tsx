@@ -28,12 +28,12 @@ export function SchemaRelationshipsAccordion() {
             label="Schema Relationships JSON"
             value={context.form.schemaRelationshipsJson}
             multiline
-            minRows={10}
-            maxRows={20}
+            minRows={6}
+            maxRows={12}
             onChange={(event) =>
               context.setForm((prev) => ({ ...prev, schemaRelationshipsJson: event.target.value }))
             }
-            helperText='Use strict JSON array format (no comments). Default distribution is [1].'
+            helperText="Use strict JSON array format (no comments). Default distribution is [1]."
             fullWidth
           />
           {context.relationshipEstimateSummary && (

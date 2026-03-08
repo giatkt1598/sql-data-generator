@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Container } from '@mui/material';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { getProjects, getSemanticTypes } from './apis';
+import { getProjects, getSemanticTypes, getSupportedLocales } from './apis';
 import { FeedbackSnackbars } from './components/FeedbackSnackbars';
-import type { DataTypeDefinition, ProjectEntity } from './models/apiModels';
+import type {
+  DataTypeDefinition,
+  ProjectEntity,
+  SupportedLocaleDefinition,
+} from './models/apiModels';
 import { ProjectsPage } from './pages/ProjectsPage';
 import { RequestDetailPage } from './pages/RequestDetailPage';
 import { RequestsPage } from './pages/RequestsPage';
@@ -12,6 +16,7 @@ import { getErrorMessage } from './utilities/errorUtils';
 function App() {
   const [projects, setProjects] = useState<ProjectEntity[]>([]);
   const [semanticTypes, setSemanticTypes] = useState<DataTypeDefinition[]>([]);
+  const [supportedLocales, setSupportedLocales] = useState<SupportedLocaleDefinition[]>([]);
   const [loading, setLoading] = useState(false);
   const [snack, setSnack] = useState('');
   const [error, setError] = useState('');
@@ -25,9 +30,14 @@ function App() {
     void (async () => {
       try {
         setLoading(true);
-        const [projectData, semanticData] = await Promise.all([getProjects(), getSemanticTypes()]);
+        const [projectData, semanticData, localeData] = await Promise.all([
+          getProjects(),
+          getSemanticTypes(),
+          getSupportedLocales(),
+        ]);
         setProjects(projectData);
         setSemanticTypes(semanticData);
+        setSupportedLocales(localeData);
       } catch (exception) {
         setError(getErrorMessage(exception, 'Failed to load initial data.'));
         console.error(exception);
@@ -71,6 +81,7 @@ function App() {
             <RequestDetailPage
               projects={projects}
               semanticTypes={semanticTypes}
+              supportedLocales={supportedLocales}
               loading={loading}
               setLoading={setLoading}
               setSnack={setSnack}

@@ -1,7 +1,18 @@
 import { createHash, randomUUID } from 'crypto';
 import dayjs from 'dayjs';
-import { faker } from '@faker-js/faker';
+import {
+  fakerDE,
+  fakerEN,
+  fakerES,
+  fakerFR,
+  fakerJA,
+  fakerKO,
+  fakerVI,
+  fakerZH_CN,
+  type Faker,
+} from '@faker-js/faker';
 import RandExp from 'randexp';
+import { SUPPORTED_LOCALES } from '../core/locales';
 import { normalizeSqlType, SQL_TYPE_DEFAULT_CLASSIFICATION } from '../core/semanticTypes';
 import {
   ColumnGenerationRule,
@@ -24,6 +35,7 @@ interface GenerateContext {
   generatedByTable: Map<string, GeneratedTableRows>;
   plan: GenerationPlan;
   runSalt: string;
+  faker: Faker;
 }
 
 interface DigitSequenceFormatPart {
@@ -181,34 +193,55 @@ function buildHash(algorithm: 'md5' | 'sha1' | 'sha256', value: string): string 
   return createHash(algorithm).update(value).digest('hex');
 }
 
-function randomAppVersion(): string {
-  const parts = faker.helpers.arrayElement([2, 3]);
-  return Array.from({ length: parts }, () => String(faker.number.int({ min: 0, max: 20 }))).join(
-    '.',
-  );
+function resolveLocaleFaker(locale?: string): Faker {
+  const normalized = (locale ?? '').trim();
+  const fakerByLocale: Record<string, Faker> = {
+    en: fakerEN,
+    vi: fakerVI,
+    ja: fakerJA,
+    ko: fakerKO,
+    zh_CN: fakerZH_CN,
+    fr: fakerFR,
+    de: fakerDE,
+    es: fakerES,
+  };
+
+  const supportedLocaleValues = new Set(SUPPORTED_LOCALES.map((item) => item.value));
+  if (!supportedLocaleValues.has(normalized)) {
+    return fakerEN;
+  }
+
+  return fakerByLocale[normalized] ?? fakerEN;
 }
 
-function randomAppBundleId(): string {
-  return `com.${faker.internet.domainWord()}.${faker.internet.domainWord()}`;
+function randomAppVersion(localeFaker: Faker): string {
+  const parts = localeFaker.helpers.arrayElement([2, 3]);
+  return Array.from({ length: parts }, () =>
+    String(localeFaker.number.int({ min: 0, max: 20 })),
+  ).join('.');
 }
 
-function randomBase64ImageUrl(): string {
-  const payload = Buffer.from(faker.string.alphanumeric(48)).toString('base64');
+function randomAppBundleId(localeFaker: Faker): string {
+  return `com.${localeFaker.internet.domainWord()}.${localeFaker.internet.domainWord()}`;
+}
+
+function randomBase64ImageUrl(localeFaker: Faker): string {
+  const payload = Buffer.from(localeFaker.string.alphanumeric(48)).toString('base64');
   return `data:image/png;base64,${payload}`;
 }
 
-function randomDummyImageUrl(): string {
-  const width = faker.number.int({ min: 100, max: 800 });
-  const height = faker.number.int({ min: 100, max: 800 });
+function randomDummyImageUrl(localeFaker: Faker): string {
+  const width = localeFaker.number.int({ min: 100, max: 800 });
+  const height = localeFaker.number.int({ min: 100, max: 800 });
   return `https://dummyimage.com/${width}x${height}`;
 }
 
-function randomIpv4Cidr(): string {
-  return `${faker.internet.ipv4()}/${faker.number.int({ min: 8, max: 32 })}`;
+function randomIpv4Cidr(localeFaker: Faker): string {
+  return `${localeFaker.internet.ipv4()}/${localeFaker.number.int({ min: 8, max: 32 })}`;
 }
 
-function randomIpv6Cidr(): string {
-  return `${faker.internet.ipv6()}/${faker.number.int({ min: 32, max: 128 })}`;
+function randomIpv6Cidr(localeFaker: Faker): string {
+  return `${localeFaker.internet.ipv6()}/${localeFaker.number.int({ min: 32, max: 128 })}`;
 }
 
 function inferFallbackSemanticType(column: ColumnSchema): SemanticDataType {
@@ -228,7 +261,7 @@ function parseClockTime(value: string, fallback: string): dayjs.Dayjs {
   return dayjs(`2000-01-01 ${fallback}`);
 }
 
-function applyDigitSequenceTokens(input: string): string {
+function applyDigitSequenceTokens(input: string, localeFaker: Faker): string {
   let result = '';
 
   for (let index = 0; index < input.length; index += 1) {
@@ -243,31 +276,31 @@ function applyDigitSequenceTokens(input: string): string {
 
     switch (char) {
       case '#':
-        result += faker.string.numeric(1);
+        result += localeFaker.string.numeric(1);
         break;
       case '@':
-        result += faker.string.alpha({ length: 1, casing: 'lower' });
+        result += localeFaker.string.alpha({ length: 1, casing: 'lower' });
         break;
       case '^':
-        result += faker.string.alpha({ length: 1, casing: 'upper' });
+        result += localeFaker.string.alpha({ length: 1, casing: 'upper' });
         break;
       case '*':
-        result += faker.helpers.arrayElement([
-          faker.string.numeric(1),
-          faker.string.alpha({ length: 1, casing: 'lower' }),
-          faker.string.alpha({ length: 1, casing: 'upper' }),
+        result += localeFaker.helpers.arrayElement([
+          localeFaker.string.numeric(1),
+          localeFaker.string.alpha({ length: 1, casing: 'lower' }),
+          localeFaker.string.alpha({ length: 1, casing: 'upper' }),
         ]);
         break;
       case '$':
-        result += faker.helpers.arrayElement([
-          faker.string.numeric(1),
-          faker.string.alpha({ length: 1, casing: 'lower' }),
+        result += localeFaker.helpers.arrayElement([
+          localeFaker.string.numeric(1),
+          localeFaker.string.alpha({ length: 1, casing: 'lower' }),
         ]);
         break;
       case '%':
-        result += faker.helpers.arrayElement([
-          faker.string.numeric(1),
-          faker.string.alpha({ length: 1, casing: 'upper' }),
+        result += localeFaker.helpers.arrayElement([
+          localeFaker.string.numeric(1),
+          localeFaker.string.alpha({ length: 1, casing: 'upper' }),
         ]);
         break;
       default:
@@ -351,6 +384,7 @@ function generateDigitSequenceValue(
   row: Record<string, string | number | boolean | null>,
   tableName: string,
   columnName: string,
+  localeFaker: Faker,
 ): string {
   if (!format) {
     return '';
@@ -373,7 +407,7 @@ function generateDigitSequenceValue(
         }
         return stringifyReferencedValue(row[part.value]);
       }
-      return applyDigitSequenceTokens(part.value);
+      return applyDigitSequenceTokens(part.value, localeFaker);
     })
     .join('');
 }
@@ -577,18 +611,20 @@ function generateScalarValue(
   rowIndex: number,
   runSalt: string,
   row: Record<string, string | number | boolean | null>,
+  localeFaker: Faker,
 ): string | number | boolean | null {
   const salt = runSalt.slice(0, 8).toLowerCase();
 
   switch (semanticType) {
     case 'guid':
-      return faker.string.uuid().toUpperCase();
+      return localeFaker.string.uuid().toUpperCase();
     case 'digitSequence':
       return generateDigitSequenceValue(
         rule.digitSequenceOptions?.format?.trim() ?? '',
         row,
         tableName,
         column.name,
+        localeFaker,
       );
     case 'formula':
       return evaluateFormulaExpression(
@@ -610,93 +646,93 @@ function generateScalarValue(
       return startAt + Math.floor(rowIndex / repeat) * step;
     }
     case 'appBundleId':
-      return randomAppBundleId();
+      return randomAppBundleId(localeFaker);
     case 'appName':
-      return faker.commerce.productName();
+      return localeFaker.commerce.productName();
     case 'appVersion':
-      return randomAppVersion();
+      return randomAppVersion(localeFaker);
     case 'base64ImageUrl':
-      return randomBase64ImageUrl();
+      return randomBase64ImageUrl(localeFaker);
     case 'creditCardNumber':
-      return faker.finance.creditCardNumber();
+      return localeFaker.finance.creditCardNumber();
     case 'creditCardType':
-      return faker.finance.creditCardIssuer().toLowerCase();
+      return localeFaker.finance.creditCardIssuer().toLowerCase();
     case 'currency':
-      return faker.finance.currency().name;
+      return localeFaker.finance.currency().name;
     case 'currencyCode':
-      return faker.finance.currency().code;
+      return localeFaker.finance.currency().code;
     case 'departmentRetail':
-      return faker.commerce.department();
+      return localeFaker.commerce.department();
     case 'domainName':
-      return faker.internet.domainName();
+      return localeFaker.internet.domainName();
     case 'dummyImageUrl':
-      return randomDummyImageUrl();
+      return randomDummyImageUrl(localeFaker);
     case 'fileName':
-      return faker.system.fileName();
+      return localeFaker.system.fileName();
     case 'iban':
-      return faker.finance.iban({ formatted: true });
+      return localeFaker.finance.iban({ formatted: true });
     case 'ipAddressV4':
-      return faker.internet.ipv4();
+      return localeFaker.internet.ipv4();
     case 'ipAddressV4Cidr':
-      return randomIpv4Cidr();
+      return randomIpv4Cidr(localeFaker);
     case 'ipAddressV6':
-      return faker.internet.ipv6();
+      return localeFaker.internet.ipv6();
     case 'ipAddressV6Cidr':
-      return randomIpv6Cidr();
+      return randomIpv6Cidr(localeFaker);
     case 'macAddress':
-      return faker.internet.mac();
+      return localeFaker.internet.mac();
     case 'md5':
       return buildHash('md5', `${tableName}.${column.name}.${rowIndex}.${salt}`);
     case 'mimeType':
-      return faker.helpers.arrayElement(MIME_TYPES);
+      return localeFaker.helpers.arrayElement(MIME_TYPES);
     case 'productCategory':
-      return faker.commerce.department();
+      return localeFaker.commerce.department();
     case 'productDescription':
-      return faker.commerce.productDescription();
+      return localeFaker.commerce.productDescription();
     case 'productGrocery':
-      return faker.helpers.arrayElement(GROCERY_PRODUCTS);
+      return localeFaker.helpers.arrayElement(GROCERY_PRODUCTS);
     case 'productName':
-      return faker.commerce.productName();
+      return localeFaker.commerce.productName();
     case 'productSubcategory':
-      return faker.helpers.arrayElement(PRODUCT_SUBCATEGORIES);
+      return localeFaker.helpers.arrayElement(PRODUCT_SUBCATEGORIES);
     case 'mobileDeviceBrand':
-      return faker.helpers.arrayElement(MOBILE_DEVICE_BRANDS);
+      return localeFaker.helpers.arrayElement(MOBILE_DEVICE_BRANDS);
     case 'mobileDeviceModel':
-      return faker.helpers.arrayElement(MOBILE_DEVICE_MODELS);
+      return localeFaker.helpers.arrayElement(MOBILE_DEVICE_MODELS);
     case 'mobileDeviceOs':
-      return faker.helpers.arrayElement(MOBILE_DEVICE_OPERATING_SYSTEMS);
+      return localeFaker.helpers.arrayElement(MOBILE_DEVICE_OPERATING_SYSTEMS);
     case 'mobileDeviceReleaseDate':
-      return String(faker.number.int({ min: 2007, max: dayjs().year() }));
+      return String(localeFaker.number.int({ min: 2007, max: dayjs().year() }));
     case 'movieGenres':
-      return faker.helpers.arrayElement(MOVIE_GENRES);
+      return localeFaker.helpers.arrayElement(MOVIE_GENRES);
     case 'movieTitle':
-      return faker.helpers.arrayElement(MOVIE_TITLES);
+      return localeFaker.helpers.arrayElement(MOVIE_TITLES);
     case 'color':
-      return faker.color.human();
+      return localeFaker.color.human();
     case 'hexColor':
-      return faker.color.rgb({ casing: 'upper', prefix: '#' });
+      return localeFaker.color.rgb({ casing: 'upper', prefix: '#' });
     case 'sha1':
       return buildHash('sha1', `${tableName}.${column.name}.${rowIndex}.${salt}`);
     case 'sha256':
       return buildHash('sha256', `${tableName}.${column.name}.${rowIndex}.${salt}`);
     case 'stockIndustry':
-      return faker.helpers.arrayElement(STOCK_INDUSTRIES);
+      return localeFaker.helpers.arrayElement(STOCK_INDUSTRIES);
     case 'stockMarket':
-      return faker.helpers.arrayElement(STOCK_MARKETS);
+      return localeFaker.helpers.arrayElement(STOCK_MARKETS);
     case 'stockName':
-      return faker.company.name();
+      return localeFaker.company.name();
     case 'stockSector':
-      return faker.helpers.arrayElement(STOCK_SECTORS);
+      return localeFaker.helpers.arrayElement(STOCK_SECTORS);
     case 'stockSymbol':
-      return faker.string.alpha({ length: { min: 3, max: 5 }, casing: 'upper' });
+      return localeFaker.string.alpha({ length: { min: 3, max: 5 }, casing: 'upper' });
     case 'topLevelDomain':
-      return faker.helpers.arrayElement(TOP_LEVEL_DOMAINS);
+      return localeFaker.helpers.arrayElement(TOP_LEVEL_DOMAINS);
     case 'userAgent':
-      return faker.internet.userAgent();
+      return localeFaker.internet.userAgent();
     case 'username':
-      return faker.internet.username();
+      return localeFaker.internet.username();
     case 'password':
-      return faker.internet.password({
+      return localeFaker.internet.password({
         length: 12,
         memorable: false,
         pattern: /[A-Za-z0-9!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/,
@@ -708,66 +744,69 @@ function generateScalarValue(
       const max = rule.numberOptions?.max ?? 100;
       const decimals = Math.max(0, Math.floor(rule.numberOptions?.decimals ?? 0));
       if (decimals === 0) {
-        return faker.number.int({ min: Math.ceil(min), max: Math.floor(Math.max(min, max)) });
+        return localeFaker.number.int({
+          min: Math.ceil(min),
+          max: Math.floor(Math.max(min, max)),
+        });
       }
-      return faker.number.float({
+      return localeFaker.number.float({
         min,
         max: Math.max(min, max),
         fractionDigits: decimals,
       });
     }
     case 'fullName':
-      return faker.person.fullName();
+      return localeFaker.person.fullName();
     case 'firstName':
-      return faker.person.firstName();
+      return localeFaker.person.firstName();
     case 'lastName':
-      return faker.person.lastName();
+      return localeFaker.person.lastName();
     case 'gender':
-      return faker.person.sexType();
+      return localeFaker.person.sexType();
     case 'email':
       const domains =
         rule.emailOptions?.domains?.filter(
           (domain) => typeof domain === 'string' && domain.trim(),
         ) ?? [];
-      return faker.internet.email({
-        provider: domains.length > 0 ? faker.helpers.arrayElement(domains) : 'example.com',
+      return localeFaker.internet.email({
+        provider: domains.length > 0 ? localeFaker.helpers.arrayElement(domains) : 'example.com',
         firstName: `user${rowIndex + 1}`,
         lastName: salt,
       });
     case 'phoneNumber':
-      return faker.helpers.replaceSymbols(`09${salt.slice(0, 4)}####`);
+      return localeFaker.helpers.replaceSymbols(`09${salt.slice(0, 4)}####`);
     case 'address':
-      return faker.location.streetAddress();
+      return localeFaker.location.streetAddress();
     case 'streetAddress':
-      return faker.location.streetAddress();
+      return localeFaker.location.streetAddress();
     case 'streetName':
-      return faker.location.street();
+      return localeFaker.location.street();
     case 'streetNumber':
-      return faker.location.buildingNumber();
+      return localeFaker.location.buildingNumber();
     case 'streetSuffix':
-      return faker.helpers.arrayElement(STREET_SUFFIXES);
+      return localeFaker.helpers.arrayElement(STREET_SUFFIXES);
     case 'city':
-      return faker.location.city();
+      return localeFaker.location.city();
     case 'country':
-      return faker.location.country();
+      return localeFaker.location.country();
     case 'countryCode':
-      return faker.location.countryCode();
+      return localeFaker.location.countryCode();
     case 'latitude':
-      return faker.location.latitude();
+      return localeFaker.location.latitude();
     case 'longitude':
-      return faker.location.longitude();
+      return localeFaker.location.longitude();
     case 'state':
-      return faker.location.state();
+      return localeFaker.location.state();
     case 'stateAbbrev':
-      return faker.location.state({ abbreviated: true });
+      return localeFaker.location.state({ abbreviated: true });
     case 'zipCode':
-      return faker.location.zipCode();
+      return localeFaker.location.zipCode();
     case 'companyName':
-      return faker.company.name();
+      return localeFaker.company.name();
     case 'jobTitle':
-      return faker.person.jobTitle();
+      return localeFaker.person.jobTitle();
     case 'url':
-      return faker.internet.url({ appendSlash: false });
+      return localeFaker.internet.url({ appendSlash: false });
     case 'dateTime':
       const from = rule.dateTimeOptions?.start?.trim()
         ? dayjs(rule.dateTimeOptions.start.trim()).startOf('day').toDate()
@@ -776,20 +815,21 @@ function generateScalarValue(
         ? dayjs(rule.dateTimeOptions.end.trim()).endOf('day').toDate()
         : dayjs().endOf('day').toDate();
       const format = rule.dateTimeOptions?.format?.trim() || DEFAULT_DATE_TIME_FORMAT;
-      return dayjs(faker.date.between({ from, to })).format(toDayjsFormat(format));
+      return dayjs(localeFaker.date.between({ from, to })).format(toDayjsFormat(format));
     case 'time': {
       const fromTime = parseClockTime(rule.timeOptions?.from ?? '', '00:00');
       const toTime = parseClockTime(rule.timeOptions?.to ?? '', '23:59');
       const safeToTime = toTime.isBefore(fromTime) ? fromTime : toTime;
       const diffSeconds = safeToTime.diff(fromTime, 'second');
-      const offsetSeconds = diffSeconds <= 0 ? 0 : faker.number.int({ min: 0, max: diffSeconds });
+      const offsetSeconds =
+        diffSeconds <= 0 ? 0 : localeFaker.number.int({ min: 0, max: diffSeconds });
       const timeFormat = rule.timeOptions?.format?.trim() || 'HH:mm:ss';
       return fromTime.add(offsetSeconds, 'second').format(toDayjsFormat(timeFormat));
     }
     case 'timeZone':
-      return faker.date.timeZone();
+      return localeFaker.date.timeZone();
     case 'boolean':
-      return faker.datatype.boolean();
+      return localeFaker.datatype.boolean();
     case 'text':
       const textMinLength = Math.max(0, Math.floor(rule.textOptions?.minLength ?? 1));
       const textMaxLength = Math.max(textMinLength, Math.floor(rule.textOptions?.maxLength ?? 4));
@@ -800,18 +840,18 @@ function generateScalarValue(
       const textLength =
         textMinLength === textMaxLength
           ? textMinLength
-          : faker.number.int({ min: textMinLength, max: textMaxLength });
+          : localeFaker.number.int({ min: textMinLength, max: textMaxLength });
       if (textUnit === 'characters') {
-        return faker.string.alpha({
+        return localeFaker.string.alpha({
           length: textLength,
           casing: 'lower',
         });
       }
-      return faker.lorem.words(textLength);
+      return localeFaker.lorem.words(textLength);
     case 'unknown':
       return null;
     default:
-      return `${faker.lorem.word()}_${salt}_${rowIndex + 1}`;
+      return `${localeFaker.lorem.word()}_${salt}_${rowIndex + 1}`;
   }
 }
 
@@ -1152,6 +1192,7 @@ function generateRowsForTable(
         rowIndex,
         context.runSalt,
         row,
+        context.faker,
       );
     }
 
@@ -1165,12 +1206,14 @@ export function generateDataByTableOrder(
   orderedTables: TableSchema[],
   rules?: TableColumnRules,
   relationships?: SchemaRelationshipsConfig,
+  locale?: string,
 ): GeneratedTableRows[] {
   const result: GeneratedTableRows[] = [];
   const context: GenerateContext = {
     generatedByTable: new Map<string, GeneratedTableRows>(),
     plan: buildGenerationPlan(orderedTables, relationships),
     runSalt: randomUUID().replace(/-/g, ''),
+    faker: resolveLocaleFaker(locale),
   };
 
   for (const table of orderedTables) {

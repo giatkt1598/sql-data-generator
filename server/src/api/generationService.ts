@@ -25,6 +25,7 @@ export interface CreateGenerationRequestInput {
   name: string;
   schemaSql: string;
   classificationJson: string;
+  locale?: string;
   columnRules?: TableColumnRules;
   schemaRelationshipsJson?: string;
 }
@@ -34,6 +35,7 @@ export interface UpdateGenerationRequestInput {
   name?: string;
   schemaSql?: string;
   classificationJson?: string;
+  locale?: string;
   columnRules?: TableColumnRules;
   schemaRelationshipsJson?: string;
 }
@@ -185,6 +187,7 @@ export class GenerationService {
     const name = asText(input.name);
     const schemaSql = asText(input.schemaSql);
     const classificationJson = asText(input.classificationJson);
+    const locale = asText(input.locale) || 'en';
     const schemaRelationshipsJson = asText(input.schemaRelationshipsJson);
     if (!name) {
       throw new Error('name is required.');
@@ -207,6 +210,7 @@ export class GenerationService {
       name,
       schemaSql,
       classificationJson,
+      locale,
       columnRules,
       schemaRelationshipsJson,
       createdAt: now,
@@ -250,6 +254,9 @@ export class GenerationService {
       const classificationJson = asText(input.classificationJson);
       request.classificationJson = classificationJson;
     }
+    if (typeof input.locale !== 'undefined') {
+      request.locale = asText(input.locale) || 'en';
+    }
     if (typeof input.columnRules !== 'undefined') {
       request.columnRules = input.columnRules;
     }
@@ -290,6 +297,7 @@ export class GenerationService {
     return this.generatePreviewFromInput({
       schemaSql: request.schemaSql,
       classificationJson: request.classificationJson,
+      locale: request.locale,
       columnRules: request.columnRules,
       schemaRelationshipsJson: request.schemaRelationshipsJson,
     });
@@ -298,13 +306,19 @@ export class GenerationService {
   generatePreviewFromInput(input: {
     schemaSql: string;
     classificationJson: string;
+    locale?: string;
     columnRules?: TableColumnRules;
     schemaRelationshipsJson?: string;
   }): PreviewResult {
     const { tables, columnRules } = buildSchemaAndRules(input);
     const relationships = parseSchemaRelationshipsJson(input.schemaRelationshipsJson);
     const orderedTables = resolveTableOrder(tables, columnRules);
-    const generatedRows = generateDataByTableOrder(orderedTables, columnRules, relationships);
+    const generatedRows = generateDataByTableOrder(
+      orderedTables,
+      columnRules,
+      relationships,
+      input.locale,
+    );
     const files = buildInsertFileArtifacts(generatedRows);
     const fullText = files.map((file) => `-- file: ${file.fileName}\n${file.content}`).join('\n');
     const lines = fullText.split(/\r?\n/);
@@ -342,6 +356,7 @@ export class GenerationService {
   exportCombinedScriptFromInput(input: {
     schemaSql: string;
     classificationJson: string;
+    locale?: string;
     columnRules?: TableColumnRules;
     schemaRelationshipsJson?: string;
   }): string {

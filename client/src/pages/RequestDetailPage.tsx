@@ -48,6 +48,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     schemaSql: '',
     classificationJson: '',
     schemaRelationshipsJson: '',
+    locale: 'en',
   });
   const [columnRules, setColumnRules] = useState<TableColumnRules>({});
   const [designerModel, setDesignerModel] = useState<ColumnDesignerModel | null>(null);
@@ -170,6 +171,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
           schemaSql: found.schemaSql,
           classificationJson: found.classificationJson,
           schemaRelationshipsJson: found.schemaRelationshipsJson ?? '',
+          locale: found.locale ?? 'en',
         });
         setColumnRules(found.columnRules ?? {});
         setGeneralExpanded(false);
@@ -256,6 +258,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         name: form.name,
         schemaSql: form.schemaSql,
         classificationJson: form.classificationJson,
+        locale: form.locale,
         columnRules,
         schemaRelationshipsJson: form.schemaRelationshipsJson,
       });
@@ -305,6 +308,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         name: form.name,
         schemaSql: form.schemaSql,
         classificationJson: form.classificationJson,
+        locale: form.locale,
         columnRules: model.columnRules,
         schemaRelationshipsJson: nextSchemaRelationshipsJson,
       });
@@ -334,6 +338,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
       const script = await generateSqlScript({
         schemaSql: form.schemaSql,
         classificationJson: form.classificationJson,
+        locale: form.locale,
         columnRules,
         schemaRelationshipsJson: form.schemaRelationshipsJson,
       });
@@ -354,6 +359,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
       const script = await generateSqlScript({
         schemaSql: form.schemaSql,
         classificationJson: form.classificationJson,
+        locale: form.locale,
         columnRules,
         schemaRelationshipsJson: form.schemaRelationshipsJson,
       });
@@ -801,6 +807,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     analyzeConfirmOpen,
     setAnalyzeConfirmOpen,
     semanticTypes: props.semanticTypes,
+    supportedLocales: props.supportedLocales,
     primaryKeyOptions,
     relationshipEstimateSummary: relationshipEstimate?.summary,
     relationshipEstimateTooltip,

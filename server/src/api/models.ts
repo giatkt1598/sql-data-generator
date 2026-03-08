@@ -14,6 +14,7 @@ export interface GenerationRequestEntity {
   name: string;
   schemaSql: string;
   classificationJson: string;
+  locale?: string;
   columnRules?: TableColumnRules;
   schemaRelationshipsJson?: string;
   createdAt: string;

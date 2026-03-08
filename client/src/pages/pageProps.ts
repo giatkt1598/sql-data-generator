@@ -1,4 +1,8 @@
-import type { DataTypeDefinition, ProjectEntity } from '../models/apiModels';
+import type {
+  DataTypeDefinition,
+  ProjectEntity,
+  SupportedLocaleDefinition,
+} from '../models/apiModels';
 
 export interface AppPageBaseProps {
   loading: boolean;
@@ -19,4 +23,5 @@ export interface RequestsPageProps extends AppPageBaseProps {
 export interface RequestDetailPageProps extends AppPageBaseProps {
   projects: ProjectEntity[];
   semanticTypes: DataTypeDefinition[];
+  supportedLocales: SupportedLocaleDefinition[];
 }

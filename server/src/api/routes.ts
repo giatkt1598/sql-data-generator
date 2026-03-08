@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { SUPPORTED_LOCALES } from '../core/locales';
 import { DATA_TYPE_DEFINITIONS } from '../core/semanticTypes';
 import { TableColumnRules } from '../core/types';
 import { GenerationService } from './generationService';
@@ -21,6 +22,10 @@ export function buildApiRouter(service: GenerationService): Router {
 
   router.get('/semantic-types', (_req, res) => {
     res.json({ items: DATA_TYPE_DEFINITIONS });
+  });
+
+  router.get('/locales', (_req, res) => {
+    res.json({ items: SUPPORTED_LOCALES });
   });
 
   router.post('/column-designer-model', (req, res) => {
@@ -46,12 +51,14 @@ export function buildApiRouter(service: GenerationService): Router {
       const body = parseBody<{
         schemaSql?: string;
         classificationJson?: string;
+        locale?: string;
         columnRules?: TableColumnRules;
         schemaRelationshipsJson?: string;
       }>(req);
       const result = service.generatePreviewFromInput({
         schemaSql: body.schemaSql ?? '',
         classificationJson: body.classificationJson ?? '',
+        locale: body.locale,
         columnRules: body.columnRules,
         schemaRelationshipsJson: body.schemaRelationshipsJson,
       });
@@ -66,12 +73,14 @@ export function buildApiRouter(service: GenerationService): Router {
       const body = parseBody<{
         schemaSql?: string;
         classificationJson?: string;
+        locale?: string;
         columnRules?: TableColumnRules;
         schemaRelationshipsJson?: string;
       }>(req);
       const script = service.exportCombinedScriptFromInput({
         schemaSql: body.schemaSql ?? '',
         classificationJson: body.classificationJson ?? '',
+        locale: body.locale,
         columnRules: body.columnRules,
         schemaRelationshipsJson: body.schemaRelationshipsJson,
       });
@@ -141,6 +150,7 @@ export function buildApiRouter(service: GenerationService): Router {
         name?: string;
         schemaSql?: string;
         classificationJson?: string;
+        locale?: string;
         columnRules?: TableColumnRules;
         schemaRelationshipsJson?: string;
       }>(req);
@@ -149,6 +159,7 @@ export function buildApiRouter(service: GenerationService): Router {
         name: body.name ?? '',
         schemaSql: body.schemaSql ?? '',
         classificationJson: body.classificationJson ?? '',
+        locale: body.locale,
         columnRules: body.columnRules,
         schemaRelationshipsJson: body.schemaRelationshipsJson,
       });
@@ -165,6 +176,7 @@ export function buildApiRouter(service: GenerationService): Router {
         name?: string;
         schemaSql?: string;
         classificationJson?: string;
+        locale?: string;
         columnRules?: TableColumnRules;
         schemaRelationshipsJson?: string;
       }>(req);

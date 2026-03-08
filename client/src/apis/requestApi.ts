@@ -18,6 +18,7 @@ export async function createGenerationRequest(payload: {
   name: string;
   schemaSql: string;
   classificationJson: string;
+  locale?: string;
   columnRules?: TableColumnRules;
   schemaRelationshipsJson?: string;
 }): Promise<GenerationRequestEntity> {
@@ -32,6 +33,7 @@ export async function updateGenerationRequest(
     name: string;
     schemaSql: string;
     classificationJson: string;
+    locale?: string;
     columnRules?: TableColumnRules;
     schemaRelationshipsJson?: string;
   },

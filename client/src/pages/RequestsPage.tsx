@@ -91,6 +91,7 @@ export function RequestsPage(props: RequestsPageProps) {
           name: form.name,
           schemaSql: editingRequest.schemaSql,
           classificationJson: editingRequest.classificationJson,
+          locale: editingRequest.locale,
           columnRules: editingRequest.columnRules,
           schemaRelationshipsJson: editingRequest.schemaRelationshipsJson,
         });
@@ -100,6 +101,7 @@ export function RequestsPage(props: RequestsPageProps) {
           name: form.name,
           schemaSql: '',
           classificationJson: '',
+          locale: 'en',
           columnRules: {},
           schemaRelationshipsJson: '',
         });

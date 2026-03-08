@@ -3,6 +3,7 @@ import { createContext, useContext } from 'react';
 import type { Dispatch, ReactNode, SetStateAction } from 'react';
 import type {
   DataTypeDefinition,
+  SupportedLocaleDefinition,
   TableColumnRules,
   ColumnDesignerModel,
 } from '../../models/apiModels';
@@ -16,8 +17,6 @@ export interface RequestDetailContextValue {
   setForm: Dispatch<SetStateAction<RequestDetailForm>>;
   columnRules: TableColumnRules;
   designerModel: ColumnDesignerModel | null;
-  schemaFocused: boolean;
-  setSchemaFocused: (focused: boolean) => void;
   generalExpanded: boolean;
   setGeneralExpanded: (expanded: boolean) => void;
   relationshipsExpanded: boolean;
@@ -36,6 +35,7 @@ export interface RequestDetailContextValue {
   analyzeConfirmOpen: boolean;
   setAnalyzeConfirmOpen: (open: boolean) => void;
   semanticTypes: DataTypeDefinition[];
+  supportedLocales: SupportedLocaleDefinition[];
   primaryKeyOptions: Array<{ value: string; description: string }>;
   relationshipEstimateSummary?: string;
   relationshipEstimateTooltip?: string;
@@ -86,7 +86,12 @@ export interface RequestDetailContextValue {
     key: 'pattern',
     value: string,
   ) => void;
-  onEmailOptionChange: (tableName: string, columnName: string, key: 'domains', value: string) => void;
+  onEmailOptionChange: (
+    tableName: string,
+    columnName: string,
+    key: 'domains',
+    value: string,
+  ) => void;
   onTextOptionChange: (
     tableName: string,
     columnName: string,

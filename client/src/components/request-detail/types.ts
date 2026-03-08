@@ -5,6 +5,7 @@ export interface RequestDetailForm {
   schemaSql: string;
   classificationJson: string;
   schemaRelationshipsJson: string;
+  locale: string;
 }
 
 export interface PickerTarget {
