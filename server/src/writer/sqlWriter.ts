@@ -20,16 +20,12 @@ function buildInsertSql(tableData: GeneratedTableRows): string {
     return '';
   }
   const columns = Object.keys(tableData.rows[0]);
-  const valueLines = tableData.rows.map((row) => {
+  const insertLines = tableData.rows.map((row) => {
     const values = columns.map((column) => sqlValue(row[column] ?? null)).join(', ');
-    return `(${values})`;
+    return `INSERT INTO ${tableData.tableName} (${columns.join(', ')}) VALUES (${values});`;
   });
 
-  return [
-    `INSERT INTO ${tableData.tableName} (${columns.join(', ')})`,
-    `VALUES\n${valueLines.join(',\n')};`,
-    '',
-  ].join('\n');
+  return [...insertLines, ''].join('\n');
 }
 
 export interface SqlFileArtifact {

@@ -10,35 +10,54 @@ export function PreviewDialog() {
       <DialogTitle>
         <Stack direction="row" alignItems="center" spacing={1}>
           <Typography variant="h6" sx={{ flex: 1 }}>
-            SQL Preview (Full Content)
+            SQL Preview
           </Typography>
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<ContentCopyIcon />}
-            onClick={() => void context.handleCopyPreview()}
-          >
-            Copy
-          </Button>
+          {!context.previewTooLarge && (
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<ContentCopyIcon />}
+              onClick={() => void context.handleCopyPreview()}
+            >
+              Copy
+            </Button>
+          )}
         </Stack>
       </DialogTitle>
       <DialogContent>
-        <Box
-          component="pre"
-          sx={{
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-word',
-            fontFamily: 'Consolas, Monaco, monospace',
-            fontSize: 13,
-            p: 1,
-            backgroundColor: '#f5f5f5',
-            borderRadius: 1,
-            maxHeight: 650,
-            overflow: 'auto',
-          }}
-        >
-          {context.previewText}
-        </Box>
+        {context.previewTooLarge ? (
+          <Stack
+            alignItems="center"
+            justifyContent="center"
+            spacing={2}
+            sx={{ minHeight: 420, textAlign: 'center' }}
+          >
+            <Typography variant="h6">Preview is unavailable for large generated data.</Typography>
+            <Typography variant="body2" color="text.secondary">
+              Download the SQL file instead.
+            </Typography>
+            <Button variant="contained" onClick={() => void context.handleGenerateSql()}>
+              Download SQL
+            </Button>
+          </Stack>
+        ) : (
+          <Box
+            component="pre"
+            sx={{
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+              fontFamily: 'Consolas, Monaco, monospace',
+              fontSize: 13,
+              p: 1,
+              backgroundColor: '#f5f5f5',
+              borderRadius: 1,
+              maxHeight: 650,
+              overflow: 'auto',
+            }}
+          >
+            {context.previewText}
+          </Box>
+        )}
       </DialogContent>
     </Dialog>
   );

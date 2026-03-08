@@ -32,6 +32,7 @@ export interface RequestDetailContextValue {
   previewOpen: boolean;
   setPreviewOpen: (open: boolean) => void;
   previewText: string;
+  previewTooLarge: boolean;
   analyzeConfirmOpen: boolean;
   setAnalyzeConfirmOpen: (open: boolean) => void;
   semanticTypes: DataTypeDefinition[];

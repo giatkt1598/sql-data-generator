@@ -60,7 +60,9 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
   const [pickerTarget, setPickerTarget] = useState<PickerTarget | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewText, setPreviewText] = useState('');
+  const [previewTooLarge, setPreviewTooLarge] = useState(false);
   const [analyzeConfirmOpen, setAnalyzeConfirmOpen] = useState(false);
+  const MAX_PREVIEW_LENGTH = 50_000_000;
   const defaultDateTimeStart = useMemo(() => {
     const value = new Date();
     value.setFullYear(value.getFullYear() - 1);
@@ -322,7 +324,9 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         columnRules,
         schemaRelationshipsJson: form.schemaRelationshipsJson,
       });
-      setPreviewText(script);
+      const isTooLarge = script.length > MAX_PREVIEW_LENGTH;
+      setPreviewTooLarge(isTooLarge);
+      setPreviewText(isTooLarge ? '' : script);
       setPreviewOpen(true);
     } catch (exception) {
       props.setError(getErrorMessage(exception, 'Failed to preview SQL.'));
@@ -591,7 +595,11 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     key: 'from' | 'to' | 'format',
     value: string,
   ) {
-    const fallbackRule = mergeRuleDefaults(columnRules[tableName]?.[columnName], columnName, 'time');
+    const fallbackRule = mergeRuleDefaults(
+      columnRules[tableName]?.[columnName],
+      columnName,
+      'time',
+    );
     const currentOptions = fallbackRule.timeOptions ?? {
       from: '00:00',
       to: '23:59',
@@ -639,18 +647,28 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     key: 'minLength' | 'maxLength' | 'unit',
     value: string,
   ) {
-    const fallbackRule = mergeRuleDefaults(columnRules[tableName]?.[columnName], columnName, 'text');
+    const fallbackRule = mergeRuleDefaults(
+      columnRules[tableName]?.[columnName],
+      columnName,
+      'text',
+    );
     const currentOptions = fallbackRule.textOptions ?? {
       minLength: 1,
       maxLength: 4,
       unit: 'words' as const,
     };
-    const numericValue = Number.isFinite(Number(value)) ? Number(value) : key === 'maxLength' ? 4 : 1;
+    const numericValue = Number.isFinite(Number(value))
+      ? Number(value)
+      : key === 'maxLength'
+        ? 4
+        : 1;
     const nextOptions = {
       ...currentOptions,
       [key]:
         key === 'unit'
-          ? (value === 'characters' ? 'characters' : 'words')
+          ? value === 'characters'
+            ? 'characters'
+            : 'words'
           : Math.max(0, Math.floor(numericValue)),
     };
 
@@ -725,7 +743,11 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     key: 'domains',
     value: string,
   ) {
-    const fallbackRule = mergeRuleDefaults(columnRules[tableName]?.[columnName], columnName, 'email');
+    const fallbackRule = mergeRuleDefaults(
+      columnRules[tableName]?.[columnName],
+      columnName,
+      'email',
+    );
     const currentOptions = fallbackRule.emailOptions ?? {
       domains: [],
     };
@@ -782,6 +804,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     previewOpen,
     setPreviewOpen,
     previewText,
+    previewTooLarge,
     analyzeConfirmOpen,
     setAnalyzeConfirmOpen,
     semanticTypes: props.semanticTypes,
