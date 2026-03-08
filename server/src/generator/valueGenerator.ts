@@ -493,21 +493,12 @@ function generateScalarValue(
       return buildHash('md5', `${tableName}.${column.name}.${rowIndex}.${salt}`);
     case 'mimeType':
       return faker.helpers.arrayElement(MIME_TYPES);
-    case 'money':
-      return faker.finance.amount({
-        min: 1,
-        max: 1000,
-        dec: 2,
-        symbol: faker.helpers.arrayElement(['$', '€', '£']),
-      });
     case 'productCategory':
       return faker.commerce.department();
     case 'productDescription':
       return faker.commerce.productDescription();
     case 'productName':
       return faker.commerce.productName();
-    case 'productPrice':
-      return faker.finance.amount({ min: 1, max: 1000, dec: 2, symbol: '$' });
     case 'productSubcategory':
       return faker.helpers.arrayElement(PRODUCT_SUBCATEGORIES);
     case 'sha1':
@@ -518,11 +509,6 @@ function generateScalarValue(
       return faker.helpers.arrayElement(STOCK_INDUSTRIES);
     case 'stockMarket':
       return faker.helpers.arrayElement(STOCK_MARKETS);
-    case 'stockMarketCap':
-      return (
-        faker.finance.amount({ min: 10, max: 999, dec: 2, symbol: '$' }) +
-        faker.helpers.arrayElement(['M', 'B'])
-      );
     case 'stockName':
       return faker.company.name();
     case 'stockSector':

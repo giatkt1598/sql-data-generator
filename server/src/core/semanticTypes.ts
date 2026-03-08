@@ -179,12 +179,6 @@ export const DATA_TYPE_DEFINITIONS: DataTypeDefinition[] = [
     groups: ['Commerce', 'IT'],
   },
   {
-    value: 'money',
-    displayName: 'Money',
-    description: 'Formatted money amount.\nExample: $3.00',
-    groups: ['Commerce'],
-  },
-  {
     value: 'productCategory',
     displayName: 'Product Category',
     description: 'Top-level product category.\nExample: Toys',
@@ -203,12 +197,6 @@ export const DATA_TYPE_DEFINITIONS: DataTypeDefinition[] = [
     groups: ['Commerce'],
   },
   {
-    value: 'productPrice',
-    displayName: 'Product Price',
-    description: 'Product price text.\nExample: $12.94',
-    groups: ['Commerce'],
-  },
-  {
     value: 'productSubcategory',
     displayName: 'Product Subcategory',
     description: 'Detailed product category.\nExample: Gourmet Snacks',
@@ -224,12 +212,6 @@ export const DATA_TYPE_DEFINITIONS: DataTypeDefinition[] = [
     value: 'stockMarket',
     displayName: 'Stock Market',
     description: 'Exchange name.\nExample: NASDAQ',
-    groups: ['Commerce'],
-  },
-  {
-    value: 'stockMarketCap',
-    displayName: 'Stock Market Cap',
-    description: 'Market cap text.\nExample: $54.29M',
     groups: ['Commerce'],
   },
   {
