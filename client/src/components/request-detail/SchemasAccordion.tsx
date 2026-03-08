@@ -95,6 +95,9 @@ export function SchemasAccordion() {
                               step: 1,
                               repeat: 1,
                             },
+                            digitSequenceOptions: rule?.digitSequenceOptions ?? {
+                              format: '',
+                            },
                             semanticType: rule?.kind === 'semantic' ? rule.semanticType ?? 'unknown' : undefined,
                             reference: rule?.kind === 'reference' ? rule.reference : undefined,
                           });

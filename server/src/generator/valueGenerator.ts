@@ -39,6 +39,44 @@ function toDayjsFormat(format: string): string {
   return format.replace(/yyyy/g, 'YYYY').replace(/dd/g, 'DD');
 }
 
+function generateDigitSequenceValue(format: string): string {
+  if (!format) {
+    return '';
+  }
+
+  return format
+    .split('')
+    .map((char) => {
+      switch (char) {
+        case '#':
+          return faker.string.numeric(1);
+        case '@':
+          return faker.string.alpha({ length: 1, casing: 'lower' });
+        case '^':
+          return faker.string.alpha({ length: 1, casing: 'upper' });
+        case '*':
+          return faker.helpers.arrayElement([
+            faker.string.numeric(1),
+            faker.string.alpha({ length: 1, casing: 'lower' }),
+            faker.string.alpha({ length: 1, casing: 'upper' }),
+          ]);
+        case '$':
+          return faker.helpers.arrayElement([
+            faker.string.numeric(1),
+            faker.string.alpha({ length: 1, casing: 'lower' }),
+          ]);
+        case '%':
+          return faker.helpers.arrayElement([
+            faker.string.numeric(1),
+            faker.string.alpha({ length: 1, casing: 'upper' }),
+          ]);
+        default:
+          return char;
+      }
+    })
+    .join('');
+}
+
 function generateScalarValue(
   semanticType: SemanticDataType,
   rule: ColumnGenerationRule,
@@ -51,6 +89,8 @@ function generateScalarValue(
   switch (semanticType) {
     case 'guid':
       return faker.string.uuid().toUpperCase();
+    case 'digitSequence':
+      return generateDigitSequenceValue(rule.digitSequenceOptions?.format?.trim() ?? '');
     case 'sequence': {
       const startAt = rule.sequenceOptions?.startAt ?? 1;
       const step = rule.sequenceOptions?.step ?? 1;

@@ -62,6 +62,12 @@ export interface RequestDetailContextValue {
     key: 'startAt' | 'step' | 'repeat',
     value: string,
   ) => void;
+  onDigitSequenceOptionChange: (
+    tableName: string,
+    columnName: string,
+    key: 'format',
+    value: string,
+  ) => void;
   applyRule: (rule: TableColumnRules[string][string]) => void;
   applyCustomListRule: () => void;
   handleBack: () => void;

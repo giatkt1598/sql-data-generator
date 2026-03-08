@@ -3,6 +3,7 @@ import { DataTypeDefinition, SemanticDataType } from './types';
 export const SUPPORTED_SEMANTIC_TYPES: SemanticDataType[] = [
   'unknown',
   'guid',
+  'digitSequence',
   'sequence',
   'fullName',
   'firstName',
@@ -34,6 +35,12 @@ export const DATA_TYPE_DEFINITIONS: DataTypeDefinition[] = [
     value: 'guid',
     displayName: 'GUID',
     description: 'GUID/UUID value.',
+    group: 'Basic',
+  },
+  {
+    value: 'digitSequence',
+    displayName: 'Digit Sequence',
+    description: 'Pattern-based random string using placeholders like #, @, ^, *, $, and %.',
     group: 'Basic',
   },
   {

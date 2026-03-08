@@ -116,6 +116,17 @@ function normalizeSequenceOptions(
   return { startAt, step, repeat };
 }
 
+function normalizeDigitSequenceOptions(
+  rule: ColumnGenerationRule | undefined,
+  fallback: { format?: string } | undefined,
+) {
+  const format =
+    typeof rule?.digitSequenceOptions?.format === 'string'
+      ? rule.digitSequenceOptions.format
+      : (fallback?.format ?? '');
+  return { format };
+}
+
 function readCandidateFieldName(rule: ColumnGenerationRule | undefined): unknown {
   if (!rule) {
     return undefined;
@@ -172,6 +183,9 @@ export function buildDefaultColumnRules(
           startAt: 1,
           step: 1,
           repeat: 1,
+        },
+        digitSequenceOptions: {
+          format: '',
         },
       };
     }
@@ -244,6 +258,10 @@ export function sanitizeColumnRules(
             candidate,
             fallbackRules[table.name][column.name].sequenceOptions,
           ),
+          digitSequenceOptions: normalizeDigitSequenceOptions(
+            candidate,
+            fallbackRules[table.name][column.name].digitSequenceOptions,
+          ),
         };
         continue;
       }
@@ -275,6 +293,10 @@ export function sanitizeColumnRules(
               candidate,
               fallbackRules[table.name][column.name].sequenceOptions,
             ),
+            digitSequenceOptions: normalizeDigitSequenceOptions(
+              candidate,
+              fallbackRules[table.name][column.name].digitSequenceOptions,
+            ),
           };
           continue;
         }
@@ -298,6 +320,10 @@ export function sanitizeColumnRules(
           sequenceOptions: normalizeSequenceOptions(
             candidate,
             fallbackRules[table.name][column.name].sequenceOptions,
+          ),
+          digitSequenceOptions: normalizeDigitSequenceOptions(
+            candidate,
+            fallbackRules[table.name][column.name].digitSequenceOptions,
           ),
         };
         continue;
@@ -323,6 +349,10 @@ export function sanitizeColumnRules(
         sequenceOptions: normalizeSequenceOptions(
           candidate,
           fallbackRules[table.name][column.name].sequenceOptions,
+        ),
+        digitSequenceOptions: normalizeDigitSequenceOptions(
+          candidate,
+          fallbackRules[table.name][column.name].digitSequenceOptions,
         ),
       };
     }

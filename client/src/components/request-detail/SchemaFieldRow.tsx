@@ -2,6 +2,7 @@ import { memo } from 'react';
 import {
   Autocomplete,
   Box,
+  IconButton,
   MenuItem,
   Select,
   Stack,
@@ -10,6 +11,7 @@ import {
   Typography,
 } from '@mui/material';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { stringifyRule } from '../../utilities/ruleUtils';
 import { useRequestDetailContext } from './RequestDetailContext';
 import type { ColumnDesignerModel } from '../../models/apiModels';
@@ -28,6 +30,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
   const isNumberRule = rule?.kind === 'semantic' && rule.semanticType === 'number';
   const isDateTimeRule = rule?.kind === 'semantic' && rule.semanticType === 'dateTime';
   const isSequenceRule = rule?.kind === 'semantic' && rule.semanticType === 'sequence';
+  const isDigitSequenceRule = rule?.kind === 'semantic' && rule.semanticType === 'digitSequence';
   const numberOptions = rule?.numberOptions ?? {
     min: 0,
     max: 100,
@@ -44,6 +47,18 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
     step: 1,
     repeat: 1,
   };
+  const digitSequenceOptions = rule?.digitSequenceOptions ?? {
+    format: '',
+  };
+  const digitSequenceHelp = [
+    'Use "#" for a random digit.',
+    'Use "@" for a random lower case letter.',
+    'Use "^" for a random upper case letter.',
+    'Use "*" for a random digit or letter.',
+    'Use "$" for a random digit or lower case letter.',
+    'Use "%" for a random digit or upper case letter.',
+    'Any other character will be included verbatim.',
+  ].join('\n');
 
   return (
     <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ md: 'center' }}>
@@ -206,6 +221,44 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
               context.onSequenceOptionChange(tableName, column.name, 'repeat', event.target.value)
             }
             sx={{ width: 100 }}
+          />
+        </Stack>
+      )}
+      {isDigitSequenceRule && (
+        <Stack direction="row" spacing={1}>
+          <TextField
+            size="small"
+            label="Format"
+            defaultValue={digitSequenceOptions.format}
+            placeholder="example: Ticket-###-@@@"
+            onBlur={(event) =>
+              context.onDigitSequenceOptionChange(
+                tableName,
+                column.name,
+                'format',
+                event.target.value,
+              )
+            }
+            sx={{ minWidth: 300 }}
+            slotProps={{
+              input: {
+                endAdornment: (
+                  <Tooltip
+                    arrow
+                    placement="top"
+                    title={
+                      <Box sx={{ whiteSpace: 'pre-line' }}>
+                        <Typography variant="body2">{digitSequenceHelp}</Typography>
+                      </Box>
+                    }
+                  >
+                    <IconButton size="small">
+                      <HelpOutlineIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                ),
+              },
+            }}
           />
         </Stack>
       )}

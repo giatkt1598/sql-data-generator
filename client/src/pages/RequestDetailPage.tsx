@@ -10,6 +10,8 @@ import {
 } from '../apis';
 import type {
   ColumnDesignerModel,
+  ColumnGenerationRule,
+  SemanticDataType,
   GenerationRequestEntity,
   TableColumnRules,
 } from '../models/apiModels';
@@ -65,6 +67,62 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     return toLocalDateInputValue(value);
   }, []);
   const defaultDateTimeEnd = useMemo(() => toLocalDateInputValue(new Date()), []);
+  const defaultRuleOptions = useMemo(
+    () => ({
+      numberOptions: {
+        min: 0,
+        max: 100,
+        decimals: 0,
+      },
+      dateTimeOptions: {
+        start: defaultDateTimeStart,
+        end: defaultDateTimeEnd,
+        format: 'yyyy-MM-dd',
+      },
+      sequenceOptions: {
+        startAt: 1,
+        step: 1,
+        repeat: 1,
+      },
+      digitSequenceOptions: {
+        format: '',
+      },
+    }),
+    [defaultDateTimeEnd, defaultDateTimeStart],
+  );
+
+  function buildFallbackRule(
+    semanticType: SemanticDataType,
+    columnName: string,
+    overrides?: Partial<ColumnGenerationRule>,
+  ): ColumnGenerationRule {
+    return {
+      kind: 'semantic',
+      semanticType,
+      fieldName: columnName,
+      blankPercentage: 0,
+      ...defaultRuleOptions,
+      ...overrides,
+    };
+  }
+
+  function mergeRuleDefaults(
+    rule: TableColumnRules[string][string] | undefined,
+    columnName: string,
+    semanticType: SemanticDataType = 'unknown',
+  ): TableColumnRules[string][string] {
+    const fallbackRule = buildFallbackRule(semanticType, columnName);
+    return {
+      ...fallbackRule,
+      ...rule,
+      fieldName: rule?.fieldName ?? fallbackRule.fieldName,
+      blankPercentage: rule?.blankPercentage ?? fallbackRule.blankPercentage,
+      numberOptions: rule?.numberOptions ?? fallbackRule.numberOptions,
+      dateTimeOptions: rule?.dateTimeOptions ?? fallbackRule.dateTimeOptions,
+      sequenceOptions: rule?.sequenceOptions ?? fallbackRule.sequenceOptions,
+      digitSequenceOptions: rule?.digitSequenceOptions ?? fallbackRule.digitSequenceOptions,
+    };
+  }
 
   useEffect(() => {
     if (!projectId || !requestId) {
@@ -331,24 +389,8 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     }
     const current = columnRules[pickerTarget.tableName]?.[pickerTarget.columnName];
     onRuleChange(pickerTarget.tableName, pickerTarget.columnName, {
+      ...mergeRuleDefaults(current, pickerTarget.columnName),
       ...rule,
-      fieldName: current?.fieldName ?? pickerTarget.columnName,
-      blankPercentage: current?.blankPercentage ?? 0,
-      numberOptions: current?.numberOptions ?? {
-        min: 0,
-        max: 100,
-        decimals: 0,
-      },
-      dateTimeOptions: current?.dateTimeOptions ?? {
-        start: defaultDateTimeStart,
-        end: defaultDateTimeEnd,
-        format: 'yyyy-MM-dd',
-      },
-      sequenceOptions: current?.sequenceOptions ?? {
-        startAt: 1,
-        step: 1,
-        repeat: 1,
-      },
     });
     setTypePickerOpen(false);
   }
@@ -378,27 +420,12 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
       return item;
     });
     onRuleChange(pickerTarget.tableName, pickerTarget.columnName, {
+      ...mergeRuleDefaults(
+        columnRules[pickerTarget.tableName]?.[pickerTarget.columnName],
+        pickerTarget.columnName,
+      ),
       kind: 'customList',
-      fieldName: columnRules[pickerTarget.tableName]?.[pickerTarget.columnName]?.fieldName ?? pickerTarget.columnName,
       customValues: parsedValues,
-      blankPercentage:
-        columnRules[pickerTarget.tableName]?.[pickerTarget.columnName]?.blankPercentage ?? 0,
-      numberOptions: columnRules[pickerTarget.tableName]?.[pickerTarget.columnName]?.numberOptions ?? {
-        min: 0,
-        max: 100,
-        decimals: 0,
-      },
-      dateTimeOptions: columnRules[pickerTarget.tableName]?.[pickerTarget.columnName]?.dateTimeOptions ?? {
-        start: defaultDateTimeStart,
-        end: defaultDateTimeEnd,
-        format: 'yyyy-MM-dd',
-      },
-      sequenceOptions:
-        columnRules[pickerTarget.tableName]?.[pickerTarget.columnName]?.sequenceOptions ?? {
-          startAt: 1,
-          step: 1,
-          repeat: 1,
-        },
     });
     setTypePickerOpen(false);
   }
@@ -406,27 +433,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
   function onBlankPercentageChange(tableName: string, columnName: string, value: string) {
     const parsed = Number(value);
     const blankPercentage = Number.isFinite(parsed) ? Math.max(0, Math.min(100, parsed)) : 0;
-    const current = columnRules[tableName]?.[columnName];
-    const fallbackRule: TableColumnRules[string][string] = current ?? {
-      kind: 'semantic',
-      semanticType: 'unknown',
-      blankPercentage: 0,
-      numberOptions: {
-        min: 0,
-        max: 100,
-        decimals: 0,
-      },
-      dateTimeOptions: {
-        start: defaultDateTimeStart,
-        end: defaultDateTimeEnd,
-        format: 'yyyy-MM-dd',
-      },
-      sequenceOptions: {
-        startAt: 1,
-        step: 1,
-        repeat: 1,
-      },
-    };
+    const fallbackRule = mergeRuleDefaults(columnRules[tableName]?.[columnName], columnName);
     onRuleChange(tableName, columnName, {
       ...fallbackRule,
       fieldName: fallbackRule.fieldName ?? columnName,
@@ -435,29 +442,8 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
   }
 
   function onFieldNameChange(tableName: string, columnName: string, value: string) {
-    const current = columnRules[tableName]?.[columnName];
     const nextFieldName = value.trim() || columnName;
-    const fallbackRule: TableColumnRules[string][string] = current ?? {
-      kind: 'semantic',
-      semanticType: 'unknown',
-      fieldName: columnName,
-      blankPercentage: 0,
-      numberOptions: {
-        min: 0,
-        max: 100,
-        decimals: 0,
-      },
-      dateTimeOptions: {
-        start: defaultDateTimeStart,
-        end: defaultDateTimeEnd,
-        format: 'yyyy-MM-dd',
-      },
-      sequenceOptions: {
-        startAt: 1,
-        step: 1,
-        repeat: 1,
-      },
-    };
+    const fallbackRule = mergeRuleDefaults(columnRules[tableName]?.[columnName], columnName);
     onRuleChange(tableName, columnName, {
       ...fallbackRule,
       fieldName: nextFieldName,
@@ -487,25 +473,9 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     });
 
     onRuleChange(tableName, columnName, {
+      ...mergeRuleDefaults(columnRules[tableName]?.[columnName], columnName),
       kind: 'customList',
-      fieldName: columnRules[tableName]?.[columnName]?.fieldName ?? columnName,
       customValues: parsedValues,
-      blankPercentage: columnRules[tableName]?.[columnName]?.blankPercentage ?? 0,
-      numberOptions: columnRules[tableName]?.[columnName]?.numberOptions ?? {
-        min: 0,
-        max: 100,
-        decimals: 0,
-      },
-      dateTimeOptions: columnRules[tableName]?.[columnName]?.dateTimeOptions ?? {
-        start: defaultDateTimeStart,
-        end: defaultDateTimeEnd,
-        format: 'yyyy-MM-dd',
-      },
-      sequenceOptions: columnRules[tableName]?.[columnName]?.sequenceOptions ?? {
-        startAt: 1,
-        step: 1,
-        repeat: 1,
-      },
     });
   }
 
@@ -517,28 +487,11 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
   ) {
     const parsed = Number(value);
     const safeValue = Number.isFinite(parsed) ? parsed : key === 'max' ? 100 : 0;
-    const current = columnRules[tableName]?.[columnName];
-    const fallbackRule: TableColumnRules[string][string] = current ?? {
-      kind: 'semantic',
-      semanticType: 'number',
-      fieldName: columnName,
-      blankPercentage: 0,
-      numberOptions: {
-        min: 0,
-        max: 100,
-        decimals: 0,
-      },
-      dateTimeOptions: {
-        start: defaultDateTimeStart,
-        end: defaultDateTimeEnd,
-        format: 'yyyy-MM-dd',
-      },
-      sequenceOptions: {
-        startAt: 1,
-        step: 1,
-        repeat: 1,
-      },
-    };
+    const fallbackRule = mergeRuleDefaults(
+      columnRules[tableName]?.[columnName],
+      columnName,
+      'number',
+    );
     const currentOptions = fallbackRule.numberOptions ?? {
       min: 0,
       max: 100,
@@ -570,28 +523,11 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     key: 'start' | 'end' | 'format',
     value: string,
   ) {
-    const current = columnRules[tableName]?.[columnName];
-    const fallbackRule: TableColumnRules[string][string] = current ?? {
-      kind: 'semantic',
-      semanticType: 'dateTime',
-      fieldName: columnName,
-      blankPercentage: 0,
-      numberOptions: {
-        min: 0,
-        max: 100,
-        decimals: 0,
-      },
-      dateTimeOptions: {
-        start: defaultDateTimeStart,
-        end: defaultDateTimeEnd,
-        format: 'yyyy-MM-dd',
-      },
-      sequenceOptions: {
-        startAt: 1,
-        step: 1,
-        repeat: 1,
-      },
-    };
+    const fallbackRule = mergeRuleDefaults(
+      columnRules[tableName]?.[columnName],
+      columnName,
+      'dateTime',
+    );
     const currentOptions = fallbackRule.dateTimeOptions ?? {
       start: defaultDateTimeStart,
       end: defaultDateTimeEnd,
@@ -616,28 +552,11 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
   ) {
     const parsed = Number(value);
     const safeValue = Number.isFinite(parsed) ? parsed : 1;
-    const current = columnRules[tableName]?.[columnName];
-    const fallbackRule: TableColumnRules[string][string] = current ?? {
-      kind: 'semantic',
-      semanticType: 'sequence',
-      fieldName: columnName,
-      blankPercentage: 0,
-      numberOptions: {
-        min: 0,
-        max: 100,
-        decimals: 0,
-      },
-      dateTimeOptions: {
-        start: defaultDateTimeStart,
-        end: defaultDateTimeEnd,
-        format: 'yyyy-MM-dd',
-      },
-      sequenceOptions: {
-        startAt: 1,
-        step: 1,
-        repeat: 1,
-      },
-    };
+    const fallbackRule = mergeRuleDefaults(
+      columnRules[tableName]?.[columnName],
+      columnName,
+      'sequence',
+    );
     const currentOptions = fallbackRule.sequenceOptions ?? {
       startAt: 1,
       step: 1,
@@ -650,6 +569,31 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
       sequenceOptions: {
         ...currentOptions,
         [key]: key === 'repeat' ? Math.max(1, Math.floor(safeValue)) : safeValue,
+      },
+    });
+  }
+
+  function onDigitSequenceOptionChange(
+    tableName: string,
+    columnName: string,
+    key: 'format',
+    value: string,
+  ) {
+    const fallbackRule = mergeRuleDefaults(
+      columnRules[tableName]?.[columnName],
+      columnName,
+      'digitSequence',
+    );
+    const currentOptions = fallbackRule.digitSequenceOptions ?? {
+      format: '',
+    };
+
+    onRuleChange(tableName, columnName, {
+      ...fallbackRule,
+      fieldName: fallbackRule.fieldName ?? columnName,
+      digitSequenceOptions: {
+        ...currentOptions,
+        [key]: value,
       },
     });
   }
@@ -709,6 +653,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     onNumberOptionChange,
     onDateTimeOptionChange,
     onSequenceOptionChange,
+    onDigitSequenceOptionChange,
     applyRule,
     applyCustomListRule,
     handleBack: () => navigate(-1),
