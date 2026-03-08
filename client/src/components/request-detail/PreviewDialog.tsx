@@ -1,9 +1,24 @@
 import { Box, Button, Dialog, DialogContent, DialogTitle, Stack, Typography } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import CheckIcon from '@mui/icons-material/Check';
+import { useEffect, useState } from 'react';
 import { useRequestDetailContext } from './RequestDetailContext';
 
 export function PreviewDialog() {
   const context = useRequestDetailContext();
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!context.previewOpen) {
+      setCopied(false);
+    }
+  }, [context.previewOpen]);
+
+  async function handleCopy() {
+    await context.handleCopyPreview();
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1500);
+  }
 
   return (
     <Dialog open={context.previewOpen} onClose={() => context.setPreviewOpen(false)} fullWidth maxWidth="lg">
@@ -16,10 +31,10 @@ export function PreviewDialog() {
             <Button
               variant="outlined"
               size="small"
-              startIcon={<ContentCopyIcon />}
-              onClick={() => void context.handleCopyPreview()}
+              startIcon={copied ? <CheckIcon /> : <ContentCopyIcon />}
+              onClick={() => void handleCopy()}
             >
-              Copy
+              {copied ? 'Copied' : 'Copy'}
             </Button>
           )}
         </Stack>

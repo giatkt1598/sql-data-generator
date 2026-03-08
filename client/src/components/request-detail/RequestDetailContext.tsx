@@ -12,6 +12,7 @@ import type { RequestDetailForm } from './types';
 export interface RequestDetailContextValue {
   projectId: string;
   requestName: string;
+  hasUnsavedChanges: boolean;
   loading: boolean;
   form: RequestDetailForm;
   setForm: Dispatch<SetStateAction<RequestDetailForm>>;

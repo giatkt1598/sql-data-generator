@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Card, CardContent, Stack, Typography } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -38,6 +38,17 @@ function toLocalDateInputValue(value: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+function buildSavedSnapshot(form: RequestDetailForm, columnRules: TableColumnRules): string {
+  return JSON.stringify({
+    name: form.name,
+    schemaSql: form.schemaSql,
+    classificationJson: form.classificationJson,
+    schemaRelationshipsJson: form.schemaRelationshipsJson,
+    locale: form.locale,
+    columnRules,
+  });
+}
+
 export function RequestDetailPage(props: RequestDetailPageProps) {
   const { projectId, requestId } = useParams();
   const navigate = useNavigate();
@@ -62,7 +73,11 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
   const [previewText, setPreviewText] = useState('');
   const [previewTooLarge, setPreviewTooLarge] = useState(false);
   const [analyzeConfirmOpen, setAnalyzeConfirmOpen] = useState(false);
+  const [savedSnapshot, setSavedSnapshot] = useState('');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const MAX_PREVIEW_LENGTH = 50_000_000;
+  const formRef = useRef(form);
+  const columnRulesRef = useRef(columnRules);
   const defaultDateTimeStart = useMemo(() => {
     const value = new Date();
     value.setFullYear(value.getFullYear() - 1);
@@ -151,6 +166,19 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     };
   }
 
+  formRef.current = form;
+  columnRulesRef.current = columnRules;
+
+  const setDirtyForm: typeof setForm = (value) => {
+    setForm((prev) => {
+      const nextValue = typeof value === 'function' ? value(prev) : value;
+      if (nextValue !== prev) {
+        setHasUnsavedChanges(true);
+      }
+      return nextValue;
+    });
+  };
+
   useEffect(() => {
     if (!projectId || !requestId) {
       return;
@@ -177,6 +205,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         setGeneralExpanded(false);
         setRelationshipsExpanded(false);
         setSchemasExpanded(true);
+        setHasUnsavedChanges(false);
 
         if (found.schemaSql.trim() && found.classificationJson.trim()) {
           const model = await getColumnDesignerModel({
@@ -186,8 +215,32 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
           });
           setDesignerModel(model);
           setColumnRules(model.columnRules);
+          setSavedSnapshot(
+            buildSavedSnapshot(
+              {
+                name: found.name,
+                schemaSql: found.schemaSql,
+                classificationJson: found.classificationJson,
+                schemaRelationshipsJson: found.schemaRelationshipsJson ?? '',
+                locale: found.locale ?? 'en',
+              },
+              model.columnRules,
+            ),
+          );
         } else {
           setDesignerModel(null);
+          setSavedSnapshot(
+            buildSavedSnapshot(
+              {
+                name: found.name,
+                schemaSql: found.schemaSql,
+                classificationJson: found.classificationJson,
+                schemaRelationshipsJson: found.schemaRelationshipsJson ?? '',
+                locale: found.locale ?? 'en',
+              },
+              found.columnRules ?? {},
+            ),
+          );
         }
       } catch (exception) {
         props.setError(getErrorMessage(exception, 'Failed to load request detail.'));
@@ -197,6 +250,25 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
       }
     })();
   }, [projectId, requestId]);
+
+  useEffect(() => {
+    document.title = hasUnsavedChanges
+      ? `Request: ${form.name || request?.name || ''} (Unsaved changes)`
+      : `Request: ${form.name || request?.name || ''}`;
+  }, [form.name, hasUnsavedChanges, request?.name]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!hasUnsavedChanges) {
+        return;
+      }
+      event.preventDefault();
+      event.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   const project = useMemo(
     () => props.projects.find((item) => item.id === projectId),
@@ -245,10 +317,94 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         schemaRelationshipsJson: form.schemaRelationshipsJson,
       });
       setRequest(updated);
+      setForm({
+        name: updated.name,
+        schemaSql: updated.schemaSql,
+        classificationJson: updated.classificationJson,
+        schemaRelationshipsJson: updated.schemaRelationshipsJson ?? '',
+        locale: updated.locale ?? 'en',
+      });
+      setColumnRules(updated.columnRules ?? {});
+      setSavedSnapshot(
+        buildSavedSnapshot(
+          {
+            name: updated.name,
+            schemaSql: updated.schemaSql,
+            classificationJson: updated.classificationJson,
+            schemaRelationshipsJson: updated.schemaRelationshipsJson ?? '',
+            locale: updated.locale ?? 'en',
+          },
+          updated.columnRules ?? {},
+        ),
+      );
+      setHasUnsavedChanges(false);
       props.setSnack('Request detail saved.');
     } catch (exception) {
       props.setError(getErrorMessage(exception, 'Failed to save request detail.'));
       console.error(exception);
+    } finally {
+      props.setLoading(false);
+    }
+  }
+
+  async function confirmLeavePage(): Promise<boolean> {
+    await flushPendingInput();
+
+    const latestSnapshot = buildSavedSnapshot(formRef.current, columnRulesRef.current);
+    const stillDirty = savedSnapshot.length > 0 && latestSnapshot !== savedSnapshot;
+
+    if (!stillDirty) {
+      return true;
+    }
+
+    const shouldSave = window.confirm('You have unsaved changes. Save before leaving this page?');
+    if (!shouldSave) {
+      return true;
+    }
+
+    if (!projectId || !requestId) {
+      return false;
+    }
+
+    try {
+      props.setLoading(true);
+      const updated = await updateGenerationRequest(requestId, {
+        projectId,
+        name: formRef.current.name,
+        schemaSql: formRef.current.schemaSql,
+        classificationJson: formRef.current.classificationJson,
+        locale: formRef.current.locale,
+        columnRules: columnRulesRef.current,
+        schemaRelationshipsJson: formRef.current.schemaRelationshipsJson,
+      });
+
+      setRequest(updated);
+      setForm({
+        name: updated.name,
+        schemaSql: updated.schemaSql,
+        classificationJson: updated.classificationJson,
+        schemaRelationshipsJson: updated.schemaRelationshipsJson ?? '',
+        locale: updated.locale ?? 'en',
+      });
+      setColumnRules(updated.columnRules ?? {});
+      setSavedSnapshot(
+        buildSavedSnapshot(
+          {
+            name: updated.name,
+            schemaSql: updated.schemaSql,
+            classificationJson: updated.classificationJson,
+            schemaRelationshipsJson: updated.schemaRelationshipsJson ?? '',
+            locale: updated.locale ?? 'en',
+          },
+          updated.columnRules ?? {},
+        ),
+      );
+      setHasUnsavedChanges(false);
+      props.setSnack('Request detail saved.');
+      return true;
+    } catch (exception) {
+      props.setError(getErrorMessage(exception, 'Failed to save request detail.'));
+      return false;
     } finally {
       props.setLoading(false);
     }
@@ -302,6 +458,17 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         ...prev,
         schemaRelationshipsJson: nextSchemaRelationshipsJson,
       }));
+      const nextSnapshot = buildSavedSnapshot(
+        {
+          name: updated.name,
+          schemaSql: updated.schemaSql,
+          classificationJson: updated.classificationJson,
+          schemaRelationshipsJson: nextSchemaRelationshipsJson,
+          locale: updated.locale ?? 'en',
+        },
+        model.columnRules,
+      );
+      setHasUnsavedChanges(savedSnapshot.length > 0 && nextSnapshot !== savedSnapshot);
       setRelationshipsExpanded(true);
       setSchemasExpanded(true);
       props.setSnack('Schemas and schema relationships were overwritten.');
@@ -378,6 +545,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     columnName: string,
     rule: TableColumnRules[string][string],
   ) {
+    setHasUnsavedChanges(true);
     setColumnRules((prev) => ({
       ...prev,
       [tableName]: {
@@ -783,10 +951,11 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
 
   const contextValue: RequestDetailContextValue = {
     projectId: project.id,
-    requestName: request.name,
+    requestName: form.name || request.name,
+    hasUnsavedChanges,
     loading: props.loading,
     form,
-    setForm,
+    setForm: setDirtyForm,
     columnRules,
     designerModel,
     generalExpanded,
@@ -825,7 +994,14 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     onTextOptionChange,
     applyRule,
     applyCustomListRule,
-    handleBack: () => navigate(-1),
+    handleBack: () => {
+      void (async () => {
+        const canLeave = await confirmLeavePage();
+        if (canLeave) {
+          navigate(-1);
+        }
+      })();
+    },
     buildPrompt,
     handlePreview,
     handleGenerateSql,
