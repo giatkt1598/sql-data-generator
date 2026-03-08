@@ -1,5 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Card, CardContent, Stack, Typography } from '@mui/material';
+import {
+  Backdrop,
+  Button,
+  Card,
+  CardContent,
+  CircularProgress,
+  Stack,
+  Typography,
+} from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   generateClassificationPrompt,
@@ -75,6 +83,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
   const [analyzeConfirmOpen, setAnalyzeConfirmOpen] = useState(false);
   const [savedSnapshot, setSavedSnapshot] = useState('');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isProcessingData, setIsProcessingData] = useState(false);
   const MAX_PREVIEW_LENGTH = 50_000_000;
   const formRef = useRef(form);
   const columnRulesRef = useRef(columnRules);
@@ -482,6 +491,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
 
   async function handlePreview() {
     try {
+      setIsProcessingData(true);
       props.setLoading(true);
       await flushPendingInput();
       const script = await generateSqlScript({
@@ -499,12 +509,14 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
       props.setError(getErrorMessage(exception, 'Failed to preview SQL.'));
       console.error(exception);
     } finally {
+      setIsProcessingData(false);
       props.setLoading(false);
     }
   }
 
   async function handleGenerateSql() {
     try {
+      setIsProcessingData(true);
       props.setLoading(true);
       await flushPendingInput();
       const script = await generateSqlScript({
@@ -526,6 +538,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
       props.setError(getErrorMessage(exception, 'Failed to generate SQL.'));
       console.error(exception);
     } finally {
+      setIsProcessingData(false);
       props.setLoading(false);
     }
   }
@@ -1012,15 +1025,29 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
 
   return (
     <RequestDetailProvider value={contextValue}>
-      <Stack spacing={2}>
-        <RequestDetailHeader />
-        <GeneralAccordion />
-        <SchemaRelationshipsAccordion />
-        <SchemasAccordion />
-        <DataTypePickerDialog />
-        <AnalyzeConfirmDialog />
-        <PreviewDialog />
-      </Stack>
+      <>
+        <Backdrop
+          open={isProcessingData}
+          sx={{
+            color: '#fff',
+            zIndex: (theme) => theme.zIndex.modal + 1,
+            flexDirection: 'column',
+            gap: 2,
+          }}
+        >
+          <CircularProgress color="inherit" />
+          <Typography variant="h6">Processing...</Typography>
+        </Backdrop>
+        <Stack spacing={2}>
+          <RequestDetailHeader />
+          <GeneralAccordion />
+          <SchemaRelationshipsAccordion />
+          <SchemasAccordion />
+          <DataTypePickerDialog />
+          <AnalyzeConfirmDialog />
+          <PreviewDialog />
+        </Stack>
+      </>
     </RequestDetailProvider>
   );
 }
