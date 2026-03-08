@@ -56,6 +56,12 @@ export interface RequestDetailContextValue {
     key: 'start' | 'end' | 'format',
     value: string,
   ) => void;
+  onTimeOptionChange: (
+    tableName: string,
+    columnName: string,
+    key: 'from' | 'to' | 'format',
+    value: string,
+  ) => void;
   onSequenceOptionChange: (
     tableName: string,
     columnName: string,
@@ -72,6 +78,12 @@ export interface RequestDetailContextValue {
     tableName: string,
     columnName: string,
     key: 'expression',
+    value: string,
+  ) => void;
+  onRegularExpressionOptionChange: (
+    tableName: string,
+    columnName: string,
+    key: 'pattern',
     value: string,
   ) => void;
   onEmailOptionChange: (tableName: string, columnName: string, key: 'domains', value: string) => void;

@@ -71,6 +71,11 @@ export interface ColumnGenerationRule {
     end?: string;
     format?: string;
   };
+  timeOptions?: {
+    from?: string;
+    to?: string;
+    format?: string;
+  };
   sequenceOptions?: {
     startAt?: number;
     step?: number;
@@ -81,6 +86,9 @@ export interface ColumnGenerationRule {
   };
   formulaOptions?: {
     expression?: string;
+  };
+  regularExpressionOptions?: {
+    pattern?: string;
   };
   emailOptions?: {
     domains?: string[];

@@ -80,6 +80,11 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         end: defaultDateTimeEnd,
         format: 'yyyy-MM-dd',
       },
+      timeOptions: {
+        from: '00:00',
+        to: '23:59',
+        format: 'HH:mm:ss',
+      },
       sequenceOptions: {
         startAt: 1,
         step: 1,
@@ -90,6 +95,9 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
       },
       formulaOptions: {
         expression: '',
+      },
+      regularExpressionOptions: {
+        pattern: '',
       },
       emailOptions: {
         domains: [],
@@ -131,9 +139,12 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
       blankPercentage: rule?.blankPercentage ?? fallbackRule.blankPercentage,
       numberOptions: rule?.numberOptions ?? fallbackRule.numberOptions,
       dateTimeOptions: rule?.dateTimeOptions ?? fallbackRule.dateTimeOptions,
+      timeOptions: rule?.timeOptions ?? fallbackRule.timeOptions,
       sequenceOptions: rule?.sequenceOptions ?? fallbackRule.sequenceOptions,
       digitSequenceOptions: rule?.digitSequenceOptions ?? fallbackRule.digitSequenceOptions,
       formulaOptions: rule?.formulaOptions ?? fallbackRule.formulaOptions,
+      regularExpressionOptions:
+        rule?.regularExpressionOptions ?? fallbackRule.regularExpressionOptions,
       emailOptions: rule?.emailOptions ?? fallbackRule.emailOptions,
       textOptions: rule?.textOptions ?? fallbackRule.textOptions,
     };
@@ -588,6 +599,29 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     });
   }
 
+  function onTimeOptionChange(
+    tableName: string,
+    columnName: string,
+    key: 'from' | 'to' | 'format',
+    value: string,
+  ) {
+    const fallbackRule = mergeRuleDefaults(columnRules[tableName]?.[columnName], columnName, 'time');
+    const currentOptions = fallbackRule.timeOptions ?? {
+      from: '00:00',
+      to: '23:59',
+      format: 'HH:mm:ss',
+    };
+
+    onRuleChange(tableName, columnName, {
+      ...fallbackRule,
+      fieldName: fallbackRule.fieldName ?? columnName,
+      timeOptions: {
+        ...currentOptions,
+        [key]: value.trim() || currentOptions[key],
+      },
+    });
+  }
+
   function onDigitSequenceOptionChange(
     tableName: string,
     columnName: string,
@@ -674,6 +708,31 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     });
   }
 
+  function onRegularExpressionOptionChange(
+    tableName: string,
+    columnName: string,
+    key: 'pattern',
+    value: string,
+  ) {
+    const fallbackRule = mergeRuleDefaults(
+      columnRules[tableName]?.[columnName],
+      columnName,
+      'regularExpression',
+    );
+    const currentOptions = fallbackRule.regularExpressionOptions ?? {
+      pattern: '',
+    };
+
+    onRuleChange(tableName, columnName, {
+      ...fallbackRule,
+      fieldName: fallbackRule.fieldName ?? columnName,
+      regularExpressionOptions: {
+        ...currentOptions,
+        [key]: value,
+      },
+    });
+  }
+
   function onEmailOptionChange(
     tableName: string,
     columnName: string,
@@ -752,9 +811,11 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     onCustomListValueChange,
     onNumberOptionChange,
     onDateTimeOptionChange,
+    onTimeOptionChange,
     onSequenceOptionChange,
     onDigitSequenceOptionChange,
     onFormulaOptionChange,
+    onRegularExpressionOptionChange,
     onEmailOptionChange,
     onTextOptionChange,
     applyRule,

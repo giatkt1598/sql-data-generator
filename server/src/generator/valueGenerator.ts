@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from 'crypto';
 import dayjs from 'dayjs';
 import { faker } from '@faker-js/faker';
+import RandExp from 'randexp';
 import { normalizeSqlType, SQL_TYPE_DEFAULT_CLASSIFICATION } from '../core/semanticTypes';
 import {
   ColumnGenerationRule,
@@ -93,7 +94,18 @@ function inferFallbackSemanticType(column: ColumnSchema): SemanticDataType {
 }
 
 function toDayjsFormat(format: string): string {
-  return format.replace(/yyyy/g, 'YYYY').replace(/dd/g, 'DD');
+  return format
+    .replace(/yyyy/g, 'YYYY')
+    .replace(/dd/g, 'DD')
+    .replace(/\ba\b/g, 'A');
+}
+
+function parseClockTime(value: string, fallback: string): dayjs.Dayjs {
+  const parsed = dayjs(`2000-01-01 ${value.trim()}`);
+  if (parsed.isValid()) {
+    return parsed;
+  }
+  return dayjs(`2000-01-01 ${fallback}`);
 }
 
 function applyDigitSequenceTokens(input: string): string {
@@ -339,6 +351,24 @@ function evaluateFormulaExpression(
   return result;
 }
 
+function generateRegularExpressionValue(
+  pattern: string,
+  tableName: string,
+  columnName: string,
+): string {
+  if (!pattern.trim()) {
+    return '';
+  }
+
+  try {
+    return new RandExp(pattern).gen();
+  } catch {
+    throw new Error(
+      `Regular Expression in '${tableName}.${columnName}' is invalid. Check the regex pattern.`,
+    );
+  }
+}
+
 function extractSameRowDependencies(rule: ColumnGenerationRule): string[] {
   if (rule.kind !== 'semantic') {
     return [];
@@ -447,6 +477,12 @@ function generateScalarValue(
         tableName,
         column.name,
       );
+    case 'regularExpression':
+      return generateRegularExpressionValue(
+        rule.regularExpressionOptions?.pattern ?? '',
+        tableName,
+        column.name,
+      );
     case 'sequence': {
       const startAt = rule.sequenceOptions?.startAt ?? 1;
       const step = rule.sequenceOptions?.step ?? 1;
@@ -501,6 +537,10 @@ function generateScalarValue(
       return faker.commerce.productName();
     case 'productSubcategory':
       return faker.helpers.arrayElement(PRODUCT_SUBCATEGORIES);
+    case 'color':
+      return faker.color.human();
+    case 'hexColor':
+      return faker.color.rgb({ casing: 'upper', prefix: '#' });
     case 'sha1':
       return buildHash('sha1', `${tableName}.${column.name}.${rowIndex}.${salt}`);
     case 'sha256':
@@ -521,6 +561,14 @@ function generateScalarValue(
       return faker.internet.userAgent();
     case 'username':
       return faker.internet.username();
+    case 'password':
+      return faker.internet.password({
+        length: 12,
+        memorable: false,
+        pattern: /[A-Za-z0-9!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/,
+      });
+    case 'passwordHash':
+      return buildHash('sha256', `${tableName}.${column.name}.${rowIndex}.${salt}.${randomUUID()}`);
     case 'number': {
       const min = rule.numberOptions?.min ?? 0;
       const max = rule.numberOptions?.max ?? 100;
@@ -577,6 +625,16 @@ function generateScalarValue(
         : dayjs().endOf('day').toDate();
       const format = rule.dateTimeOptions?.format?.trim() || DEFAULT_DATE_TIME_FORMAT;
       return dayjs(faker.date.between({ from, to })).format(toDayjsFormat(format));
+    case 'time': {
+      const fromTime = parseClockTime(rule.timeOptions?.from ?? '', '00:00');
+      const toTime = parseClockTime(rule.timeOptions?.to ?? '', '23:59');
+      const safeToTime = toTime.isBefore(fromTime) ? fromTime : toTime;
+      const diffSeconds = safeToTime.diff(fromTime, 'second');
+      const offsetSeconds =
+        diffSeconds <= 0 ? 0 : faker.number.int({ min: 0, max: diffSeconds });
+      const timeFormat = rule.timeOptions?.format?.trim() || 'HH:mm:ss';
+      return fromTime.add(offsetSeconds, 'second').format(toDayjsFormat(timeFormat));
+    }
     case 'timeZone':
       return faker.date.timeZone();
     case 'boolean':

@@ -29,6 +29,12 @@ export const DATA_TYPE_DEFINITIONS: DataTypeDefinition[] = [
     groups: ['Advanced'],
   },
   {
+    value: 'regularExpression',
+    displayName: 'Regular Expression',
+    description: 'Generated from regex pattern.\nExample: [A-Z]{3}-\\d{4}',
+    groups: ['Advanced'],
+  },
+  {
     value: 'sequence',
     displayName: 'Sequence',
     description: 'Incrementing number sequence.\nExample: 1, 2, 3, 4',
@@ -39,6 +45,36 @@ export const DATA_TYPE_DEFINITIONS: DataTypeDefinition[] = [
     displayName: 'Date Time',
     description: 'Date or datetime value.\nExample: 2025-03-08',
     groups: ['Basic'],
+  },
+  {
+    value: 'time',
+    displayName: 'Time',
+    description: 'Time-only value.\nExample: 14:30:45',
+    groups: ['Basic'],
+  },
+  {
+    value: 'color',
+    displayName: 'Color',
+    description: 'Human color name.\nExample: sky blue',
+    groups: ['Basic'],
+  },
+  {
+    value: 'hexColor',
+    displayName: 'Hex Color',
+    description: 'Hex color code.\nExample: #1F7AE0',
+    groups: ['Basic', 'IT'],
+  },
+  {
+    value: 'password',
+    displayName: 'Password',
+    description: 'Generated password.\nExample: P@ssw0rd!23',
+    groups: ['IT'],
+  },
+  {
+    value: 'passwordHash',
+    displayName: 'Password Hash',
+    description: 'Hashed password text.\nExample: 5e884898da...',
+    groups: ['IT'],
   },
   {
     value: 'timeZone',

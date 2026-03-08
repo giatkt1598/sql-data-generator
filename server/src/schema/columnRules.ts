@@ -92,6 +92,26 @@ function normalizeDateTimeOptions(
   return { start, end, format };
 }
 
+function normalizeTimeOptions(
+  rule: ColumnGenerationRule | undefined,
+  fallback: { from?: string; to?: string; format?: string } | undefined,
+) {
+  const from =
+    typeof rule?.timeOptions?.from === 'string' && rule.timeOptions.from.trim()
+      ? rule.timeOptions.from
+      : (fallback?.from ?? '00:00');
+  const to =
+    typeof rule?.timeOptions?.to === 'string' && rule.timeOptions.to.trim()
+      ? rule.timeOptions.to
+      : (fallback?.to ?? '23:59');
+  const format =
+    typeof rule?.timeOptions?.format === 'string' && rule.timeOptions.format.trim()
+      ? rule.timeOptions.format
+      : (fallback?.format ?? 'HH:mm:ss');
+
+  return { from, to, format };
+}
+
 function normalizeSequenceOptionValue(value: unknown, fallback: number): number {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
     return fallback;
@@ -136,6 +156,17 @@ function normalizeFormulaOptions(
       ? rule.formulaOptions.expression
       : (fallback?.expression ?? '');
   return { expression };
+}
+
+function normalizeRegularExpressionOptions(
+  rule: ColumnGenerationRule | undefined,
+  fallback: { pattern?: string } | undefined,
+) {
+  const pattern =
+    typeof rule?.regularExpressionOptions?.pattern === 'string'
+      ? rule.regularExpressionOptions.pattern
+      : (fallback?.pattern ?? '');
+  return { pattern };
 }
 
 function normalizeEmailOptions(
@@ -224,6 +255,11 @@ export function buildDefaultColumnRules(
           end: dayjs().format('YYYY-MM-DD'),
           format: 'yyyy-MM-dd',
         },
+        timeOptions: {
+          from: '00:00',
+          to: '23:59',
+          format: 'HH:mm:ss',
+        },
         sequenceOptions: {
           startAt: 1,
           step: 1,
@@ -234,6 +270,9 @@ export function buildDefaultColumnRules(
         },
         formulaOptions: {
           expression: '',
+        },
+        regularExpressionOptions: {
+          pattern: '',
         },
         emailOptions: {
           domains: [],
@@ -310,6 +349,10 @@ export function sanitizeColumnRules(
             candidate,
             fallbackRules[table.name][column.name].dateTimeOptions,
           ),
+          timeOptions: normalizeTimeOptions(
+            candidate,
+            fallbackRules[table.name][column.name].timeOptions,
+          ),
           sequenceOptions: normalizeSequenceOptions(
             candidate,
             fallbackRules[table.name][column.name].sequenceOptions,
@@ -321,6 +364,10 @@ export function sanitizeColumnRules(
           formulaOptions: normalizeFormulaOptions(
             candidate,
             fallbackRules[table.name][column.name].formulaOptions,
+          ),
+          regularExpressionOptions: normalizeRegularExpressionOptions(
+            candidate,
+            fallbackRules[table.name][column.name].regularExpressionOptions,
           ),
           emailOptions: normalizeEmailOptions(
             candidate,
@@ -357,6 +404,10 @@ export function sanitizeColumnRules(
               candidate,
               fallbackRules[table.name][column.name].dateTimeOptions,
             ),
+            timeOptions: normalizeTimeOptions(
+              candidate,
+              fallbackRules[table.name][column.name].timeOptions,
+            ),
             sequenceOptions: normalizeSequenceOptions(
               candidate,
               fallbackRules[table.name][column.name].sequenceOptions,
@@ -368,6 +419,10 @@ export function sanitizeColumnRules(
             formulaOptions: normalizeFormulaOptions(
               candidate,
               fallbackRules[table.name][column.name].formulaOptions,
+            ),
+            regularExpressionOptions: normalizeRegularExpressionOptions(
+              candidate,
+              fallbackRules[table.name][column.name].regularExpressionOptions,
             ),
             emailOptions: normalizeEmailOptions(
               candidate,
@@ -397,6 +452,10 @@ export function sanitizeColumnRules(
             candidate,
             fallbackRules[table.name][column.name].dateTimeOptions,
           ),
+          timeOptions: normalizeTimeOptions(
+            candidate,
+            fallbackRules[table.name][column.name].timeOptions,
+          ),
           sequenceOptions: normalizeSequenceOptions(
             candidate,
             fallbackRules[table.name][column.name].sequenceOptions,
@@ -408,6 +467,10 @@ export function sanitizeColumnRules(
           formulaOptions: normalizeFormulaOptions(
             candidate,
             fallbackRules[table.name][column.name].formulaOptions,
+          ),
+          regularExpressionOptions: normalizeRegularExpressionOptions(
+            candidate,
+            fallbackRules[table.name][column.name].regularExpressionOptions,
           ),
           emailOptions: normalizeEmailOptions(
             candidate,
@@ -438,6 +501,10 @@ export function sanitizeColumnRules(
           candidate,
           fallbackRules[table.name][column.name].dateTimeOptions,
         ),
+        timeOptions: normalizeTimeOptions(
+          candidate,
+          fallbackRules[table.name][column.name].timeOptions,
+        ),
         sequenceOptions: normalizeSequenceOptions(
           candidate,
           fallbackRules[table.name][column.name].sequenceOptions,
@@ -449,6 +516,10 @@ export function sanitizeColumnRules(
         formulaOptions: normalizeFormulaOptions(
           candidate,
           fallbackRules[table.name][column.name].formulaOptions,
+        ),
+        regularExpressionOptions: normalizeRegularExpressionOptions(
+          candidate,
+          fallbackRules[table.name][column.name].regularExpressionOptions,
         ),
         emailOptions: normalizeEmailOptions(
           candidate,

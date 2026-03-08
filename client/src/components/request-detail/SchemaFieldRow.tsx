@@ -36,8 +36,7 @@ function applyNormalizedPasteToInput(input: HTMLInputElement, normalizedValue: s
   const currentValue = input.value;
   const prefix = currentValue.slice(0, selectionStart);
   const suffix = currentValue.slice(selectionEnd);
-  const separatorBefore =
-    prefix.trim().length > 0 && !prefix.trimEnd().endsWith(',') ? ', ' : '';
+  const separatorBefore = prefix.trim().length > 0 && !prefix.trimEnd().endsWith(',') ? ', ' : '';
   const separatorAfter =
     suffix.trim().length > 0 && !suffix.trimStart().startsWith(',') ? ', ' : '';
 
@@ -84,9 +83,12 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
   const value = stringifyRule(context.semanticTypes, rule);
   const isNumberRule = rule?.kind === 'semantic' && rule.semanticType === 'number';
   const isDateTimeRule = rule?.kind === 'semantic' && rule.semanticType === 'dateTime';
+  const isTimeRule = rule?.kind === 'semantic' && rule.semanticType === 'time';
   const isSequenceRule = rule?.kind === 'semantic' && rule.semanticType === 'sequence';
   const isDigitSequenceRule = rule?.kind === 'semantic' && rule.semanticType === 'digitSequence';
   const isFormulaRule = rule?.kind === 'semantic' && rule.semanticType === 'formula';
+  const isRegularExpressionRule =
+    rule?.kind === 'semantic' && rule.semanticType === 'regularExpression';
   const isEmailRule = rule?.kind === 'semantic' && rule.semanticType === 'email';
   const isTextRule = rule?.kind === 'semantic' && rule.semanticType === 'text';
   const numberOptions = rule?.numberOptions ?? {
@@ -99,7 +101,13 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
     end: '',
     format: 'yyyy-MM-dd',
   };
+  const timeOptions = rule?.timeOptions ?? {
+    from: '00:00',
+    to: '23:59',
+    format: 'HH:mm:ss',
+  };
   const dateTimeFormats = ['yyyy-MM-dd', 'yyyy-MM-dd HH:mm:ss', 'dd/MM/yyyy', 'MM-dd-yyyy HH:mm'];
+  const timeFormats = ['HH:mm', 'HH:mm:ss', 'hh:mm A'];
   const sequenceOptions = rule?.sequenceOptions ?? {
     startAt: 1,
     step: 1,
@@ -110,6 +118,9 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
   };
   const formulaOptions = rule?.formulaOptions ?? {
     expression: '',
+  };
+  const regularExpressionOptions = rule?.regularExpressionOptions ?? {
+    pattern: '',
   };
   const emailOptions = rule?.emailOptions ?? {
     domains: [],
@@ -136,6 +147,11 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
     'Allowed: numbers, column names, +, -, *, /, %, ().',
     'Referenced columns must be numeric.',
     'Looped dependencies will throw an error.',
+  ].join('\n');
+  const regularExpressionHelp = [
+    'Use JavaScript regex syntax.',
+    'Example: [A-Z]{3}-\\d{4}',
+    'Generated with randexp.',
   ].join('\n');
 
   return (
@@ -349,6 +365,74 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
               input: {
                 endAdornment: buildHelpAdornment(
                   <Typography variant="body2">{formulaHelp}</Typography>,
+                ),
+              },
+            }}
+          />
+        </Stack>
+      )}
+      {isTimeRule && (
+        <Stack direction="row" spacing={1}>
+          <TextField
+            size="small"
+            label="From"
+            type="time"
+            defaultValue={timeOptions.from}
+            onBlur={(event) =>
+              context.onTimeOptionChange(tableName, column.name, 'from', event.target.value)
+            }
+            sx={{ width: 150 }}
+            InputLabelProps={{ shrink: true }}
+          />
+          <TextField
+            size="small"
+            label="To"
+            type="time"
+            defaultValue={timeOptions.to}
+            onBlur={(event) =>
+              context.onTimeOptionChange(tableName, column.name, 'to', event.target.value)
+            }
+            sx={{ width: 150 }}
+            InputLabelProps={{ shrink: true }}
+          />
+          <Autocomplete
+            freeSolo
+            options={timeFormats}
+            defaultValue={timeOptions.format}
+            sx={{ minWidth: 220 }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                size="small"
+                label="Format"
+                onBlur={(event) =>
+                  context.onTimeOptionChange(tableName, column.name, 'format', event.target.value)
+                }
+              />
+            )}
+          />
+        </Stack>
+      )}
+      {isRegularExpressionRule && (
+        <Stack direction="row" spacing={1}>
+          <TextField
+            size="small"
+            label="Pattern"
+            defaultValue={regularExpressionOptions.pattern}
+            placeholder="example: [A-Z]{3}-\\d{4}"
+            onBlur={(event) =>
+              context.onRegularExpressionOptionChange(
+                tableName,
+                column.name,
+                'pattern',
+                event.target.value,
+              )
+            }
+            sx={{ minWidth: 320 }}
+            slotProps={{
+              input: {
+                endAdornment: buildHelpAdornment(
+                  <Typography variant="body2">{regularExpressionHelp}</Typography>,
                 ),
               },
             }}
