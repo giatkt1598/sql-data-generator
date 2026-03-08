@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
   Box,
-  Button,
   Card,
   CardContent,
   Dialog,
@@ -19,38 +18,27 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import SearchIcon from '@mui/icons-material/Search';
 import { useRequestDetailContext } from './RequestDetailContext';
+import type { DataTypeDefinition, DataTypeGroup } from '../../models/apiModels';
 
 type PickerItem =
-  | {
-      key: string;
-      group: 'Basic' | 'Personal';
-      title: string;
-      subtitle: string;
-      sample: string;
-      onClick: () => void;
-    }
-  | {
-      key: string;
-      group: 'Table Primary Key';
-      title: string;
-      subtitle: string;
-      sample: string;
-      onClick: () => void;
-    }
-  | {
-      key: 'customList';
-      group: 'Basic';
-      title: 'Custom List';
-      subtitle: string;
-      sample: string;
-      isCustomList: true;
-    };
+  {
+    key: string;
+    group: DataTypeGroup;
+    title: string;
+    subtitle: string;
+    sample: string;
+    onClick: () => void;
+  };
 
 const GROUPS = ['All', 'Basic', 'Personal', 'Table Primary Key'] as const;
 type GroupName = (typeof GROUPS)[number];
 
-function titleCaseSample(value: string): string {
-  return value
+function buildSample(item: DataTypeDefinition): string {
+  if (item.value === 'customList') {
+    return 'item1,item2,item3';
+  }
+
+  return item.value
     .replace(/([a-z])([A-Z])/g, '$1 $2')
     .replace(/\./g, ' / ')
     .replace(/^./, (char) => char.toUpperCase());
@@ -60,87 +48,41 @@ export function DataTypePickerDialog() {
   const context = useRequestDetailContext();
   const [selectedGroup, setSelectedGroup] = useState<GroupName>('All');
   const [searchText, setSearchText] = useState('');
-  const basicValueSet = new Set([
-    'boolean',
-    'guid',
-    'int',
-    'float',
-    'number',
-    'date',
-    'dateTime',
-    'text',
-    'url',
-    'unknown',
-  ]);
-  const personalValueSet = new Set([
-    'email',
-    'phoneNumber',
-    'address',
-    'firstName',
-    'lastName',
-    'fullName',
-    'gender',
-    'city',
-    'country',
-    'zipCode',
-    'companyName',
-    'jobTitle',
-  ]);
-  const basicOptions = useMemo(
-    () => context.semanticTypes.filter((item) => basicValueSet.has(item.value)),
-    [context.semanticTypes],
-  );
-  const personalOptions = useMemo(
-    () => context.semanticTypes.filter((item) => personalValueSet.has(item.value)),
-    [context.semanticTypes],
-  );
 
   const items = useMemo<PickerItem[]>(() => {
-    const semanticItems: PickerItem[] = [
-      ...basicOptions.map((option) => ({
-        key: option.value,
-        group: 'Basic' as const,
-        title: option.displayName,
-        subtitle: option.description,
-        sample: titleCaseSample(option.value),
-        onClick: () => context.applyRule({ kind: 'semantic', semanticType: option.value }),
-      })),
-      ...personalOptions.map((option) => ({
-        key: option.value,
-        group: 'Personal' as const,
-        title: option.displayName,
-        subtitle: option.description,
-        sample: titleCaseSample(option.value),
-        onClick: () => context.applyRule({ kind: 'semantic', semanticType: option.value }),
-      })),
-      ...context.primaryKeyOptions.map((option) => ({
-        key: option.value,
-        group: 'Table Primary Key' as const,
-        title: option.value,
-        subtitle: option.description,
-        sample: 'Reference existing primary key',
-        onClick: () => {
-          const [tableName, columnName] = option.value.split('.', 2);
-          context.applyRule({
-            kind: 'reference',
-            reference: { tableName, columnName },
-          });
-        },
-      })),
-    ];
+    const semanticItems: PickerItem[] = context.semanticTypes.map((option) => ({
+      key: option.value,
+      group: option.group,
+      title: option.displayName,
+      subtitle: option.description,
+      sample: buildSample(option),
+      onClick: () => {
+        if (option.value === 'customList') {
+          context.applyCustomListRule();
+          return;
+        }
 
-    return [
-      ...semanticItems,
-      {
-        key: 'customList',
-        group: 'Basic',
-        title: 'Custom List',
-        subtitle: 'Use this type, then edit values directly in the Schemas grid.',
-        sample: 'item 1, item 2, item 3',
-        isCustomList: true,
+        context.applyRule({ kind: 'semantic', semanticType: option.value });
       },
-    ];
-  }, [basicOptions, context, personalOptions]);
+    }));
+
+    const primaryKeyItems: PickerItem[] = context.primaryKeyOptions.map((option) => ({
+      key: option.value,
+      group: 'Table Primary Key',
+      title: option.value,
+      subtitle: option.description,
+      sample: 'Reference existing primary key',
+      onClick: () => {
+        const [tableName, columnName] = option.value.split('.', 2);
+        context.applyRule({
+          kind: 'reference',
+          reference: { tableName, columnName },
+        });
+      },
+    }));
+
+    return [...semanticItems, ...primaryKeyItems];
+  }, [context]);
 
   const filteredItems = useMemo(() => {
     const keyword = searchText.trim().toLowerCase();
@@ -308,35 +250,6 @@ export function DataTypePickerDialog() {
               }}
             >
               {filteredItems.map((item) => {
-                if ('isCustomList' in item) {
-                  return (
-                    <Card
-                      key={item.key}
-                      variant="outlined"
-                      sx={{
-                        backgroundColor: '#454545',
-                        borderColor: 'rgba(255,255,255,0.08)',
-                        color: '#f5f5f5',
-                      }}
-                    >
-                      <CardContent sx={{ p: 2 }}>
-                        <Typography sx={{ fontSize: 28, fontWeight: 800, lineHeight: 1.1, mb: 1 }}>
-                          {item.title}
-                        </Typography>
-                        <Typography sx={{ color: '#c7c7c7', fontSize: 14, mb: 0.75 }}>
-                          {item.subtitle}
-                        </Typography>
-                        <Typography sx={{ color: '#9e9e9e', fontSize: 14, mb: 1.5 }}>
-                          {item.sample}
-                        </Typography>
-                        <Button variant="contained" onClick={context.applyCustomListRule}>
-                          Use Custom List
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  );
-                }
-
                 return (
                   <Card
                     key={item.key}

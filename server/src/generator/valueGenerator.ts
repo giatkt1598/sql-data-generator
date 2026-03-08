@@ -411,13 +411,14 @@ function generateRowsForTable(
         row[column.name] = referenceValue;
         continue;
       }
-      if (hasForeignKey && column.nullable) {
-        row[column.name] = null;
-        continue;
-      }
 
       if (rule.kind === 'customList') {
         row[column.name] = generateCustomListValue(rule.customValues, rowIndex);
+        continue;
+      }
+
+      if (hasForeignKey && column.nullable) {
+        row[column.name] = null;
         continue;
       }
 

@@ -44,7 +44,7 @@ export function SchemasAccordion() {
       nextBlankDrafts[key] = String(rule?.blankPercentage ?? 0);
       nextCustomListDrafts[key] =
         rule?.kind === 'customList' ? (rule.customValues ?? []).join(', ') : '';
-      nextFieldNameDrafts[key] = columnName;
+      nextFieldNameDrafts[key] = rule?.fieldName ?? columnName;
     }
 
     setBlankDrafts(nextBlankDrafts);
@@ -147,10 +147,14 @@ export function SchemasAccordion() {
                                   fullWidth
                                   defaultValue={fieldNameText}
                                   onBlur={(event) =>
-                                    setFieldNameDrafts((prev) => ({
-                                      ...prev,
-                                      [fieldKey]: event.target.value.trim() || column.name,
-                                    }))
+                                    {
+                                      const nextValue = event.target.value.trim() || column.name;
+                                      setFieldNameDrafts((prev) => ({
+                                        ...prev,
+                                        [fieldKey]: nextValue,
+                                      }));
+                                      context.onFieldNameChange(table.name, column.name, nextValue);
+                                    }
                                   }
                                 />
                               </Box>

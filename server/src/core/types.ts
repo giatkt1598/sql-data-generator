@@ -24,6 +24,10 @@ export type SemanticDataType =
   | 'number'
   | 'text';
 
+export type DataTypeCatalogValue = SemanticDataType | 'customList';
+
+export type DataTypeGroup = 'Basic' | 'Personal' | 'Table Primary Key';
+
 export interface ColumnSchema {
   name: string;
   dbType: string;
@@ -69,6 +73,7 @@ export interface ColumnReference {
 
 export interface ColumnGenerationRule {
   kind: 'semantic' | 'reference' | 'customList';
+  fieldName?: string;
   semanticType?: SemanticDataType;
   reference?: ColumnReference;
   customValues?: Array<string | number | boolean>;
@@ -78,9 +83,10 @@ export interface ColumnGenerationRule {
 export type TableColumnRules = Record<string, Record<string, ColumnGenerationRule>>;
 
 export interface DataTypeDefinition {
-  value: SemanticDataType;
+  value: DataTypeCatalogValue;
   displayName: string;
   description: string;
+  group: DataTypeGroup;
 }
 
 export interface SchemaRelationshipNode {

@@ -1,5 +1,6 @@
 import type {
   ColumnGenerationRule,
+  DataTypeCatalogValue,
   DataTypeDefinition,
   SemanticDataType,
 } from '../models/apiModels';
@@ -20,7 +21,7 @@ export function stringifyRule(
   return semanticTypes.find((x) => x.value === rule.semanticType)?.displayName ?? 'unknown';
 }
 
-export function parseRule(value: string): ColumnGenerationRule {
+export function parseRule(value: DataTypeCatalogValue | string): ColumnGenerationRule {
   if (value === 'customList') {
     return { kind: 'customList', customValues: [] };
   }

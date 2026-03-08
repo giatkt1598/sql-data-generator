@@ -29,6 +29,22 @@ function normalizeBlankPercentage(value: unknown, fallback = 0): number {
   return value;
 }
 
+function normalizeFieldName(value: unknown, fallback: string): string {
+  if (typeof value !== 'string') {
+    return fallback;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : fallback;
+}
+
+function readCandidateFieldName(rule: ColumnGenerationRule | undefined): unknown {
+  if (!rule) {
+    return undefined;
+  }
+  const legacyRule = rule as ColumnGenerationRule & { field_name?: unknown };
+  return legacyRule.fieldName ?? legacyRule.field_name;
+}
+
 export function buildDefaultColumnRules(
   tables: TableSchema[],
   classification: AiClassificationResult,
@@ -46,6 +62,7 @@ export function buildDefaultColumnRules(
         if (tableMap.has(fk.referencedTable)) {
           result[table.name][column.name] = {
             kind: 'reference',
+            fieldName: column.name,
             reference: {
               tableName: fk.referencedTable,
               columnName: refColumn,
@@ -59,6 +76,7 @@ export function buildDefaultColumnRules(
       const fromAi = classification.tables[table.name]?.columns[column.name]?.semanticType;
       result[table.name][column.name] = {
         kind: 'semantic',
+        fieldName: column.name,
         semanticType: fromAi ?? fallbackSemantic(column.dbType),
         blankPercentage: 0,
       };
@@ -85,11 +103,7 @@ function isReferenceRule(rule: ColumnGenerationRule): boolean {
 }
 
 function isCustomListRule(rule: ColumnGenerationRule): boolean {
-  return (
-    rule.kind === 'customList' &&
-    Array.isArray(rule.customValues) &&
-    rule.customValues.length > 0
-  );
+  return rule.kind === 'customList' && Array.isArray(rule.customValues);
 }
 
 export function sanitizeColumnRules(
@@ -115,6 +129,7 @@ export function sanitizeColumnRules(
       if (candidate && isSemanticRule(candidate)) {
         merged[table.name][column.name] = {
           ...candidate,
+          fieldName: normalizeFieldName(readCandidateFieldName(candidate), column.name),
           semanticType: candidate.semanticType ?? fallbackSemantic(column.dbType),
           blankPercentage: normalizeBlankPercentage(
             candidate.blankPercentage,
@@ -134,6 +149,7 @@ export function sanitizeColumnRules(
         if (hasTable && hasColumn) {
           merged[table.name][column.name] = {
             ...candidate,
+            fieldName: normalizeFieldName(readCandidateFieldName(candidate), column.name),
             blankPercentage: normalizeBlankPercentage(
               candidate.blankPercentage,
               fallbackRules[table.name][column.name].blankPercentage ?? 0,
@@ -145,6 +161,7 @@ export function sanitizeColumnRules(
       if (candidate && isCustomListRule(candidate)) {
         merged[table.name][column.name] = {
           ...candidate,
+          fieldName: normalizeFieldName(readCandidateFieldName(candidate), column.name),
           blankPercentage: normalizeBlankPercentage(
             candidate.blankPercentage,
             fallbackRules[table.name][column.name].blankPercentage ?? 0,
@@ -154,8 +171,12 @@ export function sanitizeColumnRules(
       }
       merged[table.name][column.name] = {
         ...fallbackRules[table.name][column.name],
+        fieldName: normalizeFieldName(
+          readCandidateFieldName(candidate) ?? fallbackRules[table.name][column.name].fieldName,
+          column.name,
+        ),
         blankPercentage: normalizeBlankPercentage(
-          fallbackRules[table.name][column.name].blankPercentage,
+          candidate?.blankPercentage ?? fallbackRules[table.name][column.name].blankPercentage,
           0,
         ),
       };

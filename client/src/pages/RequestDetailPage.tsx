@@ -136,12 +136,24 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
       .join('\n');
   }, [relationshipEstimate]);
 
+  async function flushPendingInput(): Promise<void> {
+    const activeElement = document.activeElement;
+    if (activeElement instanceof HTMLElement) {
+      activeElement.blur();
+    }
+
+    await new Promise<void>((resolve) => {
+      window.setTimeout(() => resolve(), 0);
+    });
+  }
+
   async function saveDetail() {
     if (!projectId || !requestId) {
       return;
     }
     try {
       props.setLoading(true);
+      await flushPendingInput();
       const updated = await updateGenerationRequest(requestId, {
         projectId,
         name: form.name,
@@ -182,6 +194,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     }
     try {
       props.setLoading(true);
+      await flushPendingInput();
       const model = await getColumnDesignerModel({
         schemaSql: form.schemaSql,
         classificationJson: form.classificationJson,
@@ -220,6 +233,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
   async function handlePreview() {
     try {
       props.setLoading(true);
+      await flushPendingInput();
       const script = await generateSqlScript({
         schemaSql: form.schemaSql,
         classificationJson: form.classificationJson,
@@ -239,6 +253,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
   async function handleGenerateSql() {
     try {
       props.setLoading(true);
+      await flushPendingInput();
       const script = await generateSqlScript({
         schemaSql: form.schemaSql,
         classificationJson: form.classificationJson,
@@ -304,6 +319,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     const current = columnRules[pickerTarget.tableName]?.[pickerTarget.columnName];
     onRuleChange(pickerTarget.tableName, pickerTarget.columnName, {
       ...rule,
+      fieldName: current?.fieldName ?? pickerTarget.columnName,
       blankPercentage: current?.blankPercentage ?? 0,
     });
     setTypePickerOpen(false);
@@ -335,6 +351,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     });
     onRuleChange(pickerTarget.tableName, pickerTarget.columnName, {
       kind: 'customList',
+      fieldName: columnRules[pickerTarget.tableName]?.[pickerTarget.columnName]?.fieldName ?? pickerTarget.columnName,
       customValues: parsedValues,
       blankPercentage:
         columnRules[pickerTarget.tableName]?.[pickerTarget.columnName]?.blankPercentage ?? 0,
@@ -353,7 +370,23 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     };
     onRuleChange(tableName, columnName, {
       ...fallbackRule,
+      fieldName: fallbackRule.fieldName ?? columnName,
       blankPercentage,
+    });
+  }
+
+  function onFieldNameChange(tableName: string, columnName: string, value: string) {
+    const current = columnRules[tableName]?.[columnName];
+    const nextFieldName = value.trim() || columnName;
+    const fallbackRule: TableColumnRules[string][string] = current ?? {
+      kind: 'semantic',
+      semanticType: 'unknown',
+      fieldName: columnName,
+      blankPercentage: 0,
+    };
+    onRuleChange(tableName, columnName, {
+      ...fallbackRule,
+      fieldName: nextFieldName,
     });
   }
 
@@ -381,6 +414,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
 
     onRuleChange(tableName, columnName, {
       kind: 'customList',
+      fieldName: columnRules[tableName]?.[columnName]?.fieldName ?? columnName,
       customValues: parsedValues,
       blankPercentage: columnRules[tableName]?.[columnName]?.blankPercentage ?? 0,
     });
@@ -435,6 +469,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     relationshipEstimateTooltip,
     relationshipEstimateError: relationshipEstimate?.error,
     openTypePicker,
+    onFieldNameChange,
     onBlankPercentageChange,
     onCustomListValueChange,
     applyRule,

@@ -41,6 +41,7 @@ export interface RequestDetailContextValue {
   relationshipEstimateTooltip?: string;
   relationshipEstimateError?: string;
   openTypePicker: (tableName: string, columnName: string) => void;
+  onFieldNameChange: (tableName: string, columnName: string, value: string) => void;
   onBlankPercentageChange: (tableName: string, columnName: string, value: string) => void;
   onCustomListValueChange: (tableName: string, columnName: string, value: string) => void;
   applyRule: (rule: TableColumnRules[string][string]) => void;

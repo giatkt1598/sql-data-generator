@@ -30,8 +30,13 @@ export type SemanticDataType =
   | 'number'
   | 'text';
 
+export type DataTypeCatalogValue = SemanticDataType | 'customList';
+
+export type DataTypeGroup = 'Basic' | 'Personal' | 'Table Primary Key';
+
 export interface ColumnGenerationRule {
   kind: 'semantic' | 'reference' | 'customList';
+  fieldName?: string;
   semanticType?: SemanticDataType;
   reference?: {
     tableName: string;
@@ -74,7 +79,8 @@ export interface PreviewResult {
 }
 
 export interface DataTypeDefinition {
-  value: SemanticDataType;
+  value: DataTypeCatalogValue;
   displayName: string;
   description: string;
+  group: DataTypeGroup;
 }
