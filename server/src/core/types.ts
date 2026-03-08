@@ -1,0 +1,69 @@
+export type SqlDialect = 'postgres' | 'mysql' | 'sqlserver' | 'generic';
+
+export type SemanticDataType =
+  | 'unknown'
+  | 'id'
+  | 'fullName'
+  | 'firstName'
+  | 'lastName'
+  | 'email'
+  | 'phoneNumber'
+  | 'address'
+  | 'city'
+  | 'country'
+  | 'zipCode'
+  | 'companyName'
+  | 'jobTitle'
+  | 'url'
+  | 'date'
+  | 'dateTime'
+  | 'boolean'
+  | 'number'
+  | 'text';
+
+export interface ColumnSchema {
+  name: string;
+  dbType: string;
+  nullable: boolean;
+  isPrimaryKey: boolean;
+}
+
+export interface ForeignKeySchema {
+  columns: string[];
+  referencedTable: string;
+  referencedColumns: string[];
+}
+
+export interface TableSchema {
+  name: string;
+  columns: ColumnSchema[];
+  primaryKeyColumns: string[];
+  foreignKeys: ForeignKeySchema[];
+}
+
+export interface DatabaseSchema {
+  tables: TableSchema[];
+}
+
+export interface ColumnClassification {
+  semanticType: SemanticDataType;
+  reason?: string;
+}
+
+export interface TableClassification {
+  columns: Record<string, ColumnClassification>;
+}
+
+export interface AiClassificationResult {
+  version: '1';
+  tables: Record<string, TableClassification>;
+}
+
+export interface GenerationOptions {
+  rowsPerTable: number;
+}
+
+export interface GeneratedTableRows {
+  tableName: string;
+  rows: Record<string, string | number | boolean | null>[];
+}

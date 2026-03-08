@@ -5,6 +5,9 @@
   "main": "dist/index.js",
   "scripts": {
     "start": "ts-node src/index.ts",
+    "cli": "ts-node src/cli.ts",
+    "build:prompt": "ts-node src/cli.ts build-prompt",
+    "generate:data": "ts-node src/cli.ts generate",
     "build": "npm run lint && tsc",
     "lint": "eslint . --ext .ts --fix",
     "format": "prettier --write .",

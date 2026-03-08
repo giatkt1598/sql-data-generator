@@ -1,0 +1,73 @@
+{
+    "version": "1",
+    "tables": {
+        "users": {
+            "columns": {
+                "user_id": {
+                    "semanticType": "id",
+                    "reason": "Primary key identifier"
+                },
+                "role_id": {
+                    "semanticType": "id",
+                    "reason": "Foreign key identifier"
+                },
+                "email": {
+                    "semanticType": "email",
+                    "reason": "Standard electronic mail format"
+                },
+                "password_hash": {
+                    "semanticType": "text",
+                    "reason": "Encrypted string representation"
+                },
+                "full_name": {
+                    "semanticType": "fullName",
+                    "reason": "Combined first and last name"
+                },
+                "phone": {
+                    "semanticType": "phoneNumber",
+                    "reason": "Telephone contact information"
+                },
+                "created_at": {
+                    "semanticType": "dateTime",
+                    "reason": "Timestamp of record creation"
+                }
+            }
+        },
+        "carts": {
+            "columns": {
+                "cart_id": {
+                    "semanticType": "id",
+                    "reason": "Primary key identifier"
+                },
+                "user_id": {
+                    "semanticType": "id",
+                    "reason": "Foreign key reference to users"
+                },
+                "created_at": {
+                    "semanticType": "dateTime",
+                    "reason": "Timestamp of record creation"
+                }
+            }
+        },
+        "cart_items": {
+            "columns": {
+                "cart_item_id": {
+                    "semanticType": "id",
+                    "reason": "Primary key identifier"
+                },
+                "cart_id": {
+                    "semanticType": "id",
+                    "reason": "Foreign key reference to carts"
+                },
+                "variant_id": {
+                    "semanticType": "id",
+                    "reason": "Foreign key reference to product variants"
+                },
+                "quantity": {
+                    "semanticType": "number",
+                    "reason": "Count of items in cart"
+                }
+            }
+        }
+    }
+}
