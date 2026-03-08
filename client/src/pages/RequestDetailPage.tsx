@@ -17,6 +17,7 @@ import type {
 } from '../models/apiModels';
 import { estimateRelationshipRows } from '../utilities/relationshipEstimate';
 import { buildDefaultSchemaRelationshipsJson } from '../utilities/schemaRelationships';
+import { getErrorMessage } from '../utilities/errorUtils';
 import { AnalyzeConfirmDialog } from '../components/request-detail/AnalyzeConfirmDialog';
 import { DataTypePickerDialog } from '../components/request-detail/DataTypePickerDialog';
 import { GeneralAccordion } from '../components/request-detail/GeneralAccordion';
@@ -176,7 +177,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
           setDesignerModel(null);
         }
       } catch (exception) {
-        props.setError('Failed to load request detail.');
+        props.setError(getErrorMessage(exception, 'Failed to load request detail.'));
         console.error(exception);
       } finally {
         props.setLoading(false);
@@ -250,7 +251,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
       setRequest(updated);
       props.setSnack('Request detail saved.');
     } catch (exception) {
-      props.setError('Failed to save request detail.');
+      props.setError(getErrorMessage(exception, 'Failed to save request detail.'));
       console.error(exception);
     } finally {
       props.setLoading(false);
@@ -268,7 +269,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         'Prompt copied to clipboard. Please paste it into your AI chatbot and paste the result into "AI Classification JSON" below.',
       );
     } catch (exception) {
-      props.setError('Failed to build prompt.');
+      props.setError(getErrorMessage(exception, 'Failed to build prompt.'));
       console.error(exception);
     }
   }
@@ -308,7 +309,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
       setSchemasExpanded(true);
       props.setSnack('Schemas and schema relationships were overwritten.');
     } catch (exception) {
-      props.setError('Failed to analyze schemas.');
+      props.setError(getErrorMessage(exception, 'Failed to analyze schemas.'));
       console.error(exception);
     } finally {
       props.setLoading(false);
@@ -328,7 +329,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
       setPreviewText(script);
       setPreviewOpen(true);
     } catch (exception) {
-      props.setError('Failed to preview SQL.');
+      props.setError(getErrorMessage(exception, 'Failed to preview SQL.'));
       console.error(exception);
     } finally {
       props.setLoading(false);
@@ -354,7 +355,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
       URL.revokeObjectURL(url);
       props.setSnack('SQL generated and downloaded.');
     } catch (exception) {
-      props.setError('Failed to generate SQL.');
+      props.setError(getErrorMessage(exception, 'Failed to generate SQL.'));
       console.error(exception);
     } finally {
       props.setLoading(false);
@@ -366,7 +367,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
       await navigator.clipboard.writeText(previewText);
       props.setSnack('Preview content copied to clipboard.');
     } catch (exception) {
-      props.setError('Failed to copy preview content.');
+      props.setError(getErrorMessage(exception, 'Failed to copy preview content.'));
       console.error(exception);
     }
   }

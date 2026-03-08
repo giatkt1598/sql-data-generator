@@ -24,6 +24,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import { useNavigate } from 'react-router-dom';
 import { createProject, deleteProject, updateProject } from '../apis';
 import type { ProjectEntity } from '../models/apiModels';
+import { getErrorMessage } from '../utilities/errorUtils';
 import type { ProjectsPageProps } from './pageProps';
 
 interface ProjectForm {
@@ -63,7 +64,7 @@ export function ProjectsPage(props: ProjectsPageProps) {
       setDialogOpen(false);
       props.setSnack('Project saved.');
     } catch (exception) {
-      props.setError('Failed to save project.');
+      props.setError(getErrorMessage(exception, 'Failed to save project.'));
       console.error(exception);
     } finally {
       props.setLoading(false);
@@ -77,7 +78,7 @@ export function ProjectsPage(props: ProjectsPageProps) {
       await props.reloadProjects();
       props.setSnack('Project deleted.');
     } catch (exception) {
-      props.setError('Failed to delete project.');
+      props.setError(getErrorMessage(exception, 'Failed to delete project.'));
       console.error(exception);
     } finally {
       props.setLoading(false);

@@ -30,6 +30,7 @@ import {
   updateGenerationRequest,
 } from '../apis';
 import type { GenerationRequestEntity } from '../models/apiModels';
+import { getErrorMessage } from '../utilities/errorUtils';
 import type { RequestsPageProps } from './pageProps';
 
 interface RequestDialogForm {
@@ -107,7 +108,7 @@ export function RequestsPage(props: RequestsPageProps) {
       setDialogOpen(false);
       props.setSnack('Generation request saved.');
     } catch (exception) {
-      props.setError('Failed to save generation request.');
+      props.setError(getErrorMessage(exception, 'Failed to save generation request.'));
       console.error(exception);
     } finally {
       props.setLoading(false);
@@ -121,7 +122,7 @@ export function RequestsPage(props: RequestsPageProps) {
       await reloadRequests();
       props.setSnack('Generation request deleted.');
     } catch (exception) {
-      props.setError('Failed to delete generation request.');
+      props.setError(getErrorMessage(exception, 'Failed to delete generation request.'));
       console.error(exception);
     } finally {
       props.setLoading(false);

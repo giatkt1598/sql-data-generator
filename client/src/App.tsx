@@ -7,6 +7,7 @@ import type { DataTypeDefinition, ProjectEntity } from './models/apiModels';
 import { ProjectsPage } from './pages/ProjectsPage';
 import { RequestDetailPage } from './pages/RequestDetailPage';
 import { RequestsPage } from './pages/RequestsPage';
+import { getErrorMessage } from './utilities/errorUtils';
 
 function App() {
   const [projects, setProjects] = useState<ProjectEntity[]>([]);
@@ -28,7 +29,7 @@ function App() {
         setProjects(projectData);
         setSemanticTypes(semanticData);
       } catch (exception) {
-        setError('Failed to load initial data.');
+        setError(getErrorMessage(exception, 'Failed to load initial data.'));
         console.error(exception);
       } finally {
         setLoading(false);
