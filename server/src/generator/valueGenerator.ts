@@ -41,18 +41,141 @@ const STOCK_INDUSTRIES = [
   'Oil & Gas Production',
   'Software',
   'Biotechnology',
+  'Telecommunications',
+  'Consumer Electronics',
+  'Renewable Energy',
+  'E-Commerce',
+  'Medical Devices',
+  'Aerospace',
+  'Automotive Manufacturing',
+  'Cybersecurity',
 ];
-const STOCK_MARKETS = ['NYSE', 'NASDAQ', 'AMEX', 'LSE', 'HOSE'];
-const STOCK_SECTORS = ['Technology', 'Capital Goods', 'Finance', 'Energy', 'Healthcare'];
+const STOCK_MARKETS = ['NYSE', 'NASDAQ', 'AMEX', 'LSE', 'HOSE', 'HNX', 'NYSE Arca', 'TSX'];
+const STOCK_SECTORS = [
+  'Technology',
+  'Capital Goods',
+  'Finance',
+  'Energy',
+  'Healthcare',
+  'Consumer Services',
+  'Utilities',
+  'Transportation',
+  'Materials',
+];
 const PRODUCT_SUBCATEGORIES = [
   'Plant-Based Beverages',
   'Gourmet Snacks',
   'Home Fragrance & Accessories',
   'Outdoor',
   'Clothing - Outerwear',
+  'Wireless Earbuds',
+  'Smart Home Security',
+  'Travel Accessories',
+  'Desk Organization',
+  'Fitness Recovery',
+  'Pet Wellness',
+  'Kitchen Storage',
+  'Laptop Sleeves',
 ];
-const MIME_TYPES = ['text/plain', 'image/png', 'application/pdf', 'application/json', 'text/csv'];
-const TOP_LEVEL_DOMAINS = ['com', 'org', 'net', 'edu', 'gov'];
+const GROCERY_PRODUCTS = [
+  'Tomato - Green',
+  'Spinach - Baby',
+  'Avocado',
+  'Milk - Whole',
+  'Eggs - Free Range',
+  'Banana',
+  'Orange Juice - No Pulp',
+  'Greek Yogurt - Plain',
+  'Chicken Breast - Boneless',
+  'Rice - Jasmine',
+  'Bread - Whole Wheat',
+  'Cheddar Cheese - Mild',
+  'Broccoli Crowns',
+  'Salmon Fillet',
+  'Coffee Beans - Medium Roast',
+  'Pasta - Penne',
+  'Olive Oil - Extra Virgin',
+];
+const MOBILE_DEVICE_BRANDS = [
+  'Apple',
+  'Samsung',
+  'Sony',
+  'Google',
+  'Xiaomi',
+  'OnePlus',
+  'Oppo',
+  'Vivo',
+  'Motorola',
+  'Nokia',
+];
+const MOBILE_DEVICE_MODELS = [
+  'iPhone 6',
+  'Galaxy S5',
+  'Xperia Z3',
+  'Pixel 8',
+  'Redmi Note 13',
+  'iPhone 15 Pro',
+  'Galaxy S24 Ultra',
+  'OnePlus 12',
+  'Moto G Power',
+  'Nokia X30',
+];
+const MOBILE_DEVICE_OPERATING_SYSTEMS = ['Android', 'iOS', 'HarmonyOS'];
+const MOVIE_GENRES = [
+  'Action | Suspense',
+  'Thriller',
+  'Comedy',
+  'Drama',
+  'Sci-Fi',
+  'Romance',
+  'Adventure',
+  'Fantasy',
+  'Crime',
+  'Animation',
+];
+const MOVIE_TITLES = [
+  'Goodfellas',
+  'Titanic',
+  'Silverado',
+  'The Matrix',
+  'Inception',
+  'Interstellar',
+  'The Dark Knight',
+  'Parasite',
+  'Spirited Away',
+  'Whiplash',
+];
+const MIME_TYPES = [
+  'text/plain',
+  'image/png',
+  'application/pdf',
+  'application/json',
+  'text/csv',
+  'image/jpeg',
+  'application/zip',
+  'audio/mpeg',
+  'video/mp4',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+];
+const TOP_LEVEL_DOMAINS = ['com', 'org', 'net', 'edu', 'gov', 'io', 'app', 'dev', 'co', 'ai'];
+const STREET_SUFFIXES = [
+  'Street',
+  'Drive',
+  'Road',
+  'Lane',
+  'Avenue',
+  'Boulevard',
+  'Terrace',
+  'Court',
+  'Circle',
+  'Place',
+  'Way',
+  'Parkway',
+  'Trail',
+  'Crescent',
+  'Highway',
+  'Square',
+];
 
 function buildHash(algorithm: 'md5' | 'sha1' | 'sha256', value: string): string {
   return createHash(algorithm).update(value).digest('hex');
@@ -94,10 +217,7 @@ function inferFallbackSemanticType(column: ColumnSchema): SemanticDataType {
 }
 
 function toDayjsFormat(format: string): string {
-  return format
-    .replace(/yyyy/g, 'YYYY')
-    .replace(/dd/g, 'DD')
-    .replace(/\ba\b/g, 'A');
+  return format.replace(/yyyy/g, 'YYYY').replace(/dd/g, 'DD').replace(/\ba\b/g, 'A');
 }
 
 function parseClockTime(value: string, fallback: string): dayjs.Dayjs {
@@ -533,10 +653,24 @@ function generateScalarValue(
       return faker.commerce.department();
     case 'productDescription':
       return faker.commerce.productDescription();
+    case 'productGrocery':
+      return faker.helpers.arrayElement(GROCERY_PRODUCTS);
     case 'productName':
       return faker.commerce.productName();
     case 'productSubcategory':
       return faker.helpers.arrayElement(PRODUCT_SUBCATEGORIES);
+    case 'mobileDeviceBrand':
+      return faker.helpers.arrayElement(MOBILE_DEVICE_BRANDS);
+    case 'mobileDeviceModel':
+      return faker.helpers.arrayElement(MOBILE_DEVICE_MODELS);
+    case 'mobileDeviceOs':
+      return faker.helpers.arrayElement(MOBILE_DEVICE_OPERATING_SYSTEMS);
+    case 'mobileDeviceReleaseDate':
+      return String(faker.number.int({ min: 2007, max: dayjs().year() }));
+    case 'movieGenres':
+      return faker.helpers.arrayElement(MOVIE_GENRES);
+    case 'movieTitle':
+      return faker.helpers.arrayElement(MOVIE_TITLES);
     case 'color':
       return faker.color.human();
     case 'hexColor':
@@ -604,10 +738,28 @@ function generateScalarValue(
       return faker.helpers.replaceSymbols(`09${salt.slice(0, 4)}####`);
     case 'address':
       return faker.location.streetAddress();
+    case 'streetAddress':
+      return faker.location.streetAddress();
+    case 'streetName':
+      return faker.location.street();
+    case 'streetNumber':
+      return faker.location.buildingNumber();
+    case 'streetSuffix':
+      return faker.helpers.arrayElement(STREET_SUFFIXES);
     case 'city':
       return faker.location.city();
     case 'country':
       return faker.location.country();
+    case 'countryCode':
+      return faker.location.countryCode();
+    case 'latitude':
+      return faker.location.latitude();
+    case 'longitude':
+      return faker.location.longitude();
+    case 'state':
+      return faker.location.state();
+    case 'stateAbbrev':
+      return faker.location.state({ abbreviated: true });
     case 'zipCode':
       return faker.location.zipCode();
     case 'companyName':
@@ -630,8 +782,7 @@ function generateScalarValue(
       const toTime = parseClockTime(rule.timeOptions?.to ?? '', '23:59');
       const safeToTime = toTime.isBefore(fromTime) ? fromTime : toTime;
       const diffSeconds = safeToTime.diff(fromTime, 'second');
-      const offsetSeconds =
-        diffSeconds <= 0 ? 0 : faker.number.int({ min: 0, max: diffSeconds });
+      const offsetSeconds = diffSeconds <= 0 ? 0 : faker.number.int({ min: 0, max: diffSeconds });
       const timeFormat = rule.timeOptions?.format?.trim() || 'HH:mm:ss';
       return fromTime.add(offsetSeconds, 'second').format(toDayjsFormat(timeFormat));
     }
