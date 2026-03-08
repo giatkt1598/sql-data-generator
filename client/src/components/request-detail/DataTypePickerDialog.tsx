@@ -20,7 +20,6 @@ import SearchIcon from '@mui/icons-material/Search';
 import { useRequestDetailContext } from './RequestDetailContext';
 import type {
   DataTypeCatalogValue,
-  DataTypeDefinition,
   DataTypeGroup,
   SemanticDataType,
 } from '../../models/apiModels';
@@ -32,8 +31,7 @@ type PickerItem =
       value: DataTypeCatalogValue;
       group: DataTypeGroup;
       title: string;
-      subtitle: string;
-      sample: string;
+      description: string;
     }
   | {
       key: string;
@@ -41,23 +39,11 @@ type PickerItem =
       value: string;
       group: 'Table Primary Key';
       title: string;
-      subtitle: string;
-      sample: string;
+      description: string;
     };
 
 const GROUPS = ['All', 'Basic', 'Personal', 'Table Primary Key'] as const;
 type GroupName = (typeof GROUPS)[number];
-
-function buildSample(item: DataTypeDefinition): string {
-  if (item.value === 'customList') {
-    return 'item1,item2,item3';
-  }
-
-  return item.value
-    .replace(/([a-z])([A-Z])/g, '$1 $2')
-    .replace(/\./g, ' / ')
-    .replace(/^./, (char) => char.toUpperCase());
-}
 
 const TypePickerCard = memo(function TypePickerCard(props: {
   item: PickerItem;
@@ -93,13 +79,12 @@ const TypePickerCard = memo(function TypePickerCard(props: {
             fontSize: 13,
             fontStyle: 'italic',
             lineHeight: 1.35,
-            minHeight: 36,
-            mb: 0.5,
+            whiteSpace: 'pre-line',
+            minHeight: 56,
           }}
         >
-          {item.subtitle}
+          {item.description}
         </Typography>
-        <Typography sx={{ color: '#64748b', fontSize: 13, lineHeight: 1.5 }}>{item.sample}</Typography>
       </CardContent>
     </Card>
   );
@@ -125,8 +110,7 @@ export const DataTypePickerDialog = memo(function DataTypePickerDialog() {
       value: option.value,
       group: option.group,
       title: option.displayName,
-      subtitle: option.description,
-      sample: buildSample(option),
+      description: option.description,
     }));
 
     const primaryKeyItems: PickerItem[] = primaryKeyOptions.map((option) => ({
@@ -135,8 +119,7 @@ export const DataTypePickerDialog = memo(function DataTypePickerDialog() {
       value: option.value,
       group: 'Table Primary Key',
       title: option.value,
-      subtitle: option.description,
-      sample: 'Reference existing primary key',
+      description: `${option.description}\nExample: ${option.value}`,
     }));
 
     return [...semanticItems, ...primaryKeyItems];
@@ -152,7 +135,7 @@ export const DataTypePickerDialog = memo(function DataTypePickerDialog() {
       if (!keyword) {
         return true;
       }
-      return [item.title, item.subtitle, item.sample, item.group]
+      return [item.title, item.description, item.group]
         .join(' ')
         .toLowerCase()
         .includes(keyword);
