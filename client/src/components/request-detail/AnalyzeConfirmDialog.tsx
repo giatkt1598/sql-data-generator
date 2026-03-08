@@ -1,15 +1,16 @@
 import { Button, Dialog, DialogContent, DialogTitle, Stack, Typography } from '@mui/material';
+import { useRequestDetailContext } from './RequestDetailContext';
 
-interface AnalyzeConfirmDialogProps {
-  open: boolean;
-  loading: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-}
+export function AnalyzeConfirmDialog() {
+  const context = useRequestDetailContext();
 
-export function AnalyzeConfirmDialog(props: AnalyzeConfirmDialogProps) {
   return (
-    <Dialog open={props.open} onClose={props.onClose} fullWidth maxWidth="sm">
+    <Dialog
+      open={context.analyzeConfirmOpen}
+      onClose={() => context.setAnalyzeConfirmOpen(false)}
+      fullWidth
+      maxWidth="sm"
+    >
       <DialogTitle>Rebuild Schemas?</DialogTitle>
       <DialogContent>
         <Typography>
@@ -17,8 +18,15 @@ export function AnalyzeConfirmDialog(props: AnalyzeConfirmDialogProps) {
         </Typography>
       </DialogContent>
       <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ px: 3, pb: 3 }}>
-        <Button onClick={props.onClose}>Cancel</Button>
-        <Button variant="contained" onClick={props.onConfirm} disabled={props.loading}>
+        <Button onClick={() => context.setAnalyzeConfirmOpen(false)}>Cancel</Button>
+        <Button
+          variant="contained"
+          onClick={() => {
+            context.setAnalyzeConfirmOpen(false);
+            void context.analyzeAndBuildSchemas();
+          }}
+          disabled={context.loading}
+        >
           Continue
         </Button>
       </Stack>

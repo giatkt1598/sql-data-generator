@@ -11,44 +11,40 @@ import {
   Typography,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import type { ColumnDesignerModel, TableColumnRules } from '../../models/apiModels';
 import { stringifyRule } from '../../utilities/ruleUtils';
 import { tableAnchorId } from '../../utilities/schemaAnchor';
+import { useRequestDetailContext } from './RequestDetailContext';
 
-interface SchemasAccordionProps {
-  expanded: boolean;
-  designerModel: ColumnDesignerModel | null;
-  columnRules: TableColumnRules;
-  onExpandedChange: (expanded: boolean) => void;
-  onOpenTypePicker: (tableName: string, columnName: string) => void;
-  onBlankPercentageChange: (tableName: string, columnName: string, value: string) => void;
-}
+export function SchemasAccordion() {
+  const context = useRequestDetailContext();
 
-export function SchemasAccordion(props: SchemasAccordionProps) {
   return (
-    <Accordion expanded={props.expanded} onChange={(_event, value) => props.onExpandedChange(value)}>
+    <Accordion
+      expanded={context.schemasExpanded}
+      onChange={(_event, value) => context.setSchemasExpanded(value)}
+    >
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Typography sx={{ fontWeight: 700 }}>Schemas</Typography>
       </AccordionSummary>
       <AccordionDetails>
-        {!props.designerModel && (
+        {!context.designerModel && (
           <Typography color="text.secondary">
             No schemas yet. Click "Analyze & Build Schemas" in General.
           </Typography>
         )}
-        {props.designerModel && (
+        {context.designerModel && (
           <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} alignItems="flex-start">
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Stack spacing={1.5}>
-                {props.designerModel.tables.map((table) => (
+                {context.designerModel.tables.map((table) => (
                   <Card key={table.name} id={tableAnchorId(table.name)} variant="outlined">
                     <CardContent>
                       <Typography sx={{ fontWeight: 700, mb: 1 }}>{table.name}</Typography>
                       <Stack spacing={1}>
                         {table.columns.map((column) => {
-                          const value = stringifyRule(props.columnRules[table.name]?.[column.name]);
+                          const value = stringifyRule(context.columnRules[table.name]?.[column.name]);
                           const blankPercentage =
-                            props.columnRules[table.name]?.[column.name]?.blankPercentage ?? 0;
+                            context.columnRules[table.name]?.[column.name]?.blankPercentage ?? 0;
                           return (
                             <Stack
                               key={`${table.name}.${column.name}`}
@@ -66,7 +62,7 @@ export function SchemasAccordion(props: SchemasAccordionProps) {
                               </Box>
                               <Button
                                 variant="outlined"
-                                onClick={() => props.onOpenTypePicker(table.name, column.name)}
+                                onClick={() => context.openTypePicker(table.name, column.name)}
                                 sx={{ justifyContent: 'flex-start', textTransform: 'none' }}
                               >
                                 {value}
@@ -77,7 +73,7 @@ export function SchemasAccordion(props: SchemasAccordionProps) {
                                 type="number"
                                 value={blankPercentage}
                                 onChange={(event) =>
-                                  props.onBlankPercentageChange(
+                                  context.onBlankPercentageChange(
                                     table.name,
                                     column.name,
                                     event.target.value,
@@ -110,7 +106,7 @@ export function SchemasAccordion(props: SchemasAccordionProps) {
                   Table Index
                 </Typography>
                 <Stack spacing={0.5}>
-                  {props.designerModel.tables.map((table) => (
+                  {context.designerModel.tables.map((table) => (
                     <Button
                       key={`toc-${table.name}`}
                       size="small"

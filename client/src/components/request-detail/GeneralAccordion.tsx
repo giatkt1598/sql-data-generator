@@ -8,25 +8,15 @@ import {
   Typography,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import type { RequestDetailForm } from './types';
+import { useRequestDetailContext } from './RequestDetailContext';
 
-interface GeneralAccordionProps {
-  expanded: boolean;
-  loading: boolean;
-  form: RequestDetailForm;
-  schemaFocused: boolean;
-  onExpandedChange: (expanded: boolean) => void;
-  onFormChange: (updater: (prev: RequestDetailForm) => RequestDetailForm) => void;
-  onSchemaFocusChange: (focused: boolean) => void;
-  onBuildPrompt: () => void;
-  onAnalyze: () => void;
-}
+export function GeneralAccordion() {
+  const context = useRequestDetailContext();
 
-export function GeneralAccordion(props: GeneralAccordionProps) {
   return (
     <Accordion
-      expanded={props.expanded}
-      onChange={(_event, value) => props.onExpandedChange(value)}
+      expanded={context.generalExpanded}
+      onChange={(_event, value) => context.setGeneralExpanded(value)}
     >
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Typography sx={{ fontWeight: 700 }}>General</Typography>
@@ -35,37 +25,41 @@ export function GeneralAccordion(props: GeneralAccordionProps) {
         <Stack spacing={2}>
           <TextField
             label="Request Name"
-            value={props.form.name}
+            value={context.form.name}
             onChange={(event) =>
-              props.onFormChange((prev) => ({ ...prev, name: event.target.value }))
+              context.setForm((prev) => ({ ...prev, name: event.target.value }))
             }
           />
           <TextField
             label="Create Table SQL"
-            value={props.form.schemaSql}
+            value={context.form.schemaSql}
             multiline
-            minRows={props.schemaFocused ? 20 : 6}
+            minRows={context.schemaFocused ? 20 : 6}
             maxRows={20}
-            onFocus={() => props.onSchemaFocusChange(true)}
-            onBlur={() => props.onSchemaFocusChange(false)}
+            onFocus={() => context.setSchemaFocused(true)}
+            onBlur={() => context.setSchemaFocused(false)}
             onChange={(event) =>
-              props.onFormChange((prev) => ({ ...prev, schemaSql: event.target.value }))
+              context.setForm((prev) => ({ ...prev, schemaSql: event.target.value }))
             }
           />
-          <Button variant="outlined" onClick={props.onBuildPrompt} disabled={props.loading}>
+          <Button variant="outlined" onClick={() => void context.buildPrompt()} disabled={context.loading}>
             Build Prompt
           </Button>
           <TextField
             label="AI Classification JSON"
-            value={props.form.classificationJson}
+            value={context.form.classificationJson}
             multiline
             minRows={6}
             maxRows={6}
             onChange={(event) =>
-              props.onFormChange((prev) => ({ ...prev, classificationJson: event.target.value }))
+              context.setForm((prev) => ({ ...prev, classificationJson: event.target.value }))
             }
           />
-          <Button variant="contained" onClick={props.onAnalyze} disabled={props.loading}>
+          <Button
+            variant="contained"
+            onClick={() => context.setAnalyzeConfirmOpen(true)}
+            disabled={context.loading}
+          >
             Analyze & Build Schemas
           </Button>
         </Stack>

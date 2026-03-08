@@ -12,38 +12,27 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import type { DataTypeDefinition, TableColumnRules } from '../../models/apiModels';
+import { useRequestDetailContext } from './RequestDetailContext';
 
-interface DataTypePickerDialogProps {
-  open: boolean;
-  tab: number;
-  customListInput: string;
-  basicOptions: DataTypeDefinition[];
-  personalOptions: DataTypeDefinition[];
-  primaryKeyOptions: Array<{ value: string; description: string }>;
-  onClose: () => void;
-  onTabChange: (value: number) => void;
-  onCustomListInputChange: (value: string) => void;
-  onApplyRule: (rule: TableColumnRules[string][string]) => void;
-  onApplyCustomList: () => void;
-}
+const tabGroups = [{ label: 'Basic' }, { label: 'Personal' }, { label: 'Table Primary Key' }];
 
-const tabGroups = [
-  { label: 'Basic' },
-  { label: 'Personal' },
-  { label: 'Table Primary Key' },
-];
+export function DataTypePickerDialog() {
+  const context = useRequestDetailContext();
 
-export function DataTypePickerDialog(props: DataTypePickerDialogProps) {
   return (
-    <Dialog open={props.open} onClose={props.onClose} fullWidth maxWidth="md">
+    <Dialog
+      open={context.typePickerOpen}
+      onClose={() => context.setTypePickerOpen(false)}
+      fullWidth
+      maxWidth="md"
+    >
       <DialogTitle>Choose Data Type</DialogTitle>
       <DialogContent>
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ minHeight: 360 }}>
           <Tabs
             orientation="vertical"
-            value={props.tab}
-            onChange={(_event, value: number) => props.onTabChange(value)}
+            value={context.typePickerTab}
+            onChange={(_event, value: number) => context.setTypePickerTab(value)}
             sx={{ borderRight: 1, borderColor: 'divider', minWidth: 220 }}
           >
             {tabGroups.map((group, index) => (
@@ -52,14 +41,14 @@ export function DataTypePickerDialog(props: DataTypePickerDialogProps) {
           </Tabs>
 
           <Box sx={{ flex: 1 }}>
-            {props.tab === 0 && (
+            {context.typePickerTab === 0 && (
               <Stack spacing={1}>
-                {props.basicOptions.map((option) => (
+                {context.basicOptions.map((option) => (
                   <Card
                     key={option.value}
                     variant="outlined"
                     sx={{ cursor: 'pointer' }}
-                    onClick={() => props.onApplyRule({ kind: 'semantic', semanticType: option.value })}
+                    onClick={() => context.applyRule({ kind: 'semantic', semanticType: option.value })}
                   >
                     <CardContent>
                       <Typography variant="h6" sx={{ fontWeight: 700 }}>
@@ -84,10 +73,10 @@ export function DataTypePickerDialog(props: DataTypePickerDialogProps) {
                         fullWidth
                         size="small"
                         label="Custom values"
-                        value={props.customListInput}
-                        onChange={(event) => props.onCustomListInputChange(event.target.value)}
+                        value={context.customListInput}
+                        onChange={(event) => context.setCustomListInput(event.target.value)}
                       />
-                      <Button variant="contained" onClick={props.onApplyCustomList}>
+                      <Button variant="contained" onClick={context.applyCustomListRule}>
                         Apply
                       </Button>
                     </Stack>
@@ -96,14 +85,14 @@ export function DataTypePickerDialog(props: DataTypePickerDialogProps) {
               </Stack>
             )}
 
-            {props.tab === 1 && (
+            {context.typePickerTab === 1 && (
               <Stack spacing={1}>
-                {props.personalOptions.map((option) => (
+                {context.personalOptions.map((option) => (
                   <Card
                     key={option.value}
                     variant="outlined"
                     sx={{ cursor: 'pointer' }}
-                    onClick={() => props.onApplyRule({ kind: 'semantic', semanticType: option.value })}
+                    onClick={() => context.applyRule({ kind: 'semantic', semanticType: option.value })}
                   >
                     <CardContent>
                       <Typography variant="h6" sx={{ fontWeight: 700 }}>
@@ -118,16 +107,16 @@ export function DataTypePickerDialog(props: DataTypePickerDialogProps) {
               </Stack>
             )}
 
-            {props.tab === 2 && (
+            {context.typePickerTab === 2 && (
               <Stack spacing={1}>
-                {props.primaryKeyOptions.map((option) => (
+                {context.primaryKeyOptions.map((option) => (
                   <Card
                     key={option.value}
                     variant="outlined"
                     sx={{ cursor: 'pointer' }}
                     onClick={() => {
                       const [tableName, columnName] = option.value.split('.', 2);
-                      props.onApplyRule({
+                      context.applyRule({
                         kind: 'reference',
                         reference: { tableName, columnName },
                       });

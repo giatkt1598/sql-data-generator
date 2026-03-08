@@ -1,17 +1,10 @@
 import { Box, Button, IconButton, Stack, Typography } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { useRequestDetailContext } from './RequestDetailContext';
 
-interface RequestDetailHeaderProps {
-  projectId: string;
-  requestName: string;
-  loading: boolean;
-  onBack: (projectId: string) => void;
-  onPreview: () => void;
-  onGenerateSql: () => void;
-  onSave: () => void;
-}
+export function RequestDetailHeader() {
+  const context = useRequestDetailContext();
 
-export function RequestDetailHeader(props: RequestDetailHeaderProps) {
   return (
     <Box
       sx={{
@@ -25,20 +18,24 @@ export function RequestDetailHeader(props: RequestDetailHeaderProps) {
       }}
     >
       <Stack direction="row" alignItems="center" spacing={1}>
-        <IconButton onClick={() => props.onBack(props.projectId)}>
+        <IconButton onClick={context.handleBack}>
           <ArrowBackIcon />
         </IconButton>
         <Typography variant="h5" sx={{ fontWeight: 700 }}>
-          Request: {props.requestName}
+          Request: {context.requestName}
         </Typography>
         <Box sx={{ flex: 1 }} />
-        <Button variant="outlined" onClick={props.onPreview} disabled={props.loading}>
+        <Button variant="outlined" onClick={() => void context.handlePreview()} disabled={context.loading}>
           Preview
         </Button>
-        <Button variant="outlined" onClick={props.onGenerateSql} disabled={props.loading}>
+        <Button
+          variant="outlined"
+          onClick={() => void context.handleGenerateSql()}
+          disabled={context.loading}
+        >
           Generate SQL
         </Button>
-        <Button variant="contained" onClick={props.onSave} disabled={props.loading}>
+        <Button variant="contained" onClick={() => void context.saveDetail()} disabled={context.loading}>
           Save
         </Button>
       </Stack>

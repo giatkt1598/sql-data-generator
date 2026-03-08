@@ -19,6 +19,10 @@ import { AnalyzeConfirmDialog } from '../components/request-detail/AnalyzeConfir
 import { DataTypePickerDialog } from '../components/request-detail/DataTypePickerDialog';
 import { GeneralAccordion } from '../components/request-detail/GeneralAccordion';
 import { PreviewDialog } from '../components/request-detail/PreviewDialog';
+import {
+  RequestDetailProvider,
+  type RequestDetailContextValue,
+} from '../components/request-detail/RequestDetailContext';
 import { RequestDetailHeader } from '../components/request-detail/RequestDetailHeader';
 import { SchemaRelationshipsAccordion } from '../components/request-detail/SchemaRelationshipsAccordion';
 import { SchemasAccordion } from '../components/request-detail/SchemasAccordion';
@@ -297,7 +301,11 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     }
   }
 
-  function onRuleChange(tableName: string, columnName: string, rule: TableColumnRules[string][string]) {
+  function onRuleChange(
+    tableName: string,
+    columnName: string,
+    rule: TableColumnRules[string][string],
+  ) {
     setColumnRules((prev) => ({
       ...prev,
       [tableName]: {
@@ -395,79 +403,63 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     );
   }
 
+  const contextValue: RequestDetailContextValue = {
+    projectId: project.id,
+    requestName: request.name,
+    loading: props.loading,
+    form,
+    setForm,
+    columnRules,
+    designerModel,
+    schemaFocused,
+    setSchemaFocused,
+    generalExpanded,
+    setGeneralExpanded,
+    relationshipsExpanded,
+    setRelationshipsExpanded,
+    schemasExpanded,
+    setSchemasExpanded,
+    typePickerOpen,
+    setTypePickerOpen,
+    typePickerTab,
+    setTypePickerTab,
+    customListInput,
+    setCustomListInput,
+    previewOpen,
+    setPreviewOpen,
+    previewText,
+    analyzeConfirmOpen,
+    setAnalyzeConfirmOpen,
+    basicOptions,
+    personalOptions,
+    primaryKeyOptions,
+    relationshipEstimateSummary: relationshipEstimate?.summary,
+    relationshipEstimateTooltip,
+    relationshipEstimateError: relationshipEstimate?.error,
+    openTypePicker,
+    onBlankPercentageChange,
+    applyRule,
+    applyCustomListRule,
+    handleBack: () => navigate(-1),
+    buildPrompt,
+    handlePreview,
+    handleGenerateSql,
+    saveDetail,
+    analyzeAndBuildSchemas,
+    handleCopyPreview,
+  };
+
   return (
-    <Stack spacing={2}>
-      <RequestDetailHeader
-        projectId={project.id}
-        requestName={request.name}
-        loading={props.loading}
-        onBack={(nextProjectId) => navigate(`/projects/${nextProjectId}/requests`)}
-        onPreview={() => void handlePreview()}
-        onGenerateSql={() => void handleGenerateSql()}
-        onSave={() => void saveDetail()}
-      />
-
-      <GeneralAccordion
-        expanded={generalExpanded}
-        loading={props.loading}
-        form={form}
-        schemaFocused={schemaFocused}
-        onExpandedChange={setGeneralExpanded}
-        onFormChange={setForm}
-        onSchemaFocusChange={setSchemaFocused}
-        onBuildPrompt={() => void buildPrompt()}
-        onAnalyze={() => setAnalyzeConfirmOpen(true)}
-      />
-
-      <SchemaRelationshipsAccordion
-        expanded={relationshipsExpanded}
-        value={form.schemaRelationshipsJson}
-        estimateSummary={relationshipEstimate?.summary}
-        estimateTooltip={relationshipEstimateTooltip}
-        estimateError={relationshipEstimate?.error}
-        onExpandedChange={setRelationshipsExpanded}
-        onChange={(value) => setForm((prev) => ({ ...prev, schemaRelationshipsJson: value }))}
-      />
-
-      <SchemasAccordion
-        expanded={schemasExpanded}
-        designerModel={designerModel}
-        columnRules={columnRules}
-        onExpandedChange={setSchemasExpanded}
-        onOpenTypePicker={openTypePicker}
-        onBlankPercentageChange={onBlankPercentageChange}
-      />
-
-      <DataTypePickerDialog
-        open={typePickerOpen}
-        tab={typePickerTab}
-        customListInput={customListInput}
-        basicOptions={basicOptions}
-        personalOptions={personalOptions}
-        primaryKeyOptions={primaryKeyOptions}
-        onClose={() => setTypePickerOpen(false)}
-        onTabChange={setTypePickerTab}
-        onCustomListInputChange={setCustomListInput}
-        onApplyRule={applyRule}
-        onApplyCustomList={applyCustomListRule}
-      />
-
-      <AnalyzeConfirmDialog
-        open={analyzeConfirmOpen}
-        loading={props.loading}
-        onClose={() => setAnalyzeConfirmOpen(false)}
-        onConfirm={() => {
-          setAnalyzeConfirmOpen(false);
-          void analyzeAndBuildSchemas();
-        }}
-      />
-
-      <PreviewDialog
-        open={previewOpen}
-        text={previewText}
-        onClose={() => setPreviewOpen(false)}
-        onCopy={() => void handleCopyPreview()}
-      />
-    </Stack>
+    <RequestDetailProvider value={contextValue}>
+      <Stack spacing={2}>
+        <RequestDetailHeader />
+        <GeneralAccordion />
+        <SchemaRelationshipsAccordion />
+        <SchemasAccordion />
+        <DataTypePickerDialog />
+        <AnalyzeConfirmDialog />
+        <PreviewDialog />
+      </Stack>
+    </RequestDetailProvider>
   );
 }

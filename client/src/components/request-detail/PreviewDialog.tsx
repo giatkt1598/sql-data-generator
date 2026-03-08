@@ -1,16 +1,12 @@
 import { Box, Button, Dialog, DialogContent, DialogTitle, Stack, Typography } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import { useRequestDetailContext } from './RequestDetailContext';
 
-interface PreviewDialogProps {
-  open: boolean;
-  text: string;
-  onClose: () => void;
-  onCopy: () => void;
-}
+export function PreviewDialog() {
+  const context = useRequestDetailContext();
 
-export function PreviewDialog(props: PreviewDialogProps) {
   return (
-    <Dialog open={props.open} onClose={props.onClose} fullWidth maxWidth="lg">
+    <Dialog open={context.previewOpen} onClose={() => context.setPreviewOpen(false)} fullWidth maxWidth="lg">
       <DialogTitle>
         <Stack direction="row" alignItems="center" spacing={1}>
           <Typography variant="h6" sx={{ flex: 1 }}>
@@ -20,7 +16,7 @@ export function PreviewDialog(props: PreviewDialogProps) {
             variant="outlined"
             size="small"
             startIcon={<ContentCopyIcon />}
-            onClick={props.onCopy}
+            onClick={() => void context.handleCopyPreview()}
           >
             Copy
           </Button>
@@ -41,7 +37,7 @@ export function PreviewDialog(props: PreviewDialogProps) {
             overflow: 'auto',
           }}
         >
-          {props.text}
+          {context.previewText}
         </Box>
       </DialogContent>
     </Dialog>

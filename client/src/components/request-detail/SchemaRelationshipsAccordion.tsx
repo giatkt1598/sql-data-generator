@@ -9,22 +9,15 @@ import {
   Typography,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { useRequestDetailContext } from './RequestDetailContext';
 
-interface SchemaRelationshipsAccordionProps {
-  expanded: boolean;
-  value: string;
-  estimateSummary?: string;
-  estimateTooltip?: string;
-  estimateError?: string;
-  onExpandedChange: (expanded: boolean) => void;
-  onChange: (value: string) => void;
-}
+export function SchemaRelationshipsAccordion() {
+  const context = useRequestDetailContext();
 
-export function SchemaRelationshipsAccordion(props: SchemaRelationshipsAccordionProps) {
   return (
     <Accordion
-      expanded={props.expanded}
-      onChange={(_event, value) => props.onExpandedChange(value)}
+      expanded={context.relationshipsExpanded}
+      onChange={(_event, value) => context.setRelationshipsExpanded(value)}
     >
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Typography sx={{ fontWeight: 700 }}>Schema Relationships</Typography>
@@ -33,19 +26,21 @@ export function SchemaRelationshipsAccordion(props: SchemaRelationshipsAccordion
         <Stack spacing={1.5}>
           <TextField
             label="Schema Relationships JSON"
-            value={props.value}
+            value={context.form.schemaRelationshipsJson}
             multiline
             minRows={10}
             maxRows={20}
-            onChange={(event) => props.onChange(event.target.value)}
+            onChange={(event) =>
+              context.setForm((prev) => ({ ...prev, schemaRelationshipsJson: event.target.value }))
+            }
             helperText='Use strict JSON array format (no comments). Default distribution is [1].'
             fullWidth
           />
-          {props.estimateSummary && (
+          {context.relationshipEstimateSummary && (
             <Tooltip
               title={
                 <Box sx={{ whiteSpace: 'pre-line', fontSize: 12 }}>
-                  {props.estimateTooltip}
+                  {context.relationshipEstimateTooltip}
                 </Box>
               }
               placement="top-start"
@@ -59,16 +54,18 @@ export function SchemaRelationshipsAccordion(props: SchemaRelationshipsAccordion
                   py: 0.75,
                   borderRadius: 1,
                   border: '1px solid',
-                  borderColor: props.estimateError ? 'error.main' : 'divider',
-                  backgroundColor: props.estimateError ? 'error.lighter' : 'background.paper',
+                  borderColor: context.relationshipEstimateError ? 'error.main' : 'divider',
+                  backgroundColor: context.relationshipEstimateError
+                    ? 'error.lighter'
+                    : 'background.paper',
                   cursor: 'help',
                 }}
               >
                 <Typography
                   variant="body2"
-                  color={props.estimateError ? 'error.main' : 'text.secondary'}
+                  color={context.relationshipEstimateError ? 'error.main' : 'text.secondary'}
                 >
-                  {props.estimateSummary}
+                  {context.relationshipEstimateSummary}
                 </Typography>
               </Box>
             </Tooltip>
