@@ -37,6 +37,7 @@ export async function generateSqlScript(payload: {
   schemaSql: string;
   classificationJson: string;
   locale?: string;
+  sqlProvider?: 'sqlserver' | 'postgres' | 'mysql' | '';
   columnRules?: TableColumnRules;
   schemaRelationshipsJson?: string;
 }): Promise<string> {

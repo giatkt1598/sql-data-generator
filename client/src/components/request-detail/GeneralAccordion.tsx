@@ -2,6 +2,7 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Autocomplete,
   Box,
   Button,
   IconButton,
@@ -18,6 +19,11 @@ import { useRequestDetailContext } from './RequestDetailContext';
 
 export function GeneralAccordion() {
   const context = useRequestDetailContext();
+  const sqlProviderOptions = [
+    { value: 'sqlserver', label: 'SQL Server' },
+    { value: 'postgres', label: 'Postgres' },
+    { value: 'mysql', label: 'MySQL' },
+  ] as const;
 
   return (
     <Accordion
@@ -38,6 +44,21 @@ export function GeneralAccordion() {
               onChange={(event) =>
                 context.setForm((prev) => ({ ...prev, name: event.target.value }))
               }
+            />
+            <Autocomplete
+              sx={{ width: 240 }}
+              size="small"
+              options={sqlProviderOptions}
+              value={
+                sqlProviderOptions.find((option) => option.value === context.form.sqlProvider) ??
+                null
+              }
+              onChange={(_event, value) =>
+                context.setForm((prev) => ({ ...prev, sqlProvider: value?.value ?? '' }))
+              }
+              getOptionLabel={(option) => option.label}
+              isOptionEqualToValue={(option, value) => option.value === value.value}
+              renderInput={(params) => <TextField {...params} label="SQL Provider" />}
             />
             <TextField
               sx={{ width: 240 }}

@@ -1,11 +1,20 @@
 import { randomUUID } from 'crypto';
 import { buildDatabaseSchemaFromClassification, parseClassificationJson } from '../ai/classificationLoader';
 import { buildClassificationPrompt } from '../ai/promptBuilder';
-import { SchemaRelationshipsConfig, TableColumnRules, TableSchema } from '../core/types';
+import {
+  SchemaRelationshipsConfig,
+  SqlProvider,
+  TableColumnRules,
+  TableSchema,
+} from '../core/types';
 import { generateDataByTableOrder } from '../generator/valueGenerator';
 import { buildDefaultColumnRules, sanitizeColumnRules } from '../schema/columnRules';
 import { resolveTableOrder } from '../schema/dependencyResolver';
-import { buildInsertFileArtifacts, SqlFileArtifact } from '../writer/sqlWriter';
+import {
+  buildGeneratedSqlHeader,
+  buildInsertFileArtifacts,
+  SqlFileArtifact,
+} from '../writer/sqlWriter';
 import { AppStorageState, GenerationRequestEntity, ProjectEntity } from './models';
 import { JsonFileStorage } from './storage';
 
@@ -25,6 +34,7 @@ export interface CreateGenerationRequestInput {
   schemaSql: string;
   classificationJson: string;
   locale?: string;
+  sqlProvider?: SqlProvider | '';
   columnRules?: TableColumnRules;
   schemaRelationshipsJson?: string;
 }
@@ -35,6 +45,7 @@ export interface UpdateGenerationRequestInput {
   schemaSql?: string;
   classificationJson?: string;
   locale?: string;
+  sqlProvider?: SqlProvider | '';
   columnRules?: TableColumnRules;
   schemaRelationshipsJson?: string;
 }
@@ -186,6 +197,7 @@ export class GenerationService {
     const schemaSql = asText(input.schemaSql);
     const classificationJson = asText(input.classificationJson);
     const locale = asText(input.locale) || 'en';
+    const sqlProvider = (asText(input.sqlProvider) as SqlProvider | '') || '';
     const schemaRelationshipsJson = asText(input.schemaRelationshipsJson);
     if (!name) {
       throw new Error('name is required.');
@@ -209,6 +221,7 @@ export class GenerationService {
       schemaSql,
       classificationJson,
       locale,
+      sqlProvider,
       columnRules,
       schemaRelationshipsJson,
       createdAt: now,
@@ -255,6 +268,9 @@ export class GenerationService {
     if (typeof input.locale !== 'undefined') {
       request.locale = asText(input.locale) || 'en';
     }
+    if (typeof input.sqlProvider !== 'undefined') {
+      request.sqlProvider = (asText(input.sqlProvider) as SqlProvider | '') || '';
+    }
     if (typeof input.columnRules !== 'undefined') {
       request.columnRules = input.columnRules;
     }
@@ -296,6 +312,7 @@ export class GenerationService {
       schemaSql: request.schemaSql,
       classificationJson: request.classificationJson,
       locale: request.locale,
+      sqlProvider: request.sqlProvider,
       columnRules: request.columnRules,
       schemaRelationshipsJson: request.schemaRelationshipsJson,
     });
@@ -305,6 +322,7 @@ export class GenerationService {
     schemaSql: string;
     classificationJson: string;
     locale?: string;
+    sqlProvider?: SqlProvider | '';
     columnRules?: TableColumnRules;
     schemaRelationshipsJson?: string;
   }): PreviewResult {
@@ -317,8 +335,28 @@ export class GenerationService {
       relationships,
       input.locale,
     );
-    const files = buildInsertFileArtifacts(generatedRows);
-    const fullText = files.map((file) => `-- file: ${file.fileName}\n${file.content}`).join('\n');
+    const files = buildInsertFileArtifacts(generatedRows, input.sqlProvider, {
+      includeHeader: false,
+      includeTransaction: false,
+    });
+    const header = buildGeneratedSqlHeader(new Date().toISOString(), input.sqlProvider);
+    const transactionWrapper =
+      input.sqlProvider === 'sqlserver'
+        ? { prefix: ['BEGIN TRANSACTION;', ''], suffix: ['', 'COMMIT TRANSACTION;'] }
+        : input.sqlProvider === 'postgres'
+          ? { prefix: ['BEGIN;', ''], suffix: ['', 'COMMIT;'] }
+          : input.sqlProvider === 'mysql'
+            ? { prefix: ['START TRANSACTION;', ''], suffix: ['', 'COMMIT;'] }
+            : {
+                prefix: [],
+                suffix: [],
+              };
+    const fullText = [
+      header,
+      ...transactionWrapper.prefix,
+      ...files.map((file) => `-- file: ${file.fileName}\n${file.content}`),
+      ...transactionWrapper.suffix,
+    ].join('\n\n');
     const lines = fullText.split(/\r?\n/);
 
     return {
@@ -348,18 +386,19 @@ export class GenerationService {
 
   exportCombinedScript(id: string): string {
     const preview = this.generatePreviewForRequest(id);
-    return preview.files.map((file) => `-- ${file.fileName}\n${file.content}`).join('\n');
+    return preview.preview;
   }
 
   exportCombinedScriptFromInput(input: {
     schemaSql: string;
     classificationJson: string;
     locale?: string;
+    sqlProvider?: SqlProvider | '';
     columnRules?: TableColumnRules;
     schemaRelationshipsJson?: string;
   }): string {
     const preview = this.generatePreviewFromInput(input);
-    return preview.files.map((file) => `-- ${file.fileName}\n${file.content}`).join('\n');
+    return preview.preview;
   }
 
   seed(initial: AppStorageState): void {

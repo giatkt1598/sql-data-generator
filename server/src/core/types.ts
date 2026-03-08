@@ -6,6 +6,7 @@ import {
 } from '../../../shared/dataTypes';
 
 export type SqlDialect = 'postgres' | 'mysql' | 'sqlserver' | 'generic';
+export type SqlProvider = Exclude<SqlDialect, 'generic'>;
 
 export type DataTypeCatalogValue = SemanticDataType | 'customList';
 export { DATA_TYPE_GROUPS, SEMANTIC_DATA_TYPES };

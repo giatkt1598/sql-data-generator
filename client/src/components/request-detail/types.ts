@@ -6,6 +6,7 @@ export interface RequestDetailForm {
   classificationJson: string;
   schemaRelationshipsJson: string;
   locale: string;
+  sqlProvider: '' | 'sqlserver' | 'postgres' | 'mysql';
 }
 
 export interface PickerTarget {

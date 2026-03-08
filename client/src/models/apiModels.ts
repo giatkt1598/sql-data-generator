@@ -75,6 +75,7 @@ export interface GenerationRequestEntity {
   schemaSql: string;
   classificationJson: string;
   locale?: string;
+  sqlProvider?: 'sqlserver' | 'postgres' | 'mysql' | '';
   columnRules?: TableColumnRules;
   schemaRelationshipsJson?: string;
   createdAt: string;
@@ -108,5 +109,10 @@ export interface DataTypeDefinition {
 
 export interface SupportedLocaleDefinition {
   value: string;
+  label: string;
+}
+
+export interface SqlProviderDefinition {
+  value: 'sqlserver' | 'postgres' | 'mysql';
   label: string;
 }

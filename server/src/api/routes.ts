@@ -52,6 +52,7 @@ export function buildApiRouter(service: GenerationService): Router {
         schemaSql?: string;
         classificationJson?: string;
         locale?: string;
+        sqlProvider?: 'sqlserver' | 'postgres' | 'mysql' | '';
         columnRules?: TableColumnRules;
         schemaRelationshipsJson?: string;
       }>(req);
@@ -59,6 +60,7 @@ export function buildApiRouter(service: GenerationService): Router {
         schemaSql: body.schemaSql ?? '',
         classificationJson: body.classificationJson ?? '',
         locale: body.locale,
+        sqlProvider: body.sqlProvider,
         columnRules: body.columnRules,
         schemaRelationshipsJson: body.schemaRelationshipsJson,
       });
@@ -74,6 +76,7 @@ export function buildApiRouter(service: GenerationService): Router {
         schemaSql?: string;
         classificationJson?: string;
         locale?: string;
+        sqlProvider?: 'sqlserver' | 'postgres' | 'mysql' | '';
         columnRules?: TableColumnRules;
         schemaRelationshipsJson?: string;
       }>(req);
@@ -81,6 +84,7 @@ export function buildApiRouter(service: GenerationService): Router {
         schemaSql: body.schemaSql ?? '',
         classificationJson: body.classificationJson ?? '',
         locale: body.locale,
+        sqlProvider: body.sqlProvider,
         columnRules: body.columnRules,
         schemaRelationshipsJson: body.schemaRelationshipsJson,
       });
@@ -151,6 +155,7 @@ export function buildApiRouter(service: GenerationService): Router {
         schemaSql?: string;
         classificationJson?: string;
         locale?: string;
+        sqlProvider?: 'sqlserver' | 'postgres' | 'mysql' | '';
         columnRules?: TableColumnRules;
         schemaRelationshipsJson?: string;
       }>(req);
@@ -160,6 +165,7 @@ export function buildApiRouter(service: GenerationService): Router {
         schemaSql: body.schemaSql ?? '',
         classificationJson: body.classificationJson ?? '',
         locale: body.locale,
+        sqlProvider: body.sqlProvider,
         columnRules: body.columnRules,
         schemaRelationshipsJson: body.schemaRelationshipsJson,
       });
@@ -177,6 +183,7 @@ export function buildApiRouter(service: GenerationService): Router {
         schemaSql?: string;
         classificationJson?: string;
         locale?: string;
+        sqlProvider?: 'sqlserver' | 'postgres' | 'mysql' | '';
         columnRules?: TableColumnRules;
         schemaRelationshipsJson?: string;
       }>(req);

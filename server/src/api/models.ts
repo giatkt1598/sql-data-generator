@@ -1,4 +1,4 @@
-import { TableColumnRules } from '../core/types';
+import { SqlProvider, TableColumnRules } from '../core/types';
 
 export interface ProjectEntity {
   id: string;
@@ -15,6 +15,7 @@ export interface GenerationRequestEntity {
   schemaSql: string;
   classificationJson: string;
   locale?: string;
+  sqlProvider?: SqlProvider | '';
   columnRules?: TableColumnRules;
   schemaRelationshipsJson?: string;
   createdAt: string;

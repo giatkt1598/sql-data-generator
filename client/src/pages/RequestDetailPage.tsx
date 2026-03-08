@@ -53,6 +53,7 @@ function buildSavedSnapshot(form: RequestDetailForm, columnRules: TableColumnRul
     classificationJson: form.classificationJson,
     schemaRelationshipsJson: form.schemaRelationshipsJson,
     locale: form.locale,
+    sqlProvider: form.sqlProvider,
     columnRules,
   });
 }
@@ -67,6 +68,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     classificationJson: '',
     schemaRelationshipsJson: '',
     locale: 'en',
+    sqlProvider: '',
   });
   const [columnRules, setColumnRules] = useState<TableColumnRules>({});
   const [designerModel, setDesignerModel] = useState<ColumnDesignerModel | null>(null);
@@ -209,6 +211,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
           classificationJson: found.classificationJson,
           schemaRelationshipsJson: found.schemaRelationshipsJson ?? '',
           locale: found.locale ?? 'en',
+          sqlProvider: found.sqlProvider ?? '',
         });
         setColumnRules(found.columnRules ?? {});
         setGeneralExpanded(false);
@@ -232,6 +235,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
                 classificationJson: found.classificationJson,
                 schemaRelationshipsJson: found.schemaRelationshipsJson ?? '',
                 locale: found.locale ?? 'en',
+                sqlProvider: found.sqlProvider ?? '',
               },
               model.columnRules,
             ),
@@ -246,6 +250,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
                 classificationJson: found.classificationJson,
                 schemaRelationshipsJson: found.schemaRelationshipsJson ?? '',
                 locale: found.locale ?? 'en',
+                sqlProvider: found.sqlProvider ?? '',
               },
               found.columnRules ?? {},
             ),
@@ -322,6 +327,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         schemaSql: form.schemaSql,
         classificationJson: form.classificationJson,
         locale: form.locale,
+        sqlProvider: form.sqlProvider,
         columnRules,
         schemaRelationshipsJson: form.schemaRelationshipsJson,
       });
@@ -332,6 +338,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         classificationJson: updated.classificationJson,
         schemaRelationshipsJson: updated.schemaRelationshipsJson ?? '',
         locale: updated.locale ?? 'en',
+        sqlProvider: updated.sqlProvider ?? '',
       });
       setColumnRules(updated.columnRules ?? {});
       setSavedSnapshot(
@@ -342,6 +349,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
             classificationJson: updated.classificationJson,
             schemaRelationshipsJson: updated.schemaRelationshipsJson ?? '',
             locale: updated.locale ?? 'en',
+            sqlProvider: updated.sqlProvider ?? '',
           },
           updated.columnRules ?? {},
         ),
@@ -383,6 +391,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         schemaSql: formRef.current.schemaSql,
         classificationJson: formRef.current.classificationJson,
         locale: formRef.current.locale,
+        sqlProvider: formRef.current.sqlProvider,
         columnRules: columnRulesRef.current,
         schemaRelationshipsJson: formRef.current.schemaRelationshipsJson,
       });
@@ -394,6 +403,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         classificationJson: updated.classificationJson,
         schemaRelationshipsJson: updated.schemaRelationshipsJson ?? '',
         locale: updated.locale ?? 'en',
+        sqlProvider: updated.sqlProvider ?? '',
       });
       setColumnRules(updated.columnRules ?? {});
       setSavedSnapshot(
@@ -404,6 +414,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
             classificationJson: updated.classificationJson,
             schemaRelationshipsJson: updated.schemaRelationshipsJson ?? '',
             locale: updated.locale ?? 'en',
+            sqlProvider: updated.sqlProvider ?? '',
           },
           updated.columnRules ?? {},
         ),
@@ -456,6 +467,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         schemaSql: form.schemaSql,
         classificationJson: form.classificationJson,
         locale: form.locale,
+        sqlProvider: form.sqlProvider,
         columnRules: model.columnRules,
         schemaRelationshipsJson: nextSchemaRelationshipsJson,
       });
@@ -474,6 +486,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
           classificationJson: updated.classificationJson,
           schemaRelationshipsJson: nextSchemaRelationshipsJson,
           locale: updated.locale ?? 'en',
+          sqlProvider: updated.sqlProvider ?? '',
         },
         model.columnRules,
       );
@@ -498,6 +511,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         schemaSql: form.schemaSql,
         classificationJson: form.classificationJson,
         locale: form.locale,
+        sqlProvider: form.sqlProvider,
         columnRules,
         schemaRelationshipsJson: form.schemaRelationshipsJson,
       });
@@ -523,6 +537,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         schemaSql: form.schemaSql,
         classificationJson: form.classificationJson,
         locale: form.locale,
+        sqlProvider: form.sqlProvider,
         columnRules,
         schemaRelationshipsJson: form.schemaRelationshipsJson,
       });

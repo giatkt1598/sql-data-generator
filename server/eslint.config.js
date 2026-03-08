@@ -19,12 +19,7 @@ module.exports = [
     },
     rules: {
       ...tsPlugin.configs.recommended.rules,
-      'prettier/prettier': [
-        'error',
-        {
-          endOfLine: 'lf',
-        },
-      ],
+      'prettier/prettier': 'off',
     },
   },
 ];

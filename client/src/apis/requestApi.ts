@@ -19,6 +19,7 @@ export async function createGenerationRequest(payload: {
   schemaSql: string;
   classificationJson: string;
   locale?: string;
+  sqlProvider?: 'sqlserver' | 'postgres' | 'mysql' | '';
   columnRules?: TableColumnRules;
   schemaRelationshipsJson?: string;
 }): Promise<GenerationRequestEntity> {
@@ -34,6 +35,7 @@ export async function updateGenerationRequest(
     schemaSql: string;
     classificationJson: string;
     locale?: string;
+    sqlProvider?: 'sqlserver' | 'postgres' | 'mysql' | '';
     columnRules?: TableColumnRules;
     schemaRelationshipsJson?: string;
   },
