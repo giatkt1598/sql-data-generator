@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useMemo, useState } from 'react';
 import {
   Accordion,
@@ -85,14 +84,14 @@ export function SchemasAccordion() {
                           <Box sx={{ width: 28 }} />
                           <Typography
                             variant="caption"
-                            sx={{ minWidth: 200, fontWeight: 700, color: 'text.secondary' }}
+                            sx={{ minWidth: 160, fontWeight: 700, color: 'text.secondary' }}
                           >
                             Field Name
                           </Typography>
                           <Typography
                             variant="caption"
                             sx={{
-                              width: { xs: '100%', md: 220 },
+                              width: { xs: '100%', md: 160 },
                               fontWeight: 700,
                               color: 'text.secondary',
                             }}
@@ -104,16 +103,6 @@ export function SchemasAccordion() {
                             sx={{ flex: 1, fontWeight: 700, color: 'text.secondary' }}
                           >
                             Options
-                          </Typography>
-                          <Typography
-                            variant="caption"
-                            sx={{
-                              width: { xs: '100%', md: 110 },
-                              fontWeight: 700,
-                              color: 'text.secondary',
-                            }}
-                          >
-                            Blank
                           </Typography>
                         </Stack>
                         {table.columns.map((column) => {
@@ -172,25 +161,9 @@ export function SchemasAccordion() {
                                   </Select>
                                 </Tooltip>
                               </Box>
-                              {/* <Button
-                                variant="outlined"
-                                onClick={() => context.openTypePicker(table.name, column.name)}
-                                endIcon={<KeyboardArrowDownIcon />}
-                                sx={{
-                                  width: 160,
-                                  justifyContent: 'space-between',
-                                  textTransform: 'none',
-                                  color: 'text.primary',
-                                  borderColor: 'divider',
-                                  backgroundColor: 'background.paper',
-                                  px: 1.5,
-                                  py: 1.05,
-                                }}
-                              >
-                                {value}
-                              </Button> */}
                               {rule?.kind === 'customList' && (
                                 <TextField
+                                  sx={{ flex: 1 }}
                                   size="small"
                                   defaultValue={customListText}
                                   placeholder="item 1, item 2, item 3"
@@ -207,33 +180,38 @@ export function SchemasAccordion() {
                                   }}
                                 />
                               )}
-                              <TextField
-                                size="small"
-                                type="number"
-                                value={blankPercentage}
-                                onChange={(event) =>
-                                  setBlankDrafts((prev) => ({
-                                    ...prev,
-                                    [fieldKey]: event.target.value,
-                                  }))
-                                }
-                                onBlur={(event) =>
-                                  context.onBlankPercentageChange(
-                                    table.name,
-                                    column.name,
-                                    event.target.value,
-                                  )
-                                }
-                                inputProps={{ min: 0, max: 100 }}
-                                sx={{ width: { xs: '100%', md: 110 } }}
-                                InputProps={{
-                                  endAdornment: (
-                                    <Typography variant="body2" color="text.secondary">
-                                      %
-                                    </Typography>
-                                  ),
-                                }}
-                              />
+                              <Box width={90}>
+                                <TextField
+                                  label="Blank"
+                                  size="small"
+                                  type="number"
+                                  value={blankPercentage}
+                                  onChange={(event) =>
+                                    setBlankDrafts((prev) => ({
+                                      ...prev,
+                                      [fieldKey]: event.target.value,
+                                    }))
+                                  }
+                                  onBlur={(event) =>
+                                    context.onBlankPercentageChange(
+                                      table.name,
+                                      column.name,
+                                      event.target.value,
+                                    )
+                                  }
+                                  slotProps={{
+                                    htmlInput: { min: 0, max: 100 },
+                                    input: {
+                                      endAdornment: (
+                                        <Typography variant="body2" color="text.secondary">
+                                          %
+                                        </Typography>
+                                      ),
+                                    },
+                                  }}
+                                  sx={{ width: 90 }}
+                                />
+                              </Box>
                             </Stack>
                           );
                         })}
