@@ -1,17 +1,23 @@
-import type { ColumnGenerationRule, SemanticDataType } from '../models/apiModels';
+import type {
+  ColumnGenerationRule,
+  DataTypeDefinition,
+  SemanticDataType,
+} from '../models/apiModels';
 
-export function stringifyRule(rule?: ColumnGenerationRule): string {
+export function stringifyRule(
+  semanticTypes: DataTypeDefinition[],
+  rule?: ColumnGenerationRule,
+): string {
   if (!rule) {
     return 'unknown';
   }
   if (rule.kind === 'customList') {
-    const count = rule.customValues?.length ?? 0;
-    return count > 0 ? `customList (${count})` : 'customList';
+    return 'Custom List';
   }
   if (rule.kind === 'reference' && rule.reference) {
     return `${rule.reference.tableName}.${rule.reference.columnName}`;
   }
-  return rule.semanticType ?? 'unknown';
+  return semanticTypes.find((x) => x.value === rule.semanticType)?.displayName ?? 'unknown';
 }
 
 export function parseRule(value: string): ColumnGenerationRule {

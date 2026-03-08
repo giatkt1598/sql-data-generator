@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react';
 import {
   Box,
   Button,
@@ -6,134 +7,366 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
+  IconButton,
+  InputAdornment,
+  List,
+  ListItemButton,
+  ListItemText,
   Stack,
-  Tab,
-  Tabs,
   TextField,
   Typography,
 } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+import SearchIcon from '@mui/icons-material/Search';
 import { useRequestDetailContext } from './RequestDetailContext';
 
-const tabGroups = [{ label: 'Basic' }, { label: 'Personal' }, { label: 'Table Primary Key' }];
+type PickerItem =
+  | {
+      key: string;
+      group: 'Basic' | 'Personal';
+      title: string;
+      subtitle: string;
+      sample: string;
+      onClick: () => void;
+    }
+  | {
+      key: string;
+      group: 'Table Primary Key';
+      title: string;
+      subtitle: string;
+      sample: string;
+      onClick: () => void;
+    }
+  | {
+      key: 'customList';
+      group: 'Basic';
+      title: 'Custom List';
+      subtitle: string;
+      sample: string;
+      isCustomList: true;
+    };
+
+const GROUPS = ['All', 'Basic', 'Personal', 'Table Primary Key'] as const;
+type GroupName = (typeof GROUPS)[number];
+
+function titleCaseSample(value: string): string {
+  return value
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/\./g, ' / ')
+    .replace(/^./, (char) => char.toUpperCase());
+}
 
 export function DataTypePickerDialog() {
   const context = useRequestDetailContext();
+  const [selectedGroup, setSelectedGroup] = useState<GroupName>('All');
+  const [searchText, setSearchText] = useState('');
+  const basicValueSet = new Set([
+    'boolean',
+    'guid',
+    'int',
+    'float',
+    'number',
+    'date',
+    'dateTime',
+    'text',
+    'url',
+    'unknown',
+  ]);
+  const personalValueSet = new Set([
+    'email',
+    'phoneNumber',
+    'address',
+    'firstName',
+    'lastName',
+    'fullName',
+    'gender',
+    'city',
+    'country',
+    'zipCode',
+    'companyName',
+    'jobTitle',
+  ]);
+  const basicOptions = useMemo(
+    () => context.semanticTypes.filter((item) => basicValueSet.has(item.value)),
+    [context.semanticTypes],
+  );
+  const personalOptions = useMemo(
+    () => context.semanticTypes.filter((item) => personalValueSet.has(item.value)),
+    [context.semanticTypes],
+  );
+
+  const items = useMemo<PickerItem[]>(() => {
+    const semanticItems: PickerItem[] = [
+      ...basicOptions.map((option) => ({
+        key: option.value,
+        group: 'Basic' as const,
+        title: option.displayName,
+        subtitle: option.description,
+        sample: titleCaseSample(option.value),
+        onClick: () => context.applyRule({ kind: 'semantic', semanticType: option.value }),
+      })),
+      ...personalOptions.map((option) => ({
+        key: option.value,
+        group: 'Personal' as const,
+        title: option.displayName,
+        subtitle: option.description,
+        sample: titleCaseSample(option.value),
+        onClick: () => context.applyRule({ kind: 'semantic', semanticType: option.value }),
+      })),
+      ...context.primaryKeyOptions.map((option) => ({
+        key: option.value,
+        group: 'Table Primary Key' as const,
+        title: option.value,
+        subtitle: option.description,
+        sample: 'Reference existing primary key',
+        onClick: () => {
+          const [tableName, columnName] = option.value.split('.', 2);
+          context.applyRule({
+            kind: 'reference',
+            reference: { tableName, columnName },
+          });
+        },
+      })),
+    ];
+
+    return [
+      ...semanticItems,
+      {
+        key: 'customList',
+        group: 'Basic',
+        title: 'Custom List',
+        subtitle: 'Use this type, then edit values directly in the Schemas grid.',
+        sample: 'item 1, item 2, item 3',
+        isCustomList: true,
+      },
+    ];
+  }, [basicOptions, context, personalOptions]);
+
+  const filteredItems = useMemo(() => {
+    const keyword = searchText.trim().toLowerCase();
+    return items.filter((item) => {
+      const matchesGroup = selectedGroup === 'All' || item.group === selectedGroup;
+      if (!matchesGroup) {
+        return false;
+      }
+      if (!keyword) {
+        return true;
+      }
+      return [item.title, item.subtitle, item.sample, item.group]
+        .join(' ')
+        .toLowerCase()
+        .includes(keyword);
+    });
+  }, [items, searchText, selectedGroup]);
+
+  const countsByGroup = useMemo(() => {
+    const counts = new Map<GroupName, number>([
+      ['All', items.length],
+      ['Basic', 0],
+      ['Personal', 0],
+      ['Table Primary Key', 0],
+    ]);
+
+    for (const item of items) {
+      counts.set(item.group, (counts.get(item.group) ?? 0) + 1);
+    }
+
+    return counts;
+  }, [items]);
 
   return (
     <Dialog
       open={context.typePickerOpen}
       onClose={() => context.setTypePickerOpen(false)}
       fullWidth
-      maxWidth="md"
+      maxWidth="lg"
+      PaperProps={{
+        sx: {
+          backgroundColor: '#2f2f2f',
+          color: '#f5f5f5',
+          minHeight: 620,
+        },
+      }}
     >
-      <DialogTitle>Choose Data Type</DialogTitle>
-      <DialogContent>
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ minHeight: 360 }}>
-          <Tabs
-            orientation="vertical"
-            value={context.typePickerTab}
-            onChange={(_event, value: number) => context.setTypePickerTab(value)}
-            sx={{ borderRight: 1, borderColor: 'divider', minWidth: 220 }}
+      <DialogTitle sx={{ px: 0, py: 0 }}>
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+          sx={{
+            px: 3,
+            py: 2,
+            borderBottom: '1px solid rgba(255,255,255,0.08)',
+            backgroundColor: '#262626',
+          }}
+        >
+          <Typography variant="h5" sx={{ fontWeight: 700 }}>
+            Choose a Type
+          </Typography>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <TextField
+              placeholder="Find Type..."
+              size="small"
+              value={searchText}
+              onChange={(event) => setSearchText(event.target.value)}
+              sx={{
+                minWidth: 280,
+                '& .MuiOutlinedInput-root': {
+                  color: '#f5f5f5',
+                  backgroundColor: '#1f1f1f',
+                  '& fieldset': { borderColor: '#4caf50' },
+                  '&:hover fieldset': { borderColor: '#66bb6a' },
+                  '&.Mui-focused fieldset': { borderColor: '#81c784' },
+                },
+              }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ color: '#9e9e9e' }} />
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <IconButton onClick={() => context.setTypePickerOpen(false)} sx={{ color: '#bdbdbd' }}>
+              <CloseIcon />
+            </IconButton>
+          </Stack>
+        </Stack>
+      </DialogTitle>
+
+      <DialogContent sx={{ p: 0 }}>
+        <Stack direction={{ xs: 'column', md: 'row' }} sx={{ minHeight: 540 }}>
+          <Box
+            sx={{
+              width: { xs: '100%', md: 220 },
+              backgroundColor: '#232323',
+              borderRight: { md: '1px solid rgba(255,255,255,0.08)' },
+              borderBottom: { xs: '1px solid rgba(255,255,255,0.08)', md: 'none' },
+            }}
           >
-            {tabGroups.map((group, index) => (
-              <Tab key={group.label} label={group.label} value={index} />
-            ))}
-          </Tabs>
-
-          <Box sx={{ flex: 1 }}>
-            {context.typePickerTab === 0 && (
-              <Stack spacing={1}>
-                {context.basicOptions.map((option) => (
-                  <Card
-                    key={option.value}
-                    variant="outlined"
-                    sx={{ cursor: 'pointer' }}
-                    onClick={() => context.applyRule({ kind: 'semantic', semanticType: option.value })}
-                  >
-                    <CardContent>
-                      <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                        {option.displayName}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {option.description} ({option.value})
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                ))}
-                <Card variant="outlined">
-                  <CardContent>
-                    <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                      customList
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                      Custom values separated by comma. Example: admin,user,manager
-                    </Typography>
-                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-                      <TextField
-                        fullWidth
-                        size="small"
-                        label="Custom values"
-                        value={context.customListInput}
-                        onChange={(event) => context.setCustomListInput(event.target.value)}
-                      />
-                      <Button variant="contained" onClick={context.applyCustomListRule}>
-                        Apply
-                      </Button>
-                    </Stack>
-                  </CardContent>
-                </Card>
-              </Stack>
-            )}
-
-            {context.typePickerTab === 1 && (
-              <Stack spacing={1}>
-                {context.personalOptions.map((option) => (
-                  <Card
-                    key={option.value}
-                    variant="outlined"
-                    sx={{ cursor: 'pointer' }}
-                    onClick={() => context.applyRule({ kind: 'semantic', semanticType: option.value })}
-                  >
-                    <CardContent>
-                      <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                        {option.displayName}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {option.description} ({option.value})
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                ))}
-              </Stack>
-            )}
-
-            {context.typePickerTab === 2 && (
-              <Stack spacing={1}>
-                {context.primaryKeyOptions.map((option) => (
-                  <Card
-                    key={option.value}
-                    variant="outlined"
-                    sx={{ cursor: 'pointer' }}
-                    onClick={() => {
-                      const [tableName, columnName] = option.value.split('.', 2);
-                      context.applyRule({
-                        kind: 'reference',
-                        reference: { tableName, columnName },
-                      });
+            <List disablePadding>
+              {GROUPS.map((group) => {
+                const selected = selectedGroup === group;
+                return (
+                  <ListItemButton
+                    key={group}
+                    selected={selected}
+                    onClick={() => setSelectedGroup(group)}
+                    sx={{
+                      alignItems: 'flex-start',
+                      py: 1.5,
+                      px: 2,
+                      borderLeft: selected ? '3px solid #2ec4b6' : '3px solid transparent',
+                      backgroundColor: selected ? 'rgba(255,255,255,0.08)' : 'transparent',
+                      '&.Mui-selected': {
+                        backgroundColor: 'rgba(255,255,255,0.08)',
+                      },
+                      '&.Mui-selected:hover': {
+                        backgroundColor: 'rgba(255,255,255,0.12)',
+                      },
                     }}
                   >
-                    <CardContent>
-                      <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                        {option.value}
+                    <ListItemText
+                      primary={
+                        <Typography sx={{ color: '#f5f5f5', fontWeight: 700 }}>
+                          {group}
+                          <Typography component="span" sx={{ color: '#9e9e9e', ml: 0.75 }}>
+                            ({countsByGroup.get(group) ?? 0})
+                          </Typography>
+                        </Typography>
+                      }
+                    />
+                  </ListItemButton>
+                );
+              })}
+            </List>
+          </Box>
+
+          <Box
+            sx={{
+              flex: 1,
+              px: 2.5,
+              py: 2,
+              maxHeight: 540,
+              overflow: 'auto',
+              backgroundColor: '#3a3a3a',
+            }}
+          >
+            {filteredItems.length === 0 && (
+              <Typography sx={{ color: '#bdbdbd' }}>No types matched your search.</Typography>
+            )}
+
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: {
+                  xs: '1fr',
+                  md: 'repeat(2, minmax(0, 1fr))',
+                  lg: 'repeat(3, minmax(0, 1fr))',
+                },
+                gap: 1.5,
+              }}
+            >
+              {filteredItems.map((item) => {
+                if ('isCustomList' in item) {
+                  return (
+                    <Card
+                      key={item.key}
+                      variant="outlined"
+                      sx={{
+                        backgroundColor: '#454545',
+                        borderColor: 'rgba(255,255,255,0.08)',
+                        color: '#f5f5f5',
+                      }}
+                    >
+                      <CardContent sx={{ p: 2 }}>
+                        <Typography sx={{ fontSize: 28, fontWeight: 800, lineHeight: 1.1, mb: 1 }}>
+                          {item.title}
+                        </Typography>
+                        <Typography sx={{ color: '#c7c7c7', fontSize: 14, mb: 0.75 }}>
+                          {item.subtitle}
+                        </Typography>
+                        <Typography sx={{ color: '#9e9e9e', fontSize: 14, mb: 1.5 }}>
+                          {item.sample}
+                        </Typography>
+                        <Button variant="contained" onClick={context.applyCustomListRule}>
+                          Use Custom List
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  );
+                }
+
+                return (
+                  <Card
+                    key={item.key}
+                    variant="outlined"
+                    onClick={item.onClick}
+                    sx={{
+                      cursor: 'pointer',
+                      backgroundColor: '#454545',
+                      borderColor: 'rgba(255,255,255,0.08)',
+                      color: '#f5f5f5',
+                      transition: 'background-color 120ms ease, transform 120ms ease',
+                      '&:hover': {
+                        backgroundColor: '#4c4c4c',
+                        transform: 'translateY(-1px)',
+                      },
+                    }}
+                  >
+                    <CardContent sx={{ p: 2 }}>
+                      <Typography sx={{ fontSize: 18, fontWeight: 800, lineHeight: 1.15, mb: 0.75 }}>
+                        {item.title}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {option.description}
+                      <Typography sx={{ color: '#d0d0d0', fontSize: 14, minHeight: 40, mb: 0.75 }}>
+                        {item.subtitle}
                       </Typography>
+                      <Typography sx={{ color: '#9e9e9e', fontSize: 14 }}>{item.sample}</Typography>
                     </CardContent>
                   </Card>
-                ))}
-              </Stack>
-            )}
+                );
+              })}
+            </Box>
           </Box>
         </Stack>
       </DialogContent>

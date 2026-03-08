@@ -35,14 +35,14 @@ export interface RequestDetailContextValue {
   previewText: string;
   analyzeConfirmOpen: boolean;
   setAnalyzeConfirmOpen: (open: boolean) => void;
-  basicOptions: DataTypeDefinition[];
-  personalOptions: DataTypeDefinition[];
+  semanticTypes: DataTypeDefinition[];
   primaryKeyOptions: Array<{ value: string; description: string }>;
   relationshipEstimateSummary?: string;
   relationshipEstimateTooltip?: string;
   relationshipEstimateError?: string;
   openTypePicker: (tableName: string, columnName: string) => void;
   onBlankPercentageChange: (tableName: string, columnName: string, value: string) => void;
+  onCustomListValueChange: (tableName: string, columnName: string, value: string) => void;
   applyRule: (rule: TableColumnRules[string][string]) => void;
   applyCustomListRule: () => void;
   handleBack: () => void;

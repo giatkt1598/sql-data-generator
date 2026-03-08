@@ -136,36 +136,6 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
       .join('\n');
   }, [relationshipEstimate]);
 
-  const basicValueSet = new Set([
-    'boolean',
-    'guid',
-    'int',
-    'float',
-    'number',
-    'date',
-    'dateTime',
-    'text',
-    'url',
-    'unknown',
-  ]);
-  const personalValueSet = new Set([
-    'email',
-    'phoneNumber',
-    'address',
-    'firstName',
-    'lastName',
-    'fullName',
-    'gender',
-    'city',
-    'country',
-    'zipCode',
-    'companyName',
-    'jobTitle',
-  ]);
-
-  const basicOptions = props.semanticTypes.filter((item) => basicValueSet.has(item.value));
-  const personalOptions = props.semanticTypes.filter((item) => personalValueSet.has(item.value));
-
   async function saveDetail() {
     if (!projectId || !requestId) {
       return;
@@ -387,6 +357,35 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     });
   }
 
+  function onCustomListValueChange(tableName: string, columnName: string, value: string) {
+    const customValues = value
+      .split(',')
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0);
+    const parsedValues = customValues.map((item) => {
+      const lower = item.toLowerCase();
+      if (lower === 'true') {
+        return true;
+      }
+      if (lower === 'false') {
+        return false;
+      }
+      if (lower === 'null') {
+        return item;
+      }
+      if (/^-?\d+(\.\d+)?$/.test(item)) {
+        return Number(item);
+      }
+      return item;
+    });
+
+    onRuleChange(tableName, columnName, {
+      kind: 'customList',
+      customValues: parsedValues,
+      blankPercentage: columnRules[tableName]?.[columnName]?.blankPercentage ?? 0,
+    });
+  }
+
   if (!project || !request) {
     return (
       <Card>
@@ -430,14 +429,14 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     previewText,
     analyzeConfirmOpen,
     setAnalyzeConfirmOpen,
-    basicOptions,
-    personalOptions,
+    semanticTypes: props.semanticTypes,
     primaryKeyOptions,
     relationshipEstimateSummary: relationshipEstimate?.summary,
     relationshipEstimateTooltip,
     relationshipEstimateError: relationshipEstimate?.error,
     openTypePicker,
     onBlankPercentageChange,
+    onCustomListValueChange,
     applyRule,
     applyCustomListRule,
     handleBack: () => navigate(-1),
