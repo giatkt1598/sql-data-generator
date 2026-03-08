@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import type { ClipboardEvent, ReactNode } from 'react';
 import {
   Autocomplete,
   Box,
@@ -19,6 +20,56 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { stringifyRule } from '../../utilities/ruleUtils';
 import { useRequestDetailContext } from './RequestDetailContext';
 import type { ColumnDesignerModel } from '../../models/apiModels';
+
+function normalizeCustomListPaste(value: string): string {
+  return value
+    .replace(/\r\n|\r|\n/g, ',')
+    .split(',')
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0)
+    .join(', ');
+}
+
+function applyNormalizedPasteToInput(input: HTMLInputElement, normalizedValue: string) {
+  const selectionStart = input.selectionStart ?? input.value.length;
+  const selectionEnd = input.selectionEnd ?? input.value.length;
+  const currentValue = input.value;
+  const prefix = currentValue.slice(0, selectionStart);
+  const suffix = currentValue.slice(selectionEnd);
+  const separatorBefore =
+    prefix.trim().length > 0 && !prefix.trimEnd().endsWith(',') ? ', ' : '';
+  const separatorAfter =
+    suffix.trim().length > 0 && !suffix.trimStart().startsWith(',') ? ', ' : '';
+
+  input.value = `${prefix}${separatorBefore}${normalizedValue}${separatorAfter}${suffix}`;
+}
+
+function handleCommaSeparatedPaste(event: ClipboardEvent<HTMLDivElement>) {
+  const clipboardText = event.clipboardData.getData('text');
+  const normalizedValue = normalizeCustomListPaste(clipboardText);
+  if (!normalizedValue) {
+    return;
+  }
+
+  event.preventDefault();
+
+  const input = event.currentTarget.querySelector('input');
+  if (!input) {
+    return;
+  }
+
+  applyNormalizedPasteToInput(input, normalizedValue);
+}
+
+function buildHelpAdornment(content: ReactNode) {
+  return (
+    <Tooltip arrow placement="top" title={<Box sx={{ whiteSpace: 'pre-line' }}>{content}</Box>}>
+      <IconButton size="small">
+        <HelpOutlineIcon fontSize="small" />
+      </IconButton>
+    </Tooltip>
+  );
+}
 
 export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
   tableName: string;
@@ -131,6 +182,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
           size="small"
           defaultValue={customListText}
           placeholder="item 1, item 2, item 3"
+          onPaste={handleCommaSeparatedPaste}
           onBlur={(event) => {
             context.onCustomListValueChange(tableName, column.name, event.target.value);
           }}
@@ -269,20 +321,8 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
             sx={{ minWidth: 346 }}
             slotProps={{
               input: {
-                endAdornment: (
-                  <Tooltip
-                    arrow
-                    placement="top"
-                    title={
-                      <Box sx={{ whiteSpace: 'pre-line' }}>
-                        <Typography variant="body2">{digitSequenceHelp}</Typography>
-                      </Box>
-                    }
-                  >
-                    <IconButton size="small">
-                      <HelpOutlineIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
+                endAdornment: buildHelpAdornment(
+                  <Typography variant="body2">{digitSequenceHelp}</Typography>,
                 ),
               },
             }}
@@ -307,20 +347,8 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
             sx={{ minWidth: 320 }}
             slotProps={{
               input: {
-                endAdornment: (
-                  <Tooltip
-                    arrow
-                    placement="top"
-                    title={
-                      <Box sx={{ whiteSpace: 'pre-line' }}>
-                        <Typography variant="body2">{formulaHelp}</Typography>
-                      </Box>
-                    }
-                  >
-                    <IconButton size="small">
-                      <HelpOutlineIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
+                endAdornment: buildHelpAdornment(
+                  <Typography variant="body2">{formulaHelp}</Typography>,
                 ),
               },
             }}
@@ -333,6 +361,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
           label="Domains"
           defaultValue={(emailOptions.domains ?? []).join(', ')}
           placeholder="example: outlook.com, gmail.com"
+          onPaste={handleCommaSeparatedPaste}
           onBlur={(event) =>
             context.onEmailOptionChange(tableName, column.name, 'domains', event.target.value)
           }
