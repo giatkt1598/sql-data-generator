@@ -339,7 +339,12 @@ export class GenerationService {
       includeHeader: false,
       includeTransaction: false,
     });
-    const header = buildGeneratedSqlHeader(new Date().toISOString(), input.sqlProvider);
+    const totalRecords = generatedRows.reduce((sum, tableData) => sum + tableData.rows.length, 0);
+    const header = buildGeneratedSqlHeader(
+      new Date().toISOString(),
+      totalRecords,
+      input.sqlProvider,
+    );
     const transactionWrapper =
       input.sqlProvider === 'sqlserver'
         ? { prefix: ['BEGIN TRANSACTION;', ''], suffix: ['', 'COMMIT TRANSACTION;'] }
