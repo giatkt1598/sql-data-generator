@@ -1,25 +1,30 @@
-const tsParser = require("@typescript-eslint/parser");
-const tsPlugin = require("@typescript-eslint/eslint-plugin");
-const prettierPlugin = require("eslint-plugin-prettier");
+const tsParser = require('@typescript-eslint/parser');
+const tsPlugin = require('@typescript-eslint/eslint-plugin');
+const prettierPlugin = require('eslint-plugin-prettier');
 
 module.exports = [
   {
-    ignores: ["dist/**"],
+    ignores: ['dist/**'],
   },
   {
-    files: ["**/*.ts"],
+    files: ['**/*.ts'],
     languageOptions: {
       parser: tsParser,
       ecmaVersion: 2021,
-      sourceType: "module",
+      sourceType: 'module',
     },
     plugins: {
-      "@typescript-eslint": tsPlugin,
+      '@typescript-eslint': tsPlugin,
       prettier: prettierPlugin,
     },
     rules: {
       ...tsPlugin.configs.recommended.rules,
-      "prettier/prettier": "error",
+      'prettier/prettier': [
+        'error',
+        {
+          endOfLine: 'lf',
+        },
+      ],
     },
   },
 ];

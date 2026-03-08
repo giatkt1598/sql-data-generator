@@ -40,12 +40,10 @@ export interface ColumnClassification {
   dbType: string;
   nullable: boolean;
   isPrimaryKey: boolean;
-  isForeignKey: boolean;
-  references?: {
+  references: {
     tableName: string;
     columnName: string;
-  };
-  reason?: string;
+  } | null;
 }
 
 export interface TableClassification {
@@ -53,7 +51,6 @@ export interface TableClassification {
 }
 
 export interface AiClassificationResult {
-  version: '1';
   tables: Record<string, TableClassification>;
 }
 

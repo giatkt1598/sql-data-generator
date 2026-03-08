@@ -2,6 +2,7 @@ import { SUPPORTED_SEMANTIC_TYPES } from '../core/semanticTypes';
 import {
   AiClassificationResult,
   DatabaseSchema,
+  ColumnClassification,
   SemanticDataType,
   TableSchema,
 } from '../core/types';
@@ -23,15 +24,13 @@ export function parseClassificationJson(jsonText: string): AiClassificationResul
   }
 
   const root = parsed as Record<string, unknown>;
-  if (root.version !== '1') {
-    throw new Error("AI classification JSON version must be '1'.");
-  }
-
   if (!root.tables || typeof root.tables !== 'object') {
     throw new Error('AI classification JSON must contain a tables object.');
   }
 
   const tables = root.tables as Record<string, unknown>;
+  const normalizedTables: AiClassificationResult['tables'] = {};
+
   for (const [tableName, tableValue] of Object.entries(tables)) {
     if (!tableValue || typeof tableValue !== 'object') {
       throw new Error(`Table '${tableName}' classification must be an object.`);
@@ -43,6 +42,7 @@ export function parseClassificationJson(jsonText: string): AiClassificationResul
     }
 
     const columns = tableObj.columns as Record<string, unknown>;
+    const normalizedColumns: Record<string, ColumnClassification> = {};
     for (const [columnName, columnValue] of Object.entries(columns)) {
       if (!columnValue || typeof columnValue !== 'object') {
         throw new Error(`Column '${tableName}.${columnName}' classification must be an object.`);
@@ -52,14 +52,21 @@ export function parseClassificationJson(jsonText: string): AiClassificationResul
       if (typeof columnObj.dbType !== 'string' || columnObj.dbType.trim().length === 0) {
         throw new Error(`Column '${tableName}.${columnName}' must have dbType.`);
       }
-      if (typeof columnObj.nullable !== 'boolean') {
-        throw new Error(`Column '${tableName}.${columnName}' must have nullable boolean.`);
+      if (
+        typeof columnObj.nullable !== 'undefined' &&
+        typeof columnObj.nullable !== 'boolean'
+      ) {
+        throw new Error(
+          `Column '${tableName}.${columnName}' nullable must be boolean when provided.`,
+        );
       }
-      if (typeof columnObj.isPrimaryKey !== 'boolean') {
-        throw new Error(`Column '${tableName}.${columnName}' must have isPrimaryKey boolean.`);
-      }
-      if (typeof columnObj.isForeignKey !== 'boolean') {
-        throw new Error(`Column '${tableName}.${columnName}' must have isForeignKey boolean.`);
+      if (
+        typeof columnObj.isPrimaryKey !== 'undefined' &&
+        typeof columnObj.isPrimaryKey !== 'boolean'
+      ) {
+        throw new Error(
+          `Column '${tableName}.${columnName}' isPrimaryKey must be boolean when provided.`,
+        );
       }
       if (typeof columnObj.semanticType !== 'string') {
         throw new Error(`Column '${tableName}.${columnName}' must have semanticType.`);
@@ -69,10 +76,15 @@ export function parseClassificationJson(jsonText: string): AiClassificationResul
           `Column '${tableName}.${columnName}' has unsupported semanticType '${columnObj.semanticType}'.`,
         );
       }
-      if (columnObj.isForeignKey) {
-        if (!columnObj.references || typeof columnObj.references !== 'object') {
-          throw new Error(`Column '${tableName}.${columnName}' must have references object.`);
-        }
+      if (
+        typeof columnObj.references !== 'undefined' &&
+        columnObj.references !== null &&
+        (!columnObj.references || typeof columnObj.references !== 'object')
+      ) {
+        throw new Error(`Column '${tableName}.${columnName}' references must be an object or null.`);
+      }
+
+      if (typeof columnObj.references !== 'undefined' && columnObj.references !== null) {
         const references = columnObj.references as Record<string, unknown>;
         if (typeof references.tableName !== 'string' || references.tableName.trim().length === 0) {
           throw new Error(`Column '${tableName}.${columnName}' references.tableName is required.`);
@@ -81,15 +93,32 @@ export function parseClassificationJson(jsonText: string): AiClassificationResul
           throw new Error(`Column '${tableName}.${columnName}' references.columnName is required.`);
         }
       }
+
+      normalizedColumns[columnName] = {
+        semanticType: columnObj.semanticType,
+        dbType: columnObj.dbType.trim(),
+        nullable: columnObj.nullable === true,
+        isPrimaryKey: columnObj.isPrimaryKey === true,
+        references:
+          typeof columnObj.references === 'undefined'
+            ? null
+            : (columnObj.references as ColumnClassification['references']),
+      };
     }
+
+    normalizedTables[tableName] = {
+      columns: normalizedColumns,
+    };
   }
 
-  const result = root as unknown as AiClassificationResult;
+  const result: AiClassificationResult = {
+    tables: normalizedTables,
+  };
   const tableNames = new Set(Object.keys(result.tables));
 
   for (const [tableName, tableValue] of Object.entries(result.tables)) {
     for (const [columnName, columnValue] of Object.entries(tableValue.columns)) {
-      if (!columnValue.isForeignKey || !columnValue.references) {
+      if (!columnValue.references) {
         continue;
       }
       if (!tableNames.has(columnValue.references.tableName)) {
@@ -128,7 +157,7 @@ export function buildDatabaseSchemaFromClassification(
           .filter(([, columnValue]) => columnValue.isPrimaryKey)
           .map(([columnName]) => columnName),
         foreignKeys: Object.entries(tableValue.columns)
-          .filter(([, columnValue]) => columnValue.isForeignKey && columnValue.references)
+          .filter(([, columnValue]) => columnValue.references)
           .map(([columnName, columnValue]) => ({
             columns: [columnName],
             referencedTable: columnValue.references!.tableName,
