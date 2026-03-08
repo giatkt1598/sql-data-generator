@@ -87,6 +87,9 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
       digitSequenceOptions: {
         format: '',
       },
+      formulaOptions: {
+        expression: '',
+      },
       emailOptions: {
         domains: [],
       },
@@ -129,6 +132,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
       dateTimeOptions: rule?.dateTimeOptions ?? fallbackRule.dateTimeOptions,
       sequenceOptions: rule?.sequenceOptions ?? fallbackRule.sequenceOptions,
       digitSequenceOptions: rule?.digitSequenceOptions ?? fallbackRule.digitSequenceOptions,
+      formulaOptions: rule?.formulaOptions ?? fallbackRule.formulaOptions,
       emailOptions: rule?.emailOptions ?? fallbackRule.emailOptions,
       textOptions: rule?.textOptions ?? fallbackRule.textOptions,
     };
@@ -644,6 +648,31 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     });
   }
 
+  function onFormulaOptionChange(
+    tableName: string,
+    columnName: string,
+    key: 'expression',
+    value: string,
+  ) {
+    const fallbackRule = mergeRuleDefaults(
+      columnRules[tableName]?.[columnName],
+      columnName,
+      'formula',
+    );
+    const currentOptions = fallbackRule.formulaOptions ?? {
+      expression: '',
+    };
+
+    onRuleChange(tableName, columnName, {
+      ...fallbackRule,
+      fieldName: fallbackRule.fieldName ?? columnName,
+      formulaOptions: {
+        ...currentOptions,
+        [key]: value,
+      },
+    });
+  }
+
   function onEmailOptionChange(
     tableName: string,
     columnName: string,
@@ -724,6 +753,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     onDateTimeOptionChange,
     onSequenceOptionChange,
     onDigitSequenceOptionChange,
+    onFormulaOptionChange,
     onEmailOptionChange,
     onTextOptionChange,
     applyRule,

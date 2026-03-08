@@ -2,6 +2,7 @@ export const SEMANTIC_DATA_TYPES = [
   'unknown',
   'guid',
   'digitSequence',
+  'formula',
   'sequence',
   'appBundleId',
   'appName',
@@ -61,6 +62,13 @@ export const SEMANTIC_DATA_TYPES = [
 
 export type SemanticDataType = (typeof SEMANTIC_DATA_TYPES)[number];
 
-export const DATA_TYPE_GROUPS = ['Basic', 'Personal', 'Commerce', 'IT', 'Table Primary Key'] as const;
+export const DATA_TYPE_GROUPS = [
+  'Basic',
+  'Advanced',
+  'Personal',
+  'Commerce',
+  'IT',
+  'Table Primary Key',
+] as const;
 
 export type DataTypeGroup = (typeof DATA_TYPE_GROUPS)[number];

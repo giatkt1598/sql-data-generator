@@ -68,6 +68,12 @@ export interface RequestDetailContextValue {
     key: 'format',
     value: string,
   ) => void;
+  onFormulaOptionChange: (
+    tableName: string,
+    columnName: string,
+    key: 'expression',
+    value: string,
+  ) => void;
   onEmailOptionChange: (tableName: string, columnName: string, key: 'domains', value: string) => void;
   onTextOptionChange: (
     tableName: string,

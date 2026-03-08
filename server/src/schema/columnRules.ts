@@ -127,6 +127,17 @@ function normalizeDigitSequenceOptions(
   return { format };
 }
 
+function normalizeFormulaOptions(
+  rule: ColumnGenerationRule | undefined,
+  fallback: { expression?: string } | undefined,
+) {
+  const expression =
+    typeof rule?.formulaOptions?.expression === 'string'
+      ? rule.formulaOptions.expression
+      : (fallback?.expression ?? '');
+  return { expression };
+}
+
 function normalizeEmailOptions(
   rule: ColumnGenerationRule | undefined,
   fallback: { domains?: string[] } | undefined,
@@ -221,6 +232,9 @@ export function buildDefaultColumnRules(
         digitSequenceOptions: {
           format: '',
         },
+        formulaOptions: {
+          expression: '',
+        },
         emailOptions: {
           domains: [],
         },
@@ -304,6 +318,10 @@ export function sanitizeColumnRules(
             candidate,
             fallbackRules[table.name][column.name].digitSequenceOptions,
           ),
+          formulaOptions: normalizeFormulaOptions(
+            candidate,
+            fallbackRules[table.name][column.name].formulaOptions,
+          ),
           emailOptions: normalizeEmailOptions(
             candidate,
             fallbackRules[table.name][column.name].emailOptions,
@@ -347,6 +365,10 @@ export function sanitizeColumnRules(
               candidate,
               fallbackRules[table.name][column.name].digitSequenceOptions,
             ),
+            formulaOptions: normalizeFormulaOptions(
+              candidate,
+              fallbackRules[table.name][column.name].formulaOptions,
+            ),
             emailOptions: normalizeEmailOptions(
               candidate,
               fallbackRules[table.name][column.name].emailOptions,
@@ -382,6 +404,10 @@ export function sanitizeColumnRules(
           digitSequenceOptions: normalizeDigitSequenceOptions(
             candidate,
             fallbackRules[table.name][column.name].digitSequenceOptions,
+          ),
+          formulaOptions: normalizeFormulaOptions(
+            candidate,
+            fallbackRules[table.name][column.name].formulaOptions,
           ),
           emailOptions: normalizeEmailOptions(
             candidate,
@@ -419,6 +445,10 @@ export function sanitizeColumnRules(
         digitSequenceOptions: normalizeDigitSequenceOptions(
           candidate,
           fallbackRules[table.name][column.name].digitSequenceOptions,
+        ),
+        formulaOptions: normalizeFormulaOptions(
+          candidate,
+          fallbackRules[table.name][column.name].formulaOptions,
         ),
         emailOptions: normalizeEmailOptions(
           candidate,

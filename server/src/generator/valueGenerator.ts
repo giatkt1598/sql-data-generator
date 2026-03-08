@@ -192,6 +192,10 @@ function extractDigitSequenceDependencies(format: string): string[] {
     .map((part) => part.value);
 }
 
+function extractFormulaDependencies(expression: string): string[] {
+  return Array.from(new Set(expression.match(/[A-Za-z_][A-Za-z0-9_]*/g) ?? []));
+}
+
 function stringifyReferencedValue(value: string | number | boolean | null | undefined): string {
   if (typeof value === 'string') {
     return value
@@ -242,6 +246,112 @@ function generateDigitSequenceValue(
     .join('');
 }
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function coerceFormulaReferenceValue(
+  value: string | number | boolean | null | undefined,
+  tableName: string,
+  columnName: string,
+  dependencyName: string,
+): number {
+  if (value === null || value === undefined) {
+    throw new Error(
+      `Formula in '${tableName}.${columnName}' references '${dependencyName}', ` +
+        `but that value is null or undefined.`,
+    );
+  }
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) {
+      throw new Error(
+        `Formula in '${tableName}.${columnName}' references '${dependencyName}', ` +
+          `but that value is not a finite number.`,
+      );
+    }
+    return value;
+  }
+  if (typeof value === 'boolean') {
+    return value ? 1 : 0;
+  }
+  const normalized = Number(value);
+  if (Number.isFinite(normalized)) {
+    return normalized;
+  }
+  throw new Error(
+    `Formula in '${tableName}.${columnName}' references '${dependencyName}', ` +
+      `but that value is not numeric.`,
+  );
+}
+
+function evaluateFormulaExpression(
+  expression: string,
+  row: Record<string, string | number | boolean | null>,
+  tableName: string,
+  columnName: string,
+): number {
+  if (!expression.trim()) {
+    return 0;
+  }
+
+  let compiledExpression = expression;
+  for (const dependencyName of extractFormulaDependencies(expression)) {
+    if (!(dependencyName in row)) {
+      throw new Error(
+        `Formula in '${tableName}.${columnName}' could not resolve ` +
+          `referenced column '${dependencyName}' in the same row.`,
+      );
+    }
+    const numericValue = coerceFormulaReferenceValue(
+      row[dependencyName],
+      tableName,
+      columnName,
+      dependencyName,
+    );
+    compiledExpression = compiledExpression.replace(
+      new RegExp(`(?<![A-Za-z0-9_])${escapeRegExp(dependencyName)}(?![A-Za-z0-9_])`, 'g'),
+      String(numericValue),
+    );
+  }
+
+  const sanitized = compiledExpression.replace(/\s+/g, '');
+  if (!/^[0-9+\-*/%.()]+$/.test(sanitized)) {
+    throw new Error(
+      `Formula in '${tableName}.${columnName}' contains unsupported characters. ` +
+        `Only numbers, column names, +, -, *, /, %, and parentheses are allowed.`,
+    );
+  }
+
+  let result: number;
+  try {
+    result = Function(`"use strict"; return (${sanitized});`)() as number;
+  } catch {
+    throw new Error(
+      `Formula in '${tableName}.${columnName}' could not be evaluated. ` +
+        `Check the expression syntax.`,
+    );
+  }
+
+  if (!Number.isFinite(result)) {
+    return 0;
+  }
+
+  return result;
+}
+
+function extractSameRowDependencies(rule: ColumnGenerationRule): string[] {
+  if (rule.kind !== 'semantic') {
+    return [];
+  }
+  if (rule.semanticType === 'digitSequence') {
+    return extractDigitSequenceDependencies(rule.digitSequenceOptions?.format?.trim() ?? '');
+  }
+  if (rule.semanticType === 'formula') {
+    return extractFormulaDependencies(rule.formulaOptions?.expression?.trim() ?? '');
+  }
+  return [];
+}
+
 function resolveColumnGenerationOrder(
   table: TableSchema,
   rules?: TableColumnRules,
@@ -259,15 +369,10 @@ function resolveColumnGenerationOrder(
 
   for (const column of table.columns) {
     const rule = getColumnRule(table.name, column, rules);
-    if (rule.kind !== 'semantic' || rule.semanticType !== 'digitSequence') {
-      continue;
-    }
-
-    const format = rule.digitSequenceOptions?.format?.trim() ?? '';
-    for (const dependencyName of extractDigitSequenceDependencies(format)) {
+    for (const dependencyName of extractSameRowDependencies(rule)) {
       if (!columnsByName.has(dependencyName)) {
         throw new Error(
-          `Digit Sequence in '${table.name}.${column.name}' references unknown column '${dependencyName}'.`,
+          `Column '${table.name}.${column.name}' references unknown column '${dependencyName}' in the same row.`,
         );
       }
 
@@ -306,7 +411,7 @@ function resolveColumnGenerationOrder(
 
   if (orderedNames.length !== table.columns.length) {
     throw new Error(
-      `Digit Sequence dependencies are cyclic in table '${table.name}'. ` +
+      `Same-row column dependencies are cyclic in table '${table.name}'. ` +
         `Adjust the referenced columns to remove the loop.`,
     );
   }
@@ -331,6 +436,13 @@ function generateScalarValue(
     case 'digitSequence':
       return generateDigitSequenceValue(
         rule.digitSequenceOptions?.format?.trim() ?? '',
+        row,
+        tableName,
+        column.name,
+      );
+    case 'formula':
+      return evaluateFormulaExpression(
+        rule.formulaOptions?.expression?.trim() ?? '',
         row,
         tableName,
         column.name,

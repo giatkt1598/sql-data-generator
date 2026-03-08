@@ -35,6 +35,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
   const isDateTimeRule = rule?.kind === 'semantic' && rule.semanticType === 'dateTime';
   const isSequenceRule = rule?.kind === 'semantic' && rule.semanticType === 'sequence';
   const isDigitSequenceRule = rule?.kind === 'semantic' && rule.semanticType === 'digitSequence';
+  const isFormulaRule = rule?.kind === 'semantic' && rule.semanticType === 'formula';
   const isEmailRule = rule?.kind === 'semantic' && rule.semanticType === 'email';
   const isTextRule = rule?.kind === 'semantic' && rule.semanticType === 'text';
   const numberOptions = rule?.numberOptions ?? {
@@ -56,6 +57,9 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
   const digitSequenceOptions = rule?.digitSequenceOptions ?? {
     format: '',
   };
+  const formulaOptions = rule?.formulaOptions ?? {
+    expression: '',
+  };
   const emailOptions = rule?.emailOptions ?? {
     domains: [],
   };
@@ -74,6 +78,13 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
     'Use "$" for a random digit or lower case letter.',
     'Use "%" for a random digit or upper case letter.',
     'Any other character will be included verbatim.',
+  ].join('\n');
+  const formulaHelp = [
+    'Use column names directly.',
+    'Example: quantity * unit_price',
+    'Allowed: numbers, column names, +, -, *, /, %, ().',
+    'Referenced columns must be numeric.',
+    'Looped dependencies will throw an error.',
   ].join('\n');
 
   return (
@@ -265,6 +276,44 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
                     title={
                       <Box sx={{ whiteSpace: 'pre-line' }}>
                         <Typography variant="body2">{digitSequenceHelp}</Typography>
+                      </Box>
+                    }
+                  >
+                    <IconButton size="small">
+                      <HelpOutlineIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                ),
+              },
+            }}
+          />
+        </Stack>
+      )}
+      {isFormulaRule && (
+        <Stack direction="row" spacing={1}>
+          <TextField
+            size="small"
+            label="Expression"
+            defaultValue={formulaOptions.expression}
+            placeholder="example: quantity * unit_price"
+            onBlur={(event) =>
+              context.onFormulaOptionChange(
+                tableName,
+                column.name,
+                'expression',
+                event.target.value,
+              )
+            }
+            sx={{ minWidth: 320 }}
+            slotProps={{
+              input: {
+                endAdornment: (
+                  <Tooltip
+                    arrow
+                    placement="top"
+                    title={
+                      <Box sx={{ whiteSpace: 'pre-line' }}>
+                        <Typography variant="body2">{formulaHelp}</Typography>
                       </Box>
                     }
                   >

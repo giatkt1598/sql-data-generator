@@ -23,6 +23,12 @@ export const DATA_TYPE_DEFINITIONS: DataTypeDefinition[] = [
     groups: ['Basic', 'IT'],
   },
   {
+    value: 'formula',
+    displayName: 'Formula',
+    description: 'Calculated from columns.\nExample: quantity * unit_price',
+    groups: ['Advanced'],
+  },
+  {
     value: 'sequence',
     displayName: 'Sequence',
     description: 'Incrementing number sequence.\nExample: 1, 2, 3, 4',

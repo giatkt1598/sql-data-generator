@@ -45,6 +45,9 @@ export interface ColumnGenerationRule {
   digitSequenceOptions?: {
     format?: string;
   };
+  formulaOptions?: {
+    expression?: string;
+  };
   emailOptions?: {
     domains?: string[];
   };
