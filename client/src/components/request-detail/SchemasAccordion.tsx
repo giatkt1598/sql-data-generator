@@ -85,6 +85,11 @@ export function SchemasAccordion() {
                               max: 100,
                               decimals: 0,
                             },
+                            dateTimeOptions: rule?.dateTimeOptions ?? {
+                              start: '2024-01-01',
+                              end: '2026-12-31',
+                              format: 'yyyy-MM-dd HH:mm:ss',
+                            },
                             semanticType: rule?.kind === 'semantic' ? rule.semanticType ?? 'unknown' : undefined,
                             reference: rule?.kind === 'reference' ? rule.reference : undefined,
                           });

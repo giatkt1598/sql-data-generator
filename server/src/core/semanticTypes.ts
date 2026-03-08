@@ -16,7 +16,6 @@ export const SUPPORTED_SEMANTIC_TYPES: SemanticDataType[] = [
   'companyName',
   'jobTitle',
   'url',
-  'date',
   'dateTime',
   'boolean',
   'number',
@@ -37,15 +36,9 @@ export const DATA_TYPE_DEFINITIONS: DataTypeDefinition[] = [
     group: 'Basic',
   },
   {
-    value: 'date',
-    displayName: 'Date',
-    description: 'Date value.',
-    group: 'Basic',
-  },
-  {
     value: 'dateTime',
     displayName: 'Date Time',
-    description: 'Date-time value.',
+    description: 'Date or date-time value.',
     group: 'Basic',
   },
   {
@@ -168,7 +161,7 @@ export const SQL_TYPE_DEFAULT_CLASSIFICATION: Record<string, SemanticDataType> =
   bit: 'boolean',
   boolean: 'boolean',
   bool: 'boolean',
-  date: 'date',
+  date: 'dateTime',
   datetime: 'dateTime',
   timestamp: 'dateTime',
   char: 'text',

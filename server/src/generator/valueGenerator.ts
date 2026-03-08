@@ -1,11 +1,11 @@
 import { randomUUID } from 'crypto';
+import dayjs from 'dayjs';
 import { faker } from '@faker-js/faker';
 import { normalizeSqlType, SQL_TYPE_DEFAULT_CLASSIFICATION } from '../core/semanticTypes';
 import {
   ColumnGenerationRule,
   ColumnSchema,
   GeneratedTableRows,
-  GenerationOptions,
   SchemaRelationshipNode,
   SchemaRelationshipsConfig,
   SemanticDataType,
@@ -28,10 +28,15 @@ interface GenerateContext {
 const DEFAULT_TABLE_ROWS = 10;
 const MAX_ROWS_PER_TABLE = 100_000;
 const MAX_TOTAL_ROWS = 200_000;
+const DEFAULT_DATE_TIME_FORMAT = 'yyyy-MM-dd';
 
 function inferFallbackSemanticType(column: ColumnSchema): SemanticDataType {
   const normalized = normalizeSqlType(column.dbType);
   return SQL_TYPE_DEFAULT_CLASSIFICATION[normalized] ?? 'unknown';
+}
+
+function toDayjsFormat(format: string): string {
+  return format.replace(/yyyy/g, 'YYYY').replace(/dd/g, 'DD');
 }
 
 function generateScalarValue(
@@ -46,20 +51,19 @@ function generateScalarValue(
   switch (semanticType) {
     case 'guid':
       return faker.string.uuid().toUpperCase();
-    case 'number':
-      {
-        const min = rule.numberOptions?.min ?? 0;
-        const max = rule.numberOptions?.max ?? 100;
-        const decimals = Math.max(0, Math.floor(rule.numberOptions?.decimals ?? 0));
-        if (decimals === 0) {
-          return faker.number.int({ min: Math.ceil(min), max: Math.floor(Math.max(min, max)) });
-        }
-        return faker.number.float({
-          min,
-          max: Math.max(min, max),
-          fractionDigits: decimals,
-        });
+    case 'number': {
+      const min = rule.numberOptions?.min ?? 0;
+      const max = rule.numberOptions?.max ?? 100;
+      const decimals = Math.max(0, Math.floor(rule.numberOptions?.decimals ?? 0));
+      if (decimals === 0) {
+        return faker.number.int({ min: Math.ceil(min), max: Math.floor(Math.max(min, max)) });
       }
+      return faker.number.float({
+        min,
+        max: Math.max(min, max),
+        fractionDigits: decimals,
+      });
+    }
     case 'fullName':
       return faker.person.fullName();
     case 'firstName':
@@ -90,17 +94,16 @@ function generateScalarValue(
       return faker.person.jobTitle();
     case 'url':
       return faker.internet.url({ appendSlash: false });
-    case 'date':
-      return faker.date
-        .between({ from: '2024-01-01T00:00:00.000Z', to: '2026-12-31T23:59:59.999Z' })
-        .toISOString()
-        .slice(0, 10);
     case 'dateTime':
-      return faker.date
-        .between({ from: '2024-01-01T00:00:00.000Z', to: '2026-12-31T23:59:59.999Z' })
-        .toISOString()
-        .slice(0, 19)
-        .replace('T', ' ');
+      const from = rule.dateTimeOptions?.start?.trim()
+        ? dayjs(rule.dateTimeOptions.start.trim()).startOf('day').toDate()
+        : dayjs().subtract(1, 'year').startOf('day').toDate();
+      const to = rule.dateTimeOptions?.end?.trim()
+        ? dayjs(rule.dateTimeOptions.end.trim()).endOf('day').toDate()
+        : dayjs().endOf('day').toDate();
+      const format = rule.dateTimeOptions?.format?.trim() || DEFAULT_DATE_TIME_FORMAT;
+      return dayjs(faker.date.between({ from, to })).format(toDayjsFormat(format));
+
     case 'boolean':
       return faker.datatype.boolean();
     case 'text':
@@ -247,7 +250,6 @@ function ensurePlanWithinLimits(rowCountByTable: Map<string, number>) {
 
 function buildGenerationPlan(
   tables: TableSchema[],
-  options: GenerationOptions,
   relationships?: SchemaRelationshipsConfig,
 ): GenerationPlan {
   const rowCountByTable = new Map<string, number>();
@@ -384,8 +386,10 @@ function findReferenceValueForTable(
     }
   }
 
-  const plannedIndex =
-    context.plan.parentAssignments.get(currentTableName)?.get(parentTable)?.at(rowIndex);
+  const plannedIndex = context.plan.parentAssignments
+    .get(currentTableName)
+    ?.get(parentTable)
+    ?.at(rowIndex);
   const targetIndex = plannedIndex ?? rowIndex;
   const parentRow = parentRows[targetIndex % parentRows.length];
   return (parentRow[rule.reference.columnName] as string | number | boolean | null) ?? null;
@@ -404,7 +408,9 @@ function generateRowsForTable(
 
     for (const column of table.columns) {
       const rule = getColumnRule(table.name, column, rules);
-      const hasForeignKey = table.foreignKeys.some((foreignKey) => foreignKey.columns.includes(column.name));
+      const hasForeignKey = table.foreignKeys.some((foreignKey) =>
+        foreignKey.columns.includes(column.name),
+      );
       if (shouldGenerateNull(table.name, column.name, rowIndex, rule.blankPercentage)) {
         row[column.name] = null;
         continue;
@@ -436,13 +442,7 @@ function generateRowsForTable(
         rule.kind === 'semantic'
           ? (rule.semanticType ?? inferFallbackSemanticType(column))
           : inferFallbackSemanticType(column);
-      row[column.name] = generateScalarValue(
-        semanticType,
-        rule,
-        column,
-        rowIndex,
-        context.runSalt,
-      );
+      row[column.name] = generateScalarValue(semanticType, rule, column, rowIndex, context.runSalt);
     }
 
     rows.push(row);
@@ -453,14 +453,13 @@ function generateRowsForTable(
 
 export function generateDataByTableOrder(
   orderedTables: TableSchema[],
-  options: GenerationOptions,
   rules?: TableColumnRules,
   relationships?: SchemaRelationshipsConfig,
 ): GeneratedTableRows[] {
   const result: GeneratedTableRows[] = [];
   const context: GenerateContext = {
     generatedByTable: new Map<string, GeneratedTableRows>(),
-    plan: buildGenerationPlan(orderedTables, options, relationships),
+    plan: buildGenerationPlan(orderedTables, relationships),
     runSalt: randomUUID().replace(/-/g, ''),
   };
 

@@ -3,6 +3,7 @@ import {
   SQL_TYPE_DEFAULT_CLASSIFICATION,
   SUPPORTED_SEMANTIC_TYPES,
 } from '../core/semanticTypes';
+import dayjs from 'dayjs';
 import {
   AiClassificationResult,
   ColumnGenerationRule,
@@ -69,6 +70,28 @@ function normalizeNumberOptions(
   };
 }
 
+function normalizeDateTimeOptions(
+  rule: ColumnGenerationRule | undefined,
+  fallback: { start?: string; end?: string; format?: string } | undefined,
+) {
+  const defaultStart = dayjs().subtract(1, 'year').format('YYYY-MM-DD');
+  const defaultEnd = dayjs().format('YYYY-MM-DD');
+  const start =
+    typeof rule?.dateTimeOptions?.start === 'string' && rule.dateTimeOptions.start.trim()
+      ? rule.dateTimeOptions.start
+      : (fallback?.start ?? defaultStart);
+  const end =
+    typeof rule?.dateTimeOptions?.end === 'string' && rule.dateTimeOptions.end.trim()
+      ? rule.dateTimeOptions.end
+      : (fallback?.end ?? defaultEnd);
+  const format =
+    typeof rule?.dateTimeOptions?.format === 'string' && rule.dateTimeOptions.format.trim()
+      ? rule.dateTimeOptions.format
+      : (fallback?.format ?? 'yyyy-MM-dd');
+
+  return { start, end, format };
+}
+
 function readCandidateFieldName(rule: ColumnGenerationRule | undefined): unknown {
   if (!rule) {
     return undefined;
@@ -115,6 +138,11 @@ export function buildDefaultColumnRules(
           min: 0,
           max: 100,
           decimals: 0,
+        },
+        dateTimeOptions: {
+          start: dayjs().subtract(1, 'year').format('YYYY-MM-DD'),
+          end: dayjs().format('YYYY-MM-DD'),
+          format: 'yyyy-MM-dd',
         },
       };
     }
@@ -179,6 +207,10 @@ export function sanitizeColumnRules(
             candidate,
             fallbackRules[table.name][column.name].numberOptions,
           ),
+          dateTimeOptions: normalizeDateTimeOptions(
+            candidate,
+            fallbackRules[table.name][column.name].dateTimeOptions,
+          ),
         };
         continue;
       }
@@ -202,6 +234,10 @@ export function sanitizeColumnRules(
               candidate,
               fallbackRules[table.name][column.name].numberOptions,
             ),
+            dateTimeOptions: normalizeDateTimeOptions(
+              candidate,
+              fallbackRules[table.name][column.name].dateTimeOptions,
+            ),
           };
           continue;
         }
@@ -217,6 +253,10 @@ export function sanitizeColumnRules(
           numberOptions: normalizeNumberOptions(
             candidate,
             fallbackRules[table.name][column.name].numberOptions,
+          ),
+          dateTimeOptions: normalizeDateTimeOptions(
+            candidate,
+            fallbackRules[table.name][column.name].dateTimeOptions,
           ),
         };
         continue;
@@ -234,6 +274,10 @@ export function sanitizeColumnRules(
         numberOptions: normalizeNumberOptions(
           candidate,
           fallbackRules[table.name][column.name].numberOptions,
+        ),
+        dateTimeOptions: normalizeDateTimeOptions(
+          candidate,
+          fallbackRules[table.name][column.name].dateTimeOptions,
         ),
       };
     }

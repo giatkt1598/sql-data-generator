@@ -16,7 +16,6 @@ export type SemanticDataType =
   | 'companyName'
   | 'jobTitle'
   | 'url'
-  | 'date'
   | 'dateTime'
   | 'boolean'
   | 'number'
@@ -81,6 +80,11 @@ export interface ColumnGenerationRule {
     max?: number;
     decimals?: number;
   };
+  dateTimeOptions?: {
+    start?: string;
+    end?: string;
+    format?: string;
+  };
 }
 
 export type TableColumnRules = Record<string, Record<string, ColumnGenerationRule>>;
@@ -100,8 +104,6 @@ export interface SchemaRelationshipNode {
 
 export type SchemaRelationshipsRoot = Record<string, SchemaRelationshipNode>;
 export type SchemaRelationshipsConfig = SchemaRelationshipsRoot[];
-
-export interface GenerationOptions {}
 
 export interface GeneratedTableRows {
   tableName: string;

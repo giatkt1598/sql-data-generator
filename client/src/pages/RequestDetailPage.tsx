@@ -29,6 +29,13 @@ import { SchemasAccordion } from '../components/request-detail/SchemasAccordion'
 import type { PickerTarget, RequestDetailForm } from '../components/request-detail/types';
 import type { RequestDetailPageProps } from './pageProps';
 
+function toLocalDateInputValue(value: Date): string {
+  const year = value.getFullYear();
+  const month = `${value.getMonth() + 1}`.padStart(2, '0');
+  const day = `${value.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export function RequestDetailPage(props: RequestDetailPageProps) {
   const { projectId, requestId } = useParams();
   const navigate = useNavigate();
@@ -52,6 +59,12 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewText, setPreviewText] = useState('');
   const [analyzeConfirmOpen, setAnalyzeConfirmOpen] = useState(false);
+  const defaultDateTimeStart = useMemo(() => {
+    const value = new Date();
+    value.setFullYear(value.getFullYear() - 1);
+    return toLocalDateInputValue(value);
+  }, []);
+  const defaultDateTimeEnd = useMemo(() => toLocalDateInputValue(new Date()), []);
 
   useEffect(() => {
     if (!projectId || !requestId) {
@@ -326,6 +339,11 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         max: 100,
         decimals: 0,
       },
+      dateTimeOptions: current?.dateTimeOptions ?? {
+        start: defaultDateTimeStart,
+        end: defaultDateTimeEnd,
+        format: 'yyyy-MM-dd',
+      },
     });
     setTypePickerOpen(false);
   }
@@ -365,6 +383,11 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         max: 100,
         decimals: 0,
       },
+      dateTimeOptions: columnRules[pickerTarget.tableName]?.[pickerTarget.columnName]?.dateTimeOptions ?? {
+        start: defaultDateTimeStart,
+        end: defaultDateTimeEnd,
+        format: 'yyyy-MM-dd',
+      },
     });
     setTypePickerOpen(false);
   }
@@ -381,6 +404,11 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         min: 0,
         max: 100,
         decimals: 0,
+      },
+      dateTimeOptions: {
+        start: defaultDateTimeStart,
+        end: defaultDateTimeEnd,
+        format: 'yyyy-MM-dd',
       },
     };
     onRuleChange(tableName, columnName, {
@@ -402,6 +430,11 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         min: 0,
         max: 100,
         decimals: 0,
+      },
+      dateTimeOptions: {
+        start: defaultDateTimeStart,
+        end: defaultDateTimeEnd,
+        format: 'yyyy-MM-dd',
       },
     };
     onRuleChange(tableName, columnName, {
@@ -442,6 +475,11 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         max: 100,
         decimals: 0,
       },
+      dateTimeOptions: columnRules[tableName]?.[columnName]?.dateTimeOptions ?? {
+        start: defaultDateTimeStart,
+        end: defaultDateTimeEnd,
+        format: 'yyyy-MM-dd',
+      },
     });
   }
 
@@ -463,6 +501,11 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         min: 0,
         max: 100,
         decimals: 0,
+      },
+      dateTimeOptions: {
+        start: defaultDateTimeStart,
+        end: defaultDateTimeEnd,
+        format: 'yyyy-MM-dd',
       },
     };
     const currentOptions = fallbackRule.numberOptions ?? {
@@ -487,6 +530,45 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
       ...fallbackRule,
       fieldName: fallbackRule.fieldName ?? columnName,
       numberOptions: nextOptions,
+    });
+  }
+
+  function onDateTimeOptionChange(
+    tableName: string,
+    columnName: string,
+    key: 'start' | 'end' | 'format',
+    value: string,
+  ) {
+    const current = columnRules[tableName]?.[columnName];
+    const fallbackRule: TableColumnRules[string][string] = current ?? {
+      kind: 'semantic',
+      semanticType: 'dateTime',
+      fieldName: columnName,
+      blankPercentage: 0,
+      numberOptions: {
+        min: 0,
+        max: 100,
+        decimals: 0,
+      },
+      dateTimeOptions: {
+        start: defaultDateTimeStart,
+        end: defaultDateTimeEnd,
+        format: 'yyyy-MM-dd',
+      },
+    };
+    const currentOptions = fallbackRule.dateTimeOptions ?? {
+      start: defaultDateTimeStart,
+      end: defaultDateTimeEnd,
+      format: 'yyyy-MM-dd',
+    };
+
+    onRuleChange(tableName, columnName, {
+      ...fallbackRule,
+      fieldName: fallbackRule.fieldName ?? columnName,
+      dateTimeOptions: {
+        ...currentOptions,
+        [key]: value.trim() || currentOptions[key],
+      },
     });
   }
 
@@ -543,6 +625,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     onBlankPercentageChange,
     onCustomListValueChange,
     onNumberOptionChange,
+    onDateTimeOptionChange,
     applyRule,
     applyCustomListRule,
     handleBack: () => navigate(-1),

@@ -1,5 +1,14 @@
 import { memo } from 'react';
-import { Box, MenuItem, Select, Stack, TextField, Tooltip, Typography } from '@mui/material';
+import {
+  Autocomplete,
+  Box,
+  MenuItem,
+  Select,
+  Stack,
+  TextField,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import { stringifyRule } from '../../utilities/ruleUtils';
 import { useRequestDetailContext } from './RequestDetailContext';
@@ -17,11 +26,18 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
   const rule = context.columnRules[tableName]?.[column.name];
   const value = stringifyRule(context.semanticTypes, rule);
   const isNumberRule = rule?.kind === 'semantic' && rule.semanticType === 'number';
+  const isDateTimeRule = rule?.kind === 'semantic' && rule.semanticType === 'dateTime';
   const numberOptions = rule?.numberOptions ?? {
     min: 0,
     max: 100,
     decimals: 0,
   };
+  const dateTimeOptions = rule?.dateTimeOptions ?? {
+    start: '',
+    end: '',
+    format: 'yyyy-MM-dd',
+  };
+  const dateTimeFormats = ['yyyy-MM-dd', 'yyyy-MM-dd HH:mm:ss', 'dd/MM/yyyy', 'MM-dd-yyyy HH:mm'];
 
   return (
     <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ md: 'center' }}>
@@ -103,6 +119,53 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
               context.onNumberOptionChange(tableName, column.name, 'decimals', event.target.value)
             }
             sx={{ width: 110 }}
+          />
+        </Stack>
+      )}
+      {isDateTimeRule && (
+        <Stack direction="row" spacing={1} sx={{ flex: 1 }}>
+          <TextField
+            size="small"
+            label="Start"
+            type="date"
+            defaultValue={dateTimeOptions.start}
+            onBlur={(event) =>
+              context.onDateTimeOptionChange(tableName, column.name, 'start', event.target.value)
+            }
+            sx={{ width: 150 }}
+            InputLabelProps={{ shrink: true }}
+          />
+          <TextField
+            size="small"
+            label="End"
+            type="date"
+            defaultValue={dateTimeOptions.end}
+            onBlur={(event) =>
+              context.onDateTimeOptionChange(tableName, column.name, 'end', event.target.value)
+            }
+            sx={{ width: 150 }}
+            InputLabelProps={{ shrink: true }}
+          />
+          <Autocomplete
+            freeSolo
+            options={dateTimeFormats}
+            defaultValue={dateTimeOptions.format}
+            sx={{ minWidth: 220 }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                size="small"
+                label="Format"
+                onBlur={(event) =>
+                  context.onDateTimeOptionChange(
+                    tableName,
+                    column.name,
+                    'format',
+                    event.target.value,
+                  )
+                }
+              />
+            )}
           />
         </Stack>
       )}

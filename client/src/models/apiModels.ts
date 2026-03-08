@@ -22,7 +22,6 @@ export type SemanticDataType =
   | 'companyName'
   | 'jobTitle'
   | 'url'
-  | 'date'
   | 'dateTime'
   | 'boolean'
   | 'number'
@@ -46,6 +45,11 @@ export interface ColumnGenerationRule {
     min?: number;
     max?: number;
     decimals?: number;
+  };
+  dateTimeOptions?: {
+    start?: string;
+    end?: string;
+    format?: string;
   };
 }
 

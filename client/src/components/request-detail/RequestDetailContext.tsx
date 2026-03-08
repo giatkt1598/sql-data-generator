@@ -50,6 +50,12 @@ export interface RequestDetailContextValue {
     key: 'min' | 'max' | 'decimals',
     value: string,
   ) => void;
+  onDateTimeOptionChange: (
+    tableName: string,
+    columnName: string,
+    key: 'start' | 'end' | 'format',
+    value: string,
+  ) => void;
   applyRule: (rule: TableColumnRules[string][string]) => void;
   applyCustomListRule: () => void;
   handleBack: () => void;

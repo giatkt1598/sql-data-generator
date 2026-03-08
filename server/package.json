@@ -37,6 +37,7 @@
   "dependencies": {
     "@faker-js/faker": "^10.3.0",
     "cors": "^2.8.6",
+    "dayjs": "^1.11.19",
     "express": "^4.22.1"
   }
 }
