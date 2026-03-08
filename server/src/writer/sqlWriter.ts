@@ -32,15 +32,29 @@ function buildInsertSql(tableData: GeneratedTableRows): string {
   ].join('\n');
 }
 
+export interface SqlFileArtifact {
+  fileName: string;
+  content: string;
+}
+
+export function buildInsertFileArtifacts(tableRows: GeneratedTableRows[]): SqlFileArtifact[] {
+  return tableRows.map((tableData, index) => {
+    const order = String(index + 1).padStart(3, '0');
+    return {
+      fileName: `${order}_${tableData.tableName}.sql`,
+      content: buildInsertSql(tableData),
+    };
+  });
+}
+
 export function writeInsertFiles(tableRows: GeneratedTableRows[], outputDir: string): string[] {
   fs.mkdirSync(outputDir, { recursive: true });
   const files: string[] = [];
 
-  tableRows.forEach((tableData, index) => {
-    const order = String(index + 1).padStart(3, '0');
-    const fileName = `${order}_${tableData.tableName}.sql`;
-    const fullPath = path.join(outputDir, fileName);
-    fs.writeFileSync(fullPath, buildInsertSql(tableData), 'utf-8');
+  const artifacts = buildInsertFileArtifacts(tableRows);
+  artifacts.forEach((artifact) => {
+    const fullPath = path.join(outputDir, artifact.fileName);
+    fs.writeFileSync(fullPath, artifact.content, 'utf-8');
     files.push(fullPath);
   });
 

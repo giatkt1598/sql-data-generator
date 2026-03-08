@@ -1,10 +1,11 @@
-import { SQL_TYPE_DEFAULT_CLASSIFICATION, normalizeSqlType } from '../core/semanticTypes';
+import { normalizeSqlType, SQL_TYPE_DEFAULT_CLASSIFICATION } from '../core/semanticTypes';
 import {
-  AiClassificationResult,
+  ColumnGenerationRule,
   ColumnSchema,
   GeneratedTableRows,
   GenerationOptions,
   SemanticDataType,
+  TableColumnRules,
   TableSchema,
 } from '../core/types';
 
@@ -62,66 +63,64 @@ function generateScalarValue(
   }
 }
 
-function getColumnSemanticType(
+function getColumnRule(
   tableName: string,
-  columnName: string,
-  classification: AiClassificationResult,
   column: ColumnSchema,
-): SemanticDataType {
-  const fromAi = classification.tables[tableName]?.columns[columnName]?.semanticType;
-  if (fromAi) {
-    return fromAi;
+  rules?: TableColumnRules,
+): ColumnGenerationRule {
+  const rule = rules?.[tableName]?.[column.name];
+  if (rule) {
+    return rule;
   }
-  if (column.isPrimaryKey) {
-    return 'id';
-  }
-  return inferFallbackSemanticType(column);
+  return {
+    kind: 'semantic',
+    semanticType: column.isPrimaryKey ? 'id' : inferFallbackSemanticType(column),
+  };
 }
 
-function findForeignKeyValue(
-  table: TableSchema,
-  columnName: string,
+function findReferenceValue(
+  rule: ColumnGenerationRule,
   rowIndex: number,
   context: GenerateContext,
 ): string | number | boolean | null {
-  for (const fk of table.foreignKeys) {
-    const fkColumnIndex = fk.columns.indexOf(columnName);
-    if (fkColumnIndex < 0) {
-      continue;
-    }
-
-    const parentRows = context.generatedByTable.get(fk.referencedTable)?.rows;
-    if (!parentRows || parentRows.length === 0) {
-      return null;
-    }
-
-    const parentRow = parentRows[rowIndex % parentRows.length];
-    const parentColumn = fk.referencedColumns[fkColumnIndex];
-    return (parentRow[parentColumn] as string | number | boolean | null) ?? null;
+  if (rule.kind !== 'reference' || !rule.reference) {
+    return null;
   }
 
-  return null;
+  const parentRows = context.generatedByTable.get(rule.reference.tableName)?.rows;
+  if (!parentRows || parentRows.length === 0) {
+    return null;
+  }
+  const parentRow = parentRows[rowIndex % parentRows.length];
+  return (parentRow[rule.reference.columnName] as string | number | boolean | null) ?? null;
 }
 
 function generateRowsForTable(
   table: TableSchema,
-  classification: AiClassificationResult,
   options: GenerationOptions,
   context: GenerateContext,
+  rules?: TableColumnRules,
 ): GeneratedTableRows {
   const rows: Record<string, string | number | boolean | null>[] = [];
+
   for (let rowIndex = 0; rowIndex < options.rowsPerTable; rowIndex += 1) {
     const row: Record<string, string | number | boolean | null> = {};
+
     for (const column of table.columns) {
-      const fkValue = findForeignKeyValue(table, column.name, rowIndex, context);
-      if (fkValue !== null) {
-        row[column.name] = fkValue;
+      const rule = getColumnRule(table.name, column, rules);
+      const referenceValue = findReferenceValue(rule, rowIndex, context);
+      if (referenceValue !== null) {
+        row[column.name] = referenceValue;
         continue;
       }
 
-      const semanticType = getColumnSemanticType(table.name, column.name, classification, column);
+      const semanticType =
+        rule.kind === 'semantic'
+          ? (rule.semanticType ?? inferFallbackSemanticType(column))
+          : inferFallbackSemanticType(column);
       row[column.name] = generateScalarValue(semanticType, rowIndex);
     }
+
     rows.push(row);
   }
 
@@ -130,8 +129,8 @@ function generateRowsForTable(
 
 export function generateDataByTableOrder(
   orderedTables: TableSchema[],
-  classification: AiClassificationResult,
   options: GenerationOptions,
+  rules?: TableColumnRules,
 ): GeneratedTableRows[] {
   const result: GeneratedTableRows[] = [];
   const context: GenerateContext = {
@@ -139,7 +138,7 @@ export function generateDataByTableOrder(
   };
 
   for (const table of orderedTables) {
-    const generated = generateRowsForTable(table, classification, options, context);
+    const generated = generateRowsForTable(table, options, context, rules);
     context.generatedByTable.set(table.name, generated);
     result.push(generated);
   }

@@ -1,3 +1,10 @@
+CREATE TABLE carts (
+    cart_id INT IDENTITY PRIMARY KEY,
+    user_id INT,
+    created_at DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
 CREATE TABLE users (
     user_id INT IDENTITY PRIMARY KEY,
     role_id INT,
@@ -7,13 +14,6 @@ CREATE TABLE users (
     phone NVARCHAR(50),
     created_at DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (role_id) REFERENCES roles(role_id)
-);
-
-CREATE TABLE carts (
-    cart_id INT IDENTITY PRIMARY KEY,
-    user_id INT,
-    created_at DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
 
 CREATE TABLE cart_items (

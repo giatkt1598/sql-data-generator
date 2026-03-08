@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { parseClassificationJson, validateClassificationCoverage } from './ai/classificationLoader';
 import { buildClassificationPrompt } from './ai/promptBuilder';
+import { buildDefaultColumnRules } from './schema/columnRules';
 import { resolveTableOrder } from './schema/dependencyResolver';
 import { parseCreateTableSql } from './schema/simpleSchemaParser';
 import { generateDataByTableOrder } from './generator/valueGenerator';
@@ -68,10 +69,9 @@ function runGenerate(): void {
     warnings.forEach((warning) => console.warn(`- ${warning}`));
   }
 
-  const orderedTables = resolveTableOrder(schema.tables);
-  const generatedRows = generateDataByTableOrder(orderedTables, classification, {
-    rowsPerTable,
-  });
+  const columnRules = buildDefaultColumnRules(schema.tables, classification);
+  const orderedTables = resolveTableOrder(schema.tables, columnRules);
+  const generatedRows = generateDataByTableOrder(orderedTables, { rowsPerTable }, columnRules);
   const files = writeInsertFiles(generatedRows, path.resolve(outputDir));
 
   console.log('Generated SQL files:');

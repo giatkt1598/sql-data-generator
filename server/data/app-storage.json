@@ -1,0 +1,93 @@
+{
+  "projects": [
+    {
+      "id": "b0eaff8a-9aaa-4a01-8fbc-cb65e7892dc5",
+      "name": "Demo",
+      "description": "",
+      "createdAt": "2026-03-08T03:30:33.639Z",
+      "updatedAt": "2026-03-08T03:30:33.639Z"
+    }
+  ],
+  "generationRequests": [
+    {
+      "id": "997f3d71-72c7-4eda-951f-2f793096f560",
+      "projectId": "b0eaff8a-9aaa-4a01-8fbc-cb65e7892dc5",
+      "name": "R1",
+      "schemaSql": "CREATE TABLE users (\n    user_id INT IDENTITY PRIMARY KEY,\n    role_id INT,\n    email NVARCHAR(255) UNIQUE,\n    password_hash NVARCHAR(255),\n    full_name NVARCHAR(255),\n    phone NVARCHAR(50),\n    created_at DATETIME DEFAULT GETDATE(),\n    FOREIGN KEY (role_id) REFERENCES roles(role_id)\n);\n\nCREATE TABLE carts (\n    cart_id INT IDENTITY PRIMARY KEY,\n    user_id INT,\n    created_at DATETIME DEFAULT GETDATE(),\n    FOREIGN KEY (user_id) REFERENCES users(user_id)\n);\n\nCREATE TABLE cart_items (\n    cart_item_id INT IDENTITY PRIMARY KEY,\n    cart_id INT,\n    variant_id INT,\n    quantity INT,\n    FOREIGN KEY (cart_id) REFERENCES carts(cart_id),\n    FOREIGN KEY (variant_id) REFERENCES product_variants(variant_id)\n);",
+      "classificationJson": "{\n\"version\": \"1\",\n\"tables\": {\n\"users\": {\n\"columns\": {\n\"user_id\": {\n\"semanticType\": \"id\",\n\"reason\": \"Primary key for the users table\"\n},\n\"role_id\": {\n\"semanticType\": \"id\",\n\"reason\": \"Foreign key reference to roles\"\n},\n\"email\": {\n\"semanticType\": \"email\",\n\"reason\": \"User email address\"\n},\n\"password_hash\": {\n\"semanticType\": \"text\",\n\"reason\": \"Hashed password value\"\n},\n\"full_name\": {\n\"semanticType\": \"fullName\",\n\"reason\": \"Full name of the user\"\n},\n\"phone\": {\n\"semanticType\": \"phoneNumber\",\n\"reason\": \"User contact number\"\n},\n\"created_at\": {\n\"semanticType\": \"dateTime\",\n\"reason\": \"Timestamp of account creation\"\n}\n}\n},\n\"carts\": {\n\"columns\": {\n\"cart_id\": {\n\"semanticType\": \"id\",\n\"reason\": \"Primary key for the carts table\"\n},\n\"user_id\": {\n\"semanticType\": \"id\",\n\"reason\": \"Foreign key reference to users\"\n},\n\"created_at\": {\n\"semanticType\": \"dateTime\",\n\"reason\": \"Timestamp of cart creation\"\n}\n}\n},\n\"cart_items\": {\n\"columns\": {\n\"cart_item_id\": {\n\"semanticType\": \"id\",\n\"reason\": \"Primary key for cart items\"\n},\n\"cart_id\": {\n\"semanticType\": \"id\",\n\"reason\": \"Foreign key reference to carts\"\n},\n\"variant_id\": {\n\"semanticType\": \"id\",\n\"reason\": \"Foreign key reference to product variants\"\n},\n\"quantity\": {\n\"semanticType\": \"number\",\n\"reason\": \"Count of items\"\n}\n}\n}\n}\n}",
+      "rowsPerTable": 10,
+      "createdAt": "2026-03-08T03:32:59.598Z",
+      "updatedAt": "2026-03-08T04:28:14.405Z",
+      "columnRules": {
+        "users": {
+          "user_id": {
+            "kind": "semantic",
+            "semanticType": "id"
+          },
+          "role_id": {
+            "kind": "semantic",
+            "semanticType": "id"
+          },
+          "email": {
+            "kind": "semantic",
+            "semanticType": "email"
+          },
+          "password_hash": {
+            "kind": "semantic",
+            "semanticType": "text"
+          },
+          "full_name": {
+            "kind": "semantic",
+            "semanticType": "fullName"
+          },
+          "phone": {
+            "kind": "semantic",
+            "semanticType": "phoneNumber"
+          },
+          "created_at": {
+            "kind": "semantic",
+            "semanticType": "dateTime"
+          }
+        },
+        "carts": {
+          "cart_id": {
+            "kind": "semantic",
+            "semanticType": "id"
+          },
+          "user_id": {
+            "kind": "reference",
+            "reference": {
+              "tableName": "users",
+              "columnName": "user_id"
+            }
+          },
+          "created_at": {
+            "kind": "semantic",
+            "semanticType": "dateTime"
+          }
+        },
+        "cart_items": {
+          "cart_item_id": {
+            "kind": "semantic",
+            "semanticType": "id"
+          },
+          "cart_id": {
+            "kind": "reference",
+            "reference": {
+              "tableName": "carts",
+              "columnName": "cart_id"
+            }
+          },
+          "variant_id": {
+            "kind": "semantic",
+            "semanticType": "id"
+          },
+          "quantity": {
+            "kind": "semantic",
+            "semanticType": "number"
+          }
+        }
+      }
+    }
+  ]
+}

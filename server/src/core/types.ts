@@ -59,6 +59,19 @@ export interface AiClassificationResult {
   tables: Record<string, TableClassification>;
 }
 
+export interface ColumnReference {
+  tableName: string;
+  columnName: string;
+}
+
+export interface ColumnGenerationRule {
+  kind: 'semantic' | 'reference';
+  semanticType?: SemanticDataType;
+  reference?: ColumnReference;
+}
+
+export type TableColumnRules = Record<string, Record<string, ColumnGenerationRule>>;
+
 export interface GenerationOptions {
   rowsPerTable: number;
 }
