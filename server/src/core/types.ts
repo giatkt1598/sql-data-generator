@@ -1,31 +1,15 @@
+import {
+  DATA_TYPE_GROUPS,
+  SEMANTIC_DATA_TYPES,
+  type DataTypeGroup,
+  type SemanticDataType,
+} from '../../../shared/dataTypes';
+
 export type SqlDialect = 'postgres' | 'mysql' | 'sqlserver' | 'generic';
 
-export type SemanticDataType =
-  | 'unknown'
-  | 'guid'
-  | 'digitSequence'
-  | 'sequence'
-  | 'fullName'
-  | 'firstName'
-  | 'lastName'
-  | 'gender'
-  | 'email'
-  | 'phoneNumber'
-  | 'address'
-  | 'city'
-  | 'country'
-  | 'zipCode'
-  | 'companyName'
-  | 'jobTitle'
-  | 'url'
-  | 'dateTime'
-  | 'boolean'
-  | 'number'
-  | 'text';
-
 export type DataTypeCatalogValue = SemanticDataType | 'customList';
-
-export type DataTypeGroup = 'Basic' | 'Personal' | 'Table Primary Key';
+export { DATA_TYPE_GROUPS, SEMANTIC_DATA_TYPES };
+export type { DataTypeGroup, SemanticDataType };
 
 export interface ColumnSchema {
   name: string;

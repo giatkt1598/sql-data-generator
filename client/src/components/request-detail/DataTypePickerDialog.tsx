@@ -18,6 +18,7 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import SearchIcon from '@mui/icons-material/Search';
 import { useRequestDetailContext } from './RequestDetailContext';
+import { DATA_TYPE_GROUPS } from '../../models/apiModels';
 import type {
   DataTypeCatalogValue,
   DataTypeGroup,
@@ -42,7 +43,7 @@ type PickerItem =
       description: string;
     };
 
-const GROUPS = ['All', 'Basic', 'Personal', 'Table Primary Key'] as const;
+const GROUPS = ['All', ...DATA_TYPE_GROUPS] as const;
 type GroupName = (typeof GROUPS)[number];
 
 const TypePickerCard = memo(function TypePickerCard(props: {
@@ -147,6 +148,7 @@ export const DataTypePickerDialog = memo(function DataTypePickerDialog() {
       ['All', items.length],
       ['Basic', 0],
       ['Personal', 0],
+      ['Commerce', 0],
       ['Table Primary Key', 0],
     ]);
 

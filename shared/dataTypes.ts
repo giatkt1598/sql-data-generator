@@ -1,0 +1,47 @@
+export const SEMANTIC_DATA_TYPES = [
+  'unknown',
+  'guid',
+  'digitSequence',
+  'sequence',
+  'creditCardNumber',
+  'creditCardType',
+  'currency',
+  'currencyCode',
+  'departmentRetail',
+  'iban',
+  'money',
+  'productCategory',
+  'productDescription',
+  'productName',
+  'productPrice',
+  'productSubcategory',
+  'stockIndustry',
+  'stockMarket',
+  'stockMarketCap',
+  'stockName',
+  'stockSector',
+  'stockSymbol',
+  'fullName',
+  'firstName',
+  'lastName',
+  'gender',
+  'email',
+  'phoneNumber',
+  'address',
+  'city',
+  'country',
+  'zipCode',
+  'companyName',
+  'jobTitle',
+  'url',
+  'dateTime',
+  'boolean',
+  'number',
+  'text',
+] as const;
+
+export type SemanticDataType = (typeof SEMANTIC_DATA_TYPES)[number];
+
+export const DATA_TYPE_GROUPS = ['Basic', 'Personal', 'Commerce', 'Table Primary Key'] as const;
+
+export type DataTypeGroup = (typeof DATA_TYPE_GROUPS)[number];

@@ -1,28 +1,7 @@
-import { DataTypeDefinition, SemanticDataType } from './types';
+import { DataTypeDefinition, SEMANTIC_DATA_TYPES } from './types';
+import type { SemanticDataType } from './types';
 
-export const SUPPORTED_SEMANTIC_TYPES: SemanticDataType[] = [
-  'unknown',
-  'guid',
-  'digitSequence',
-  'sequence',
-  'fullName',
-  'firstName',
-  'lastName',
-  'gender',
-  'email',
-  'phoneNumber',
-  'address',
-  'city',
-  'country',
-  'zipCode',
-  'companyName',
-  'jobTitle',
-  'url',
-  'dateTime',
-  'boolean',
-  'number',
-  'text',
-];
+export const SUPPORTED_SEMANTIC_TYPES = [...SEMANTIC_DATA_TYPES];
 
 export const DATA_TYPE_DEFINITIONS: DataTypeDefinition[] = [
   {
@@ -48,6 +27,114 @@ export const DATA_TYPE_DEFINITIONS: DataTypeDefinition[] = [
     displayName: 'Sequence',
     description: 'Incrementing number sequence.\nExample: 1, 2, 3, 4',
     group: 'Basic',
+  },
+  {
+    value: 'creditCardNumber',
+    displayName: 'Credit Card #',
+    description: 'Credit card number.\nExample: 4017959045824',
+    group: 'Commerce',
+  },
+  {
+    value: 'creditCardType',
+    displayName: 'Credit Card Type',
+    description: 'Card issuer name.\nExample: visa',
+    group: 'Commerce',
+  },
+  {
+    value: 'currency',
+    displayName: 'Currency',
+    description: 'Currency name.\nExample: Dollar',
+    group: 'Commerce',
+  },
+  {
+    value: 'currencyCode',
+    displayName: 'Currency Code',
+    description: 'Currency code.\nExample: USD',
+    group: 'Commerce',
+  },
+  {
+    value: 'departmentRetail',
+    displayName: 'Department (Retail)',
+    description: 'Retail department.\nExample: Grocery',
+    group: 'Commerce',
+  },
+  {
+    value: 'iban',
+    displayName: 'IBAN',
+    description: 'International bank number.\nExample: FR76 5960 2948 07N1 L9TC PVYX E17',
+    group: 'Commerce',
+  },
+  {
+    value: 'money',
+    displayName: 'Money',
+    description: 'Formatted money amount.\nExample: $3.00',
+    group: 'Commerce',
+  },
+  {
+    value: 'productCategory',
+    displayName: 'Product Category',
+    description: 'Top-level product category.\nExample: Toys',
+    group: 'Commerce',
+  },
+  {
+    value: 'productDescription',
+    displayName: 'Product Description',
+    description: 'Product marketing text.\nExample: Savory lentil chips',
+    group: 'Commerce',
+  },
+  {
+    value: 'productName',
+    displayName: 'Product Name',
+    description: 'Product display name.\nExample: Classic Black Trousers',
+    group: 'Commerce',
+  },
+  {
+    value: 'productPrice',
+    displayName: 'Product Price',
+    description: 'Product price text.\nExample: $12.94',
+    group: 'Commerce',
+  },
+  {
+    value: 'productSubcategory',
+    displayName: 'Product Subcategory',
+    description: 'Detailed product category.\nExample: Gourmet Snacks',
+    group: 'Commerce',
+  },
+  {
+    value: 'stockIndustry',
+    displayName: 'Stock Industry',
+    description: 'Industry name.\nExample: Semiconductors',
+    group: 'Commerce',
+  },
+  {
+    value: 'stockMarket',
+    displayName: 'Stock Market',
+    description: 'Exchange name.\nExample: NASDAQ',
+    group: 'Commerce',
+  },
+  {
+    value: 'stockMarketCap',
+    displayName: 'Stock Market Cap',
+    description: 'Market cap text.\nExample: $54.29M',
+    group: 'Commerce',
+  },
+  {
+    value: 'stockName',
+    displayName: 'Stock Name',
+    description: 'Listed company name.\nExample: Microsoft Corporation',
+    group: 'Commerce',
+  },
+  {
+    value: 'stockSector',
+    displayName: 'Stock Sector',
+    description: 'Sector name.\nExample: Technology',
+    group: 'Commerce',
+  },
+  {
+    value: 'stockSymbol',
+    displayName: 'Stock Symbol',
+    description: 'Ticker symbol.\nExample: MSFT',
+    group: 'Commerce',
   },
   {
     value: 'dateTime',

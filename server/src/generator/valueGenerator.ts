@@ -34,6 +34,22 @@ const DEFAULT_TABLE_ROWS = 10;
 const MAX_ROWS_PER_TABLE = 100_000;
 const MAX_TOTAL_ROWS = 200_000;
 const DEFAULT_DATE_TIME_FORMAT = 'yyyy-MM-dd';
+const STOCK_INDUSTRIES = [
+  'Semiconductors',
+  'Major Banks',
+  'Oil & Gas Production',
+  'Software',
+  'Biotechnology',
+];
+const STOCK_MARKETS = ['NYSE', 'NASDAQ', 'AMEX', 'LSE', 'HOSE'];
+const STOCK_SECTORS = ['Technology', 'Capital Goods', 'Finance', 'Energy', 'Healthcare'];
+const PRODUCT_SUBCATEGORIES = [
+  'Plant-Based Beverages',
+  'Gourmet Snacks',
+  'Home Fragrance & Accessories',
+  'Outdoor',
+  'Clothing - Outerwear',
+];
 
 function inferFallbackSemanticType(column: ColumnSchema): SemanticDataType {
   const normalized = normalizeSqlType(column.dbType);
@@ -289,6 +305,50 @@ function generateScalarValue(
       const repeat = Math.max(1, Math.floor(rule.sequenceOptions?.repeat ?? 1));
       return startAt + Math.floor(rowIndex / repeat) * step;
     }
+    case 'creditCardNumber':
+      return faker.finance.creditCardNumber();
+    case 'creditCardType':
+      return faker.finance.creditCardIssuer().toLowerCase();
+    case 'currency':
+      return faker.finance.currency().name;
+    case 'currencyCode':
+      return faker.finance.currency().code;
+    case 'departmentRetail':
+      return faker.commerce.department();
+    case 'iban':
+      return faker.finance.iban({ formatted: true });
+    case 'money':
+      return faker.finance.amount({
+        min: 1,
+        max: 1000,
+        dec: 2,
+        symbol: faker.helpers.arrayElement(['$', '€', '£']),
+      });
+    case 'productCategory':
+      return faker.commerce.department();
+    case 'productDescription':
+      return faker.commerce.productDescription();
+    case 'productName':
+      return faker.commerce.productName();
+    case 'productPrice':
+      return faker.finance.amount({ min: 1, max: 1000, dec: 2, symbol: '$' });
+    case 'productSubcategory':
+      return faker.helpers.arrayElement(PRODUCT_SUBCATEGORIES);
+    case 'stockIndustry':
+      return faker.helpers.arrayElement(STOCK_INDUSTRIES);
+    case 'stockMarket':
+      return faker.helpers.arrayElement(STOCK_MARKETS);
+    case 'stockMarketCap':
+      return (
+        faker.finance.amount({ min: 10, max: 999, dec: 2, symbol: '$' }) +
+        faker.helpers.arrayElement(['M', 'B'])
+      );
+    case 'stockName':
+      return faker.company.name();
+    case 'stockSector':
+      return faker.helpers.arrayElement(STOCK_SECTORS);
+    case 'stockSymbol':
+      return faker.string.alpha({ length: { min: 3, max: 5 }, casing: 'upper' });
     case 'number': {
       const min = rule.numberOptions?.min ?? 0;
       const max = rule.numberOptions?.max ?? 100;
