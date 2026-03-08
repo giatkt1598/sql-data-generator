@@ -68,6 +68,12 @@ export interface RequestDetailContextValue {
     key: 'format',
     value: string,
   ) => void;
+  onTextOptionChange: (
+    tableName: string,
+    columnName: string,
+    key: 'minLength' | 'maxLength' | 'unit',
+    value: string,
+  ) => void;
   applyRule: (rule: TableColumnRules[string][string]) => void;
   applyCustomListRule: () => void;
   handleBack: () => void;

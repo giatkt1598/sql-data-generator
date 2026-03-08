@@ -87,6 +87,11 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
       digitSequenceOptions: {
         format: '',
       },
+      textOptions: {
+        minLength: 1,
+        maxLength: 4,
+        unit: 'words' as const,
+      },
     }),
     [defaultDateTimeEnd, defaultDateTimeStart],
   );
@@ -121,6 +126,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
       dateTimeOptions: rule?.dateTimeOptions ?? fallbackRule.dateTimeOptions,
       sequenceOptions: rule?.sequenceOptions ?? fallbackRule.sequenceOptions,
       digitSequenceOptions: rule?.digitSequenceOptions ?? fallbackRule.digitSequenceOptions,
+      textOptions: rule?.textOptions ?? fallbackRule.textOptions,
     };
   }
 
@@ -598,6 +604,42 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     });
   }
 
+  function onTextOptionChange(
+    tableName: string,
+    columnName: string,
+    key: 'minLength' | 'maxLength' | 'unit',
+    value: string,
+  ) {
+    const fallbackRule = mergeRuleDefaults(columnRules[tableName]?.[columnName], columnName, 'text');
+    const currentOptions = fallbackRule.textOptions ?? {
+      minLength: 1,
+      maxLength: 4,
+      unit: 'words' as const,
+    };
+    const numericValue = Number.isFinite(Number(value)) ? Number(value) : key === 'maxLength' ? 4 : 1;
+    const nextOptions = {
+      ...currentOptions,
+      [key]:
+        key === 'unit'
+          ? (value === 'characters' ? 'characters' : 'words')
+          : Math.max(0, Math.floor(numericValue)),
+    };
+
+    if ((nextOptions.maxLength ?? 4) < (nextOptions.minLength ?? 1)) {
+      if (key === 'minLength') {
+        nextOptions.maxLength = nextOptions.minLength;
+      } else if (key === 'maxLength') {
+        nextOptions.minLength = nextOptions.maxLength;
+      }
+    }
+
+    onRuleChange(tableName, columnName, {
+      ...fallbackRule,
+      fieldName: fallbackRule.fieldName ?? columnName,
+      textOptions: nextOptions,
+    });
+  }
+
   if (!project || !request) {
     return (
       <Card>
@@ -654,6 +696,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     onDateTimeOptionChange,
     onSequenceOptionChange,
     onDigitSequenceOptionChange,
+    onTextOptionChange,
     applyRule,
     applyCustomListRule,
     handleBack: () => navigate(-1),

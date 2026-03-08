@@ -2,8 +2,12 @@ import { memo } from 'react';
 import {
   Autocomplete,
   Box,
+  FormControl,
+  FormControlLabel,
   IconButton,
   MenuItem,
+  Radio,
+  RadioGroup,
   Select,
   Stack,
   TextField,
@@ -31,6 +35,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
   const isDateTimeRule = rule?.kind === 'semantic' && rule.semanticType === 'dateTime';
   const isSequenceRule = rule?.kind === 'semantic' && rule.semanticType === 'sequence';
   const isDigitSequenceRule = rule?.kind === 'semantic' && rule.semanticType === 'digitSequence';
+  const isTextRule = rule?.kind === 'semantic' && rule.semanticType === 'text';
   const numberOptions = rule?.numberOptions ?? {
     min: 0,
     max: 100,
@@ -49,6 +54,11 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
   };
   const digitSequenceOptions = rule?.digitSequenceOptions ?? {
     format: '',
+  };
+  const textOptions = rule?.textOptions ?? {
+    minLength: 1,
+    maxLength: 4,
+    unit: 'words' as const,
   };
   const digitSequenceHelp = [
     'Use "#" for a random digit.',
@@ -260,6 +270,48 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
               },
             }}
           />
+        </Stack>
+      )}
+      {isTextRule && (
+        <Stack direction="row" spacing={1} alignItems="center">
+          <TextField
+            size="small"
+            label="Min Length"
+            type="number"
+            defaultValue={textOptions.minLength}
+            onBlur={(event) =>
+              context.onTextOptionChange(tableName, column.name, 'minLength', event.target.value)
+            }
+            sx={{ width: 110 }}
+          />
+          <TextField
+            size="small"
+            label="Max Length"
+            type="number"
+            defaultValue={textOptions.maxLength}
+            onBlur={(event) =>
+              context.onTextOptionChange(tableName, column.name, 'maxLength', event.target.value)
+            }
+            sx={{ width: 110 }}
+          />
+          <FormControl>
+            <RadioGroup
+              row
+              defaultValue={textOptions.unit}
+              onChange={() => undefined}
+              onBlur={(event) => {
+                const target = event.target as HTMLInputElement;
+                context.onTextOptionChange(tableName, column.name, 'unit', target.value);
+              }}
+            >
+              <FormControlLabel value="words" control={<Radio size="small" />} label="Words" />
+              <FormControlLabel
+                value="characters"
+                control={<Radio size="small" />}
+                label="Characters"
+              />
+            </RadioGroup>
+          </FormControl>
         </Stack>
       )}
       <Box width={90}>

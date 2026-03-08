@@ -127,6 +127,26 @@ function normalizeDigitSequenceOptions(
   return { format };
 }
 
+function normalizeTextOptions(
+  rule: ColumnGenerationRule | undefined,
+  fallback: { minLength?: number; maxLength?: number; unit?: 'words' | 'characters' } | undefined,
+) {
+  const rawMinLength =
+    typeof rule?.textOptions?.minLength === 'number' && Number.isFinite(rule.textOptions.minLength)
+      ? rule.textOptions.minLength
+      : (fallback?.minLength ?? 1);
+  const rawMaxLength =
+    typeof rule?.textOptions?.maxLength === 'number' && Number.isFinite(rule.textOptions.maxLength)
+      ? rule.textOptions.maxLength
+      : (fallback?.maxLength ?? 4);
+  const minLength = Math.max(0, Math.floor(rawMinLength));
+  const maxLength = Math.max(minLength, Math.floor(rawMaxLength));
+  const unit: 'words' | 'characters' =
+    rule?.textOptions?.unit === 'characters' ? 'characters' : 'words';
+
+  return { minLength, maxLength, unit };
+}
+
 function readCandidateFieldName(rule: ColumnGenerationRule | undefined): unknown {
   if (!rule) {
     return undefined;
@@ -186,6 +206,11 @@ export function buildDefaultColumnRules(
         },
         digitSequenceOptions: {
           format: '',
+        },
+        textOptions: {
+          minLength: 1,
+          maxLength: 4,
+          unit: 'words',
         },
       };
     }
@@ -262,6 +287,7 @@ export function sanitizeColumnRules(
             candidate,
             fallbackRules[table.name][column.name].digitSequenceOptions,
           ),
+          textOptions: normalizeTextOptions(candidate, fallbackRules[table.name][column.name].textOptions),
         };
         continue;
       }
@@ -297,6 +323,10 @@ export function sanitizeColumnRules(
               candidate,
               fallbackRules[table.name][column.name].digitSequenceOptions,
             ),
+            textOptions: normalizeTextOptions(
+              candidate,
+              fallbackRules[table.name][column.name].textOptions,
+            ),
           };
           continue;
         }
@@ -325,6 +355,7 @@ export function sanitizeColumnRules(
             candidate,
             fallbackRules[table.name][column.name].digitSequenceOptions,
           ),
+          textOptions: normalizeTextOptions(candidate, fallbackRules[table.name][column.name].textOptions),
         };
         continue;
       }
@@ -354,6 +385,7 @@ export function sanitizeColumnRules(
           candidate,
           fallbackRules[table.name][column.name].digitSequenceOptions,
         ),
+        textOptions: normalizeTextOptions(candidate, fallbackRules[table.name][column.name].textOptions),
       };
     }
   }

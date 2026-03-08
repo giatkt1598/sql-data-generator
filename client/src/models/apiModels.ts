@@ -61,6 +61,11 @@ export interface ColumnGenerationRule {
   digitSequenceOptions?: {
     format?: string;
   };
+  textOptions?: {
+    minLength?: number;
+    maxLength?: number;
+    unit?: 'words' | 'characters';
+  };
 }
 
 export type TableColumnRules = Record<string, Record<string, ColumnGenerationRule>>;

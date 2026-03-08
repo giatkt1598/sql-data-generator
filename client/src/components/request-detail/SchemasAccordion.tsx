@@ -98,7 +98,13 @@ export function SchemasAccordion() {
                             digitSequenceOptions: rule?.digitSequenceOptions ?? {
                               format: '',
                             },
-                            semanticType: rule?.kind === 'semantic' ? rule.semanticType ?? 'unknown' : undefined,
+                            textOptions: rule?.textOptions ?? {
+                              minLength: 1,
+                              maxLength: 4,
+                              unit: 'words',
+                            },
+                            semanticType:
+                              rule?.kind === 'semantic' ? rule.semanticType ?? 'unknown' : undefined,
                             reference: rule?.kind === 'reference' ? rule.reference : undefined,
                           });
                           return (

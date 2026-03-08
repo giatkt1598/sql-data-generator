@@ -153,7 +153,23 @@ function generateScalarValue(
     case 'boolean':
       return faker.datatype.boolean();
     case 'text':
-      return faker.lorem.words({ min: 1, max: 3 });
+      const textMinLength = Math.max(0, Math.floor(rule.textOptions?.minLength ?? 1));
+      const textMaxLength = Math.max(textMinLength, Math.floor(rule.textOptions?.maxLength ?? 4));
+      const textUnit = rule.textOptions?.unit === 'characters' ? 'characters' : 'words';
+      if (textMaxLength === 0) {
+        return '';
+      }
+      const textLength =
+        textMinLength === textMaxLength
+          ? textMinLength
+          : faker.number.int({ min: textMinLength, max: textMaxLength });
+      if (textUnit === 'characters') {
+        return faker.string.alpha({
+          length: textLength,
+          casing: 'lower',
+        });
+      }
+      return faker.lorem.words(textLength);
     case 'unknown':
     default:
       return `${faker.lorem.word()}_${salt}_${rowIndex + 1}`;
