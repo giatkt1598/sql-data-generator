@@ -1,11 +1,10 @@
 import { randomUUID } from 'crypto';
-import { parseClassificationJson } from '../ai/classificationLoader';
+import { buildDatabaseSchemaFromClassification, parseClassificationJson } from '../ai/classificationLoader';
 import { buildClassificationPrompt } from '../ai/promptBuilder';
 import { SchemaRelationshipsConfig, TableColumnRules, TableSchema } from '../core/types';
 import { generateDataByTableOrder } from '../generator/valueGenerator';
 import { buildDefaultColumnRules, sanitizeColumnRules } from '../schema/columnRules';
 import { resolveTableOrder } from '../schema/dependencyResolver';
-import { parseCreateTableSql } from '../schema/simpleSchemaParser';
 import { buildInsertFileArtifacts, SqlFileArtifact } from '../writer/sqlWriter';
 import { AppStorageState, GenerationRequestEntity, ProjectEntity } from './models';
 import { JsonFileStorage } from './storage';
@@ -90,12 +89,11 @@ function buildSchemaAndRules(input: {
   classificationJson: string;
   columnRules?: TableColumnRules;
 }): { tables: TableSchema[]; columnRules: TableColumnRules } {
-  const schema = parseCreateTableSql(input.schemaSql);
-  if (schema.tables.length === 0) {
-    throw new Error('No CREATE TABLE statements found.');
-  }
-
   const classification = parseClassificationJson(input.classificationJson);
+  const schema = buildDatabaseSchemaFromClassification(classification);
+  if (schema.tables.length === 0) {
+    throw new Error('AI classification JSON does not contain any tables.');
+  }
   const defaultRules = buildDefaultColumnRules(schema.tables, classification);
   const mergedRules = sanitizeColumnRules(schema.tables, input.columnRules, defaultRules);
   return {
@@ -105,7 +103,7 @@ function buildSchemaAndRules(input: {
 }
 
 function canBuildSchemaAndRules(schemaSql: string, classificationJson: string): boolean {
-  return schemaSql.trim().length > 0 && classificationJson.trim().length > 0;
+  return classificationJson.trim().length > 0;
 }
 
 export class GenerationService {

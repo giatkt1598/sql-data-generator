@@ -1,10 +1,9 @@
 import fs from 'fs';
 import path from 'path';
-import { parseClassificationJson, validateClassificationCoverage } from './ai/classificationLoader';
+import { buildDatabaseSchemaFromClassification, parseClassificationJson } from './ai/classificationLoader';
 import { buildClassificationPrompt } from './ai/promptBuilder';
 import { buildDefaultColumnRules } from './schema/columnRules';
 import { resolveTableOrder } from './schema/dependencyResolver';
-import { parseCreateTableSql } from './schema/simpleSchemaParser';
 import { generateDataByTableOrder } from './generator/valueGenerator';
 import { writeInsertFiles } from './writer/sqlWriter';
 
@@ -52,16 +51,10 @@ function runGenerate(): void {
   const schemaSql = fs.readFileSync(schemaPath, 'utf-8');
   const classificationText = fs.readFileSync(classificationPath, 'utf-8');
 
-  const schema = parseCreateTableSql(schemaSql);
-  if (schema.tables.length === 0) {
-    throw new Error('No CREATE TABLE statements found in schema.');
-  }
-
   const classification = parseClassificationJson(classificationText);
-  const warnings = validateClassificationCoverage(schema.tables, classification);
-  if (warnings.length > 0) {
-    console.warn('Classification warnings:');
-    warnings.forEach((warning) => console.warn(`- ${warning}`));
+  const schema = buildDatabaseSchemaFromClassification(classification);
+  if (schema.tables.length === 0) {
+    throw new Error('AI classification JSON does not contain any tables.');
   }
 
   const columnRules = buildDefaultColumnRules(schema.tables, classification);

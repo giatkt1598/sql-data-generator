@@ -1,5 +1,10 @@
 import { SUPPORTED_SEMANTIC_TYPES } from '../core/semanticTypes';
-import { AiClassificationResult, SemanticDataType, TableSchema } from '../core/types';
+import {
+  AiClassificationResult,
+  DatabaseSchema,
+  SemanticDataType,
+  TableSchema,
+} from '../core/types';
 
 function isSemanticType(value: string): value is SemanticDataType {
   return SUPPORTED_SEMANTIC_TYPES.includes(value as SemanticDataType);
@@ -44,6 +49,18 @@ export function parseClassificationJson(jsonText: string): AiClassificationResul
       }
 
       const columnObj = columnValue as Record<string, unknown>;
+      if (typeof columnObj.dbType !== 'string' || columnObj.dbType.trim().length === 0) {
+        throw new Error(`Column '${tableName}.${columnName}' must have dbType.`);
+      }
+      if (typeof columnObj.nullable !== 'boolean') {
+        throw new Error(`Column '${tableName}.${columnName}' must have nullable boolean.`);
+      }
+      if (typeof columnObj.isPrimaryKey !== 'boolean') {
+        throw new Error(`Column '${tableName}.${columnName}' must have isPrimaryKey boolean.`);
+      }
+      if (typeof columnObj.isForeignKey !== 'boolean') {
+        throw new Error(`Column '${tableName}.${columnName}' must have isForeignKey boolean.`);
+      }
       if (typeof columnObj.semanticType !== 'string') {
         throw new Error(`Column '${tableName}.${columnName}' must have semanticType.`);
       }
@@ -52,10 +69,74 @@ export function parseClassificationJson(jsonText: string): AiClassificationResul
           `Column '${tableName}.${columnName}' has unsupported semanticType '${columnObj.semanticType}'.`,
         );
       }
+      if (columnObj.isForeignKey) {
+        if (!columnObj.references || typeof columnObj.references !== 'object') {
+          throw new Error(`Column '${tableName}.${columnName}' must have references object.`);
+        }
+        const references = columnObj.references as Record<string, unknown>;
+        if (typeof references.tableName !== 'string' || references.tableName.trim().length === 0) {
+          throw new Error(`Column '${tableName}.${columnName}' references.tableName is required.`);
+        }
+        if (typeof references.columnName !== 'string' || references.columnName.trim().length === 0) {
+          throw new Error(`Column '${tableName}.${columnName}' references.columnName is required.`);
+        }
+      }
     }
   }
 
-  return root as unknown as AiClassificationResult;
+  const result = root as unknown as AiClassificationResult;
+  const tableNames = new Set(Object.keys(result.tables));
+
+  for (const [tableName, tableValue] of Object.entries(result.tables)) {
+    for (const [columnName, columnValue] of Object.entries(tableValue.columns)) {
+      if (!columnValue.isForeignKey || !columnValue.references) {
+        continue;
+      }
+      if (!tableNames.has(columnValue.references.tableName)) {
+        throw new Error(
+          `Column '${tableName}.${columnName}' references unknown table '${columnValue.references.tableName}'.`,
+        );
+      }
+      const referencedTable = result.tables[columnValue.references.tableName];
+      if (!referencedTable.columns[columnValue.references.columnName]) {
+        throw new Error(
+          `Column '${tableName}.${columnName}' references unknown column '${columnValue.references.tableName}.${columnValue.references.columnName}'.`,
+        );
+      }
+    }
+  }
+
+  return result;
+}
+
+export function buildDatabaseSchemaFromClassification(
+  classification: AiClassificationResult,
+): DatabaseSchema {
+  return {
+    tables: Object.entries(classification.tables).map(([tableName, tableValue]) => {
+      const columns = Object.entries(tableValue.columns).map(([columnName, columnValue]) => ({
+        name: columnName,
+        dbType: columnValue.dbType,
+        nullable: columnValue.nullable,
+        isPrimaryKey: columnValue.isPrimaryKey,
+      }));
+
+      return {
+        name: tableName,
+        columns,
+        primaryKeyColumns: Object.entries(tableValue.columns)
+          .filter(([, columnValue]) => columnValue.isPrimaryKey)
+          .map(([columnName]) => columnName),
+        foreignKeys: Object.entries(tableValue.columns)
+          .filter(([, columnValue]) => columnValue.isForeignKey && columnValue.references)
+          .map(([columnName, columnValue]) => ({
+            columns: [columnName],
+            referencedTable: columnValue.references!.tableName,
+            referencedColumns: [columnValue.references!.columnName],
+          })),
+      };
+    }),
+  };
 }
 
 export function validateClassificationCoverage(

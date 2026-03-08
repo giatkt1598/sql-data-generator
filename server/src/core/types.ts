@@ -37,6 +37,14 @@ export interface DatabaseSchema {
 
 export interface ColumnClassification {
   semanticType: SemanticDataType;
+  dbType: string;
+  nullable: boolean;
+  isPrimaryKey: boolean;
+  isForeignKey: boolean;
+  references?: {
+    tableName: string;
+    columnName: string;
+  };
   reason?: string;
 }
 
