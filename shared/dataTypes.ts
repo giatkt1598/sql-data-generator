@@ -52,6 +52,7 @@ export const SEMANTIC_DATA_TYPES = [
   'jobTitle',
   'url',
   'dateTime',
+  'timeZone',
   'boolean',
   'number',
   'text',

@@ -577,7 +577,8 @@ function generateScalarValue(
         : dayjs().endOf('day').toDate();
       const format = rule.dateTimeOptions?.format?.trim() || DEFAULT_DATE_TIME_FORMAT;
       return dayjs(faker.date.between({ from, to })).format(toDayjsFormat(format));
-
+    case 'timeZone':
+      return faker.date.timeZone();
     case 'boolean':
       return faker.datatype.boolean();
     case 'text':

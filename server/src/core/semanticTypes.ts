@@ -41,6 +41,12 @@ export const DATA_TYPE_DEFINITIONS: DataTypeDefinition[] = [
     groups: ['Basic'],
   },
   {
+    value: 'timeZone',
+    displayName: 'Time Zone',
+    description: 'IANA timezone name.\nExample: Asia/Ho_Chi_Minh',
+    groups: ['IT'],
+  },
+  {
     value: 'boolean',
     displayName: 'Boolean',
     description: 'True or false value.\nExample: true / false',
