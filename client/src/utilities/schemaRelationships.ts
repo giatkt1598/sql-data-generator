@@ -77,5 +77,8 @@ export function buildDefaultSchemaRelationshipsJson(
     }
   }
 
-  return JSON.stringify(config, null, 2);
+  return JSON.stringify(config, null, 2).replace(
+    /\[\s*(\d+(?:\s*,\s*\d+)*)\s*\]/g,
+    (_fullMatch, values: string) => `[${values.replace(/\s+/g, '')}]`,
+  );
 }
