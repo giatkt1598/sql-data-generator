@@ -313,11 +313,10 @@ export class GenerationService {
     const files = buildInsertFileArtifacts(generatedRows);
     const fullText = files.map((file) => `-- file: ${file.fileName}\n${file.content}`).join('\n');
     const lines = fullText.split(/\r?\n/);
-    const preview = lines.slice(0, 100).join('\n');
 
     return {
       files,
-      preview,
+      preview: fullText,
       totalLines: lines.length,
     };
   }

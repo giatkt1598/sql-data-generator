@@ -1,7 +1,7 @@
 import { httpClient } from './httpClient';
 import type {
   ColumnDesignerModel,
-  SemanticDataType,
+  DataTypeDefinition,
   TableColumnRules,
 } from '../models/apiModels';
 
@@ -13,8 +13,8 @@ export async function generateClassificationPrompt(payload: {
   return response.data.prompt;
 }
 
-export async function getSemanticTypes(): Promise<SemanticDataType[]> {
-  const response = await httpClient.get<{ items: SemanticDataType[] }>('/semantic-types');
+export async function getSemanticTypes(): Promise<DataTypeDefinition[]> {
+  const response = await httpClient.get<{ items: DataTypeDefinition[] }>('/semantic-types');
   return response.data.items;
 }
 
@@ -25,4 +25,16 @@ export async function getColumnDesignerModel(payload: {
 }): Promise<ColumnDesignerModel> {
   const response = await httpClient.post<ColumnDesignerModel>('/column-designer-model', payload);
   return response.data;
+}
+
+export async function generateSqlScript(payload: {
+  schemaSql: string;
+  classificationJson: string;
+  columnRules?: TableColumnRules;
+  schemaRelationshipsJson?: string;
+}): Promise<string> {
+  const response = await httpClient.post('/download', payload, {
+    responseType: 'text',
+  });
+  return response.data as string;
 }

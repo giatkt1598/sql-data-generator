@@ -30,7 +30,7 @@ export function resolveTableOrder(
 
   for (const table of tables) {
     for (const fk of table.foreignKeys) {
-      if (byName.has(fk.referencedTable)) {
+      if (byName.has(fk.referencedTable) && fk.referencedTable !== table.name) {
         addEdge(graph, incomingCount, fk.referencedTable, table.name);
       }
     }

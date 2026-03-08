@@ -1,13 +1,13 @@
 CREATE TABLE carts (
-    cart_id INT IDENTITY PRIMARY KEY,
-    user_id INT,
+    cart_id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+    user_id UNIQUEIDENTIFIER,
     created_at DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
 
 CREATE TABLE users (
-    user_id INT IDENTITY PRIMARY KEY,
-    role_id INT,
+    user_id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+    role_id UNIQUEIDENTIFIER,
     email NVARCHAR(255) UNIQUE,
     password_hash NVARCHAR(255),
     full_name NVARCHAR(255),
@@ -17,9 +17,9 @@ CREATE TABLE users (
 );
 
 CREATE TABLE cart_items (
-    cart_item_id INT IDENTITY PRIMARY KEY,
-    cart_id INT,
-    variant_id INT,
+    cart_item_id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+    cart_id UNIQUEIDENTIFIER,
+    variant_id UNIQUEIDENTIFIER,
     quantity INT,
     FOREIGN KEY (cart_id) REFERENCES carts(cart_id),
     FOREIGN KEY (variant_id) REFERENCES product_variants(variant_id)

@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { SUPPORTED_SEMANTIC_TYPES } from '../core/semanticTypes';
+import { DATA_TYPE_DEFINITIONS } from '../core/semanticTypes';
 import { TableColumnRules } from '../core/types';
 import { GenerationService } from './generationService';
 
@@ -20,7 +20,7 @@ export function buildApiRouter(service: GenerationService): Router {
   });
 
   router.get('/semantic-types', (_req, res) => {
-    res.json({ items: SUPPORTED_SEMANTIC_TYPES });
+    res.json({ items: DATA_TYPE_DEFINITIONS });
   });
 
   router.post('/column-designer-model', (req, res) => {

@@ -3,14 +3,14 @@ import { Container } from '@mui/material';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { getProjects, getSemanticTypes } from './apis';
 import { FeedbackSnackbars } from './components/FeedbackSnackbars';
-import type { ProjectEntity, SemanticDataType } from './models/apiModels';
+import type { DataTypeDefinition, ProjectEntity } from './models/apiModels';
 import { ProjectsPage } from './pages/ProjectsPage';
 import { RequestDetailPage } from './pages/RequestDetailPage';
 import { RequestsPage } from './pages/RequestsPage';
 
 function App() {
   const [projects, setProjects] = useState<ProjectEntity[]>([]);
-  const [semanticTypes, setSemanticTypes] = useState<SemanticDataType[]>([]);
+  const [semanticTypes, setSemanticTypes] = useState<DataTypeDefinition[]>([]);
   const [loading, setLoading] = useState(false);
   const [snack, setSnack] = useState('');
   const [error, setError] = useState('');

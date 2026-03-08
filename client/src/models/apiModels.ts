@@ -8,10 +8,13 @@ export interface ProjectEntity {
 
 export type SemanticDataType =
   | 'unknown'
-  | 'id'
+  | 'guid'
+  | 'int'
+  | 'float'
   | 'fullName'
   | 'firstName'
   | 'lastName'
+  | 'gender'
   | 'email'
   | 'phoneNumber'
   | 'address'
@@ -28,12 +31,14 @@ export type SemanticDataType =
   | 'text';
 
 export interface ColumnGenerationRule {
-  kind: 'semantic' | 'reference';
+  kind: 'semantic' | 'reference' | 'customList';
   semanticType?: SemanticDataType;
   reference?: {
     tableName: string;
     columnName: string;
   };
+  customValues?: Array<string | number | boolean>;
+  blankPercentage?: number;
 }
 
 export type TableColumnRules = Record<string, Record<string, ColumnGenerationRule>>;
@@ -66,4 +71,10 @@ export interface ColumnDesignerModel {
 export interface PreviewResult {
   preview: string;
   totalLines: number;
+}
+
+export interface DataTypeDefinition {
+  value: SemanticDataType;
+  displayName: string;
+  description: string;
 }

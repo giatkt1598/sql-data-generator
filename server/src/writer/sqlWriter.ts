@@ -10,7 +10,7 @@ function sqlValue(value: string | number | boolean | null): string {
     return String(value);
   }
   if (typeof value === 'boolean') {
-    return value ? 'TRUE' : 'FALSE';
+    return value ? '1' : '0';
   }
   return `'${value.replace(/'/g, "''")}'`;
 }

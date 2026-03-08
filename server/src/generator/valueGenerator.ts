@@ -1,3 +1,5 @@
+import { randomUUID } from 'crypto';
+import { faker } from '@faker-js/faker';
 import { normalizeSqlType, SQL_TYPE_DEFAULT_CLASSIFICATION } from '../core/semanticTypes';
 import {
   ColumnGenerationRule,
@@ -20,9 +22,12 @@ interface GenerationPlan {
 interface GenerateContext {
   generatedByTable: Map<string, GeneratedTableRows>;
   plan: GenerationPlan;
+  runSalt: string;
 }
 
 const DEFAULT_TABLE_ROWS = 10;
+const MAX_ROWS_PER_TABLE = 100_000;
+const MAX_TOTAL_ROWS = 200_000;
 
 function inferFallbackSemanticType(column: ColumnSchema): SemanticDataType {
   const normalized = normalizeSqlType(column.dbType);
@@ -31,46 +36,68 @@ function inferFallbackSemanticType(column: ColumnSchema): SemanticDataType {
 
 function generateScalarValue(
   semanticType: SemanticDataType,
+  column: ColumnSchema,
   rowIndex: number,
+  runSalt: string,
 ): string | number | boolean {
+  const salt = runSalt.slice(0, 8).toLowerCase();
+
   switch (semanticType) {
-    case 'id':
+    case 'guid':
+      return faker.string.uuid().toUpperCase();
+    case 'int':
     case 'number':
-      return rowIndex + 1;
+      return faker.number.int({ min: 1, max: 1_000_000 });
+    case 'float':
+      return faker.number.float({ min: 1, max: 1_000_000, fractionDigits: 2 });
     case 'fullName':
-      return `User ${rowIndex + 1}`;
+      return faker.person.fullName();
     case 'firstName':
-      return `First${rowIndex + 1}`;
+      return faker.person.firstName();
     case 'lastName':
-      return `Last${rowIndex + 1}`;
+      return faker.person.lastName();
+    case 'gender':
+      return faker.person.sexType();
     case 'email':
-      return `user${rowIndex + 1}@example.com`;
+      return faker.internet.email({
+        provider: 'example.com',
+        firstName: `user${rowIndex + 1}`,
+        lastName: salt,
+      });
     case 'phoneNumber':
-      return `090000${String(rowIndex + 1).padStart(4, '0')}`;
+      return faker.helpers.replaceSymbols(`09${salt.slice(0, 4)}####`);
     case 'address':
-      return `${100 + rowIndex} Sample Street`;
+      return faker.location.streetAddress();
     case 'city':
-      return 'Ho Chi Minh City';
+      return faker.location.city();
     case 'country':
-      return 'Vietnam';
+      return faker.location.country();
     case 'zipCode':
-      return `${70000 + rowIndex}`;
+      return faker.location.zipCode();
     case 'companyName':
-      return `Company ${rowIndex + 1}`;
+      return faker.company.name();
     case 'jobTitle':
-      return 'Software Engineer';
+      return faker.person.jobTitle();
     case 'url':
-      return `https://example.com/item-${rowIndex + 1}`;
+      return faker.internet.url({ appendSlash: false });
     case 'date':
-      return `2026-01-${String((rowIndex % 28) + 1).padStart(2, '0')}`;
+      return faker.date
+        .between({ from: '2024-01-01T00:00:00.000Z', to: '2026-12-31T23:59:59.999Z' })
+        .toISOString()
+        .slice(0, 10);
     case 'dateTime':
-      return `2026-01-${String((rowIndex % 28) + 1).padStart(2, '0')} 08:00:00`;
+      return faker.date
+        .between({ from: '2024-01-01T00:00:00.000Z', to: '2026-12-31T23:59:59.999Z' })
+        .toISOString()
+        .slice(0, 19)
+        .replace('T', ' ');
     case 'boolean':
-      return rowIndex % 2 === 0;
+      return faker.datatype.boolean();
     case 'text':
+      return faker.lorem.words({ min: 1, max: 3 });
     case 'unknown':
     default:
-      return `value_${rowIndex + 1}`;
+      return `${faker.lorem.word()}_${salt}_${rowIndex + 1}`;
   }
 }
 
@@ -85,15 +112,48 @@ function getColumnRule(
   }
   return {
     kind: 'semantic',
-    semanticType: column.isPrimaryKey ? 'id' : inferFallbackSemanticType(column),
+    semanticType: inferFallbackSemanticType(column),
+    blankPercentage: 0,
   };
+}
+
+function shouldGenerateNull(
+  tableName: string,
+  columnName: string,
+  rowIndex: number,
+  blankPercentage: number | undefined,
+): boolean {
+  const pct = typeof blankPercentage === 'number' ? blankPercentage : 0;
+  if (pct <= 0) {
+    return false;
+  }
+  if (pct >= 100) {
+    return true;
+  }
+
+  const seed = `${tableName}.${columnName}.${rowIndex}`;
+  let hash = 0;
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = (hash * 31 + seed.charCodeAt(i)) % 1000003;
+  }
+  return Math.abs(hash % 100) < pct;
+}
+
+function generateCustomListValue(
+  customValues: Array<string | number | boolean> | undefined,
+  rowIndex: number,
+): string | number | boolean | null {
+  if (!customValues || customValues.length === 0) {
+    return null;
+  }
+  return customValues[rowIndex % customValues.length];
 }
 
 function sanitizeDistribution(input: number[] | undefined): number[] {
   if (!input || input.length === 0) {
     return [1];
   }
-  const filtered = input.filter((value) => Number.isInteger(value) && value > 0);
+  const filtered = input.filter((value) => Number.isInteger(value) && value >= 0);
   return filtered.length > 0 ? filtered : [1];
 }
 
@@ -146,9 +206,33 @@ function addParentAssignments(
 ) {
   const tableAssignments = assignmentsByTable.get(childTable) ?? new Map<string, number[]>();
   const existing = tableAssignments.get(parentTable) ?? [];
-  existing.push(...parentIndexes);
-  tableAssignments.set(parentTable, existing);
+  const merged = existing.concat(parentIndexes);
+  tableAssignments.set(parentTable, merged);
   assignmentsByTable.set(childTable, tableAssignments);
+}
+
+function ensureRowCountWithinLimits(tableName: string, rowCount: number) {
+  if (rowCount > MAX_ROWS_PER_TABLE) {
+    throw new Error(
+      `Table '${tableName}' expands to ${rowCount.toLocaleString()} rows. ` +
+        `Reduce Schema Relationships distribution/count settings.`,
+    );
+  }
+}
+
+function ensurePlanWithinLimits(rowCountByTable: Map<string, number>) {
+  let totalRows = 0;
+  for (const [tableName, rowCount] of rowCountByTable.entries()) {
+    ensureRowCountWithinLimits(tableName, rowCount);
+    totalRows += rowCount;
+  }
+
+  if (totalRows > MAX_TOTAL_ROWS) {
+    throw new Error(
+      `Generated plan expands to ${totalRows.toLocaleString()} rows in total. ` +
+        `Reduce Schema Relationships distribution/count settings.`,
+    );
+  }
 }
 
 function buildGenerationPlan(
@@ -211,6 +295,7 @@ function buildGenerationPlan(
       }
       addParentAssignments(parentAssignments, tableName, parentTable, ownIndexes);
       rowCountByTable.set(tableName, Math.max(currentCount, getAssignedCount(tableName)));
+      ensureRowCountWithinLimits(tableName, rowCountByTable.get(tableName) ?? 0);
     }
 
     for (const [columnName, distribution] of extractSelfColumnDistributions(tableName, node)) {
@@ -245,6 +330,8 @@ function buildGenerationPlan(
       rowCountByTable.set(table.name, DEFAULT_TABLE_ROWS);
     }
   }
+
+  ensurePlanWithinLimits(rowCountByTable);
 
   return { rowCountByTable, parentAssignments, selfColumnDistributions };
 }
@@ -307,6 +394,11 @@ function generateRowsForTable(
 
     for (const column of table.columns) {
       const rule = getColumnRule(table.name, column, rules);
+      const hasForeignKey = table.foreignKeys.some((foreignKey) => foreignKey.columns.includes(column.name));
+      if (shouldGenerateNull(table.name, column.name, rowIndex, rule.blankPercentage)) {
+        row[column.name] = null;
+        continue;
+      }
       const referenceValue = findReferenceValueForTable(
         table.name,
         column.name,
@@ -319,12 +411,21 @@ function generateRowsForTable(
         row[column.name] = referenceValue;
         continue;
       }
+      if (hasForeignKey && column.nullable) {
+        row[column.name] = null;
+        continue;
+      }
+
+      if (rule.kind === 'customList') {
+        row[column.name] = generateCustomListValue(rule.customValues, rowIndex);
+        continue;
+      }
 
       const semanticType =
         rule.kind === 'semantic'
           ? (rule.semanticType ?? inferFallbackSemanticType(column))
           : inferFallbackSemanticType(column);
-      row[column.name] = generateScalarValue(semanticType, rowIndex);
+      row[column.name] = generateScalarValue(semanticType, column, rowIndex, context.runSalt);
     }
 
     rows.push(row);
@@ -343,6 +444,7 @@ export function generateDataByTableOrder(
   const context: GenerateContext = {
     generatedByTable: new Map<string, GeneratedTableRows>(),
     plan: buildGenerationPlan(orderedTables, options, relationships),
+    runSalt: randomUUID().replace(/-/g, ''),
   };
 
   for (const table of orderedTables) {

@@ -2,10 +2,13 @@ export type SqlDialect = 'postgres' | 'mysql' | 'sqlserver' | 'generic';
 
 export type SemanticDataType =
   | 'unknown'
-  | 'id'
+  | 'guid'
+  | 'int'
+  | 'float'
   | 'fullName'
   | 'firstName'
   | 'lastName'
+  | 'gender'
   | 'email'
   | 'phoneNumber'
   | 'address'
@@ -65,12 +68,20 @@ export interface ColumnReference {
 }
 
 export interface ColumnGenerationRule {
-  kind: 'semantic' | 'reference';
+  kind: 'semantic' | 'reference' | 'customList';
   semanticType?: SemanticDataType;
   reference?: ColumnReference;
+  customValues?: Array<string | number | boolean>;
+  blankPercentage?: number;
 }
 
 export type TableColumnRules = Record<string, Record<string, ColumnGenerationRule>>;
+
+export interface DataTypeDefinition {
+  value: SemanticDataType;
+  displayName: string;
+  description: string;
+}
 
 export interface SchemaRelationshipNode {
   count?: number;
