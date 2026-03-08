@@ -10,12 +10,69 @@ import {
   Typography,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { useEffect, useMemo, useState } from 'react';
 import { tableAnchorId } from '../../utilities/schemaAnchor';
 import { useRequestDetailContext } from './RequestDetailContext';
 import { SchemaFieldRow } from './SchemaFieldRow';
 
 export function SchemasAccordion() {
   const context = useRequestDetailContext();
+  const [visibleTableNames, setVisibleTableNames] = useState<Set<string>>(new Set());
+  const tableNames = useMemo(
+    () => context.designerModel?.tables.map((table) => table.name) ?? [],
+    [context.designerModel],
+  );
+
+  useEffect(() => {
+    if (!context.designerModel || tableNames.length === 0) {
+      setVisibleTableNames(new Set());
+      return;
+    }
+
+    const updateVisibleTables = () => {
+      const nextVisibleTableNames = new Set<string>();
+      const viewportTop = 100;
+      const viewportBottom = window.innerHeight;
+
+      tableNames.forEach((tableName) => {
+        const element = document.getElementById(tableAnchorId(tableName));
+        if (!element) {
+          return;
+        }
+
+        const rect = element.getBoundingClientRect();
+        const isVisible = rect.bottom > viewportTop && rect.top < viewportBottom;
+
+        if (isVisible) {
+          nextVisibleTableNames.add(tableName);
+        }
+      });
+
+      setVisibleTableNames(nextVisibleTableNames);
+    };
+
+    updateVisibleTables();
+    window.addEventListener('scroll', updateVisibleTables, { passive: true });
+    window.addEventListener('resize', updateVisibleTables);
+
+    return () => {
+      window.removeEventListener('scroll', updateVisibleTables);
+      window.removeEventListener('resize', updateVisibleTables);
+    };
+  }, [context.designerModel, tableNames]);
+
+  function scrollToTable(tableName: string) {
+    const element = document.getElementById(tableAnchorId(tableName));
+    if (!element) {
+      return;
+    }
+
+    const top = window.scrollY + element.getBoundingClientRect().top - 100;
+    window.scrollTo({
+      top: Math.max(0, top),
+      behavior: 'smooth',
+    });
+  }
 
   return (
     <Accordion
@@ -35,10 +92,17 @@ export function SchemasAccordion() {
           <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} alignItems="flex-start">
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Stack spacing={1.5}>
-                {context.designerModel.tables.map((table) => (
-                  <Card key={table.name} id={tableAnchorId(table.name)} variant="outlined">
+                {context.designerModel.tables.map((table, tableIndex) => (
+                  <Card
+                    key={table.name}
+                    id={tableAnchorId(table.name)}
+                    data-table-name={table.name}
+                    variant="outlined"
+                  >
                     <CardContent>
-                      <Typography sx={{ fontWeight: 700, mb: 1 }}>{table.name}</Typography>
+                      <Typography sx={{ fontWeight: 700, mb: 1 }}>
+                        {tableIndex + 1}.&nbsp;{table.name}
+                      </Typography>
                       <Stack spacing={1}>
                         <Stack
                           direction={{ xs: 'column', md: 'row' }}
@@ -79,7 +143,8 @@ export function SchemasAccordion() {
                             kind: rule?.kind ?? 'semantic',
                             fieldName: fieldNameText,
                             blankPercentage,
-                            customValues: rule?.kind === 'customList' ? rule.customValues ?? [] : [],
+                            customValues:
+                              rule?.kind === 'customList' ? (rule.customValues ?? []) : [],
                             numberOptions: rule?.numberOptions ?? {
                               min: 0,
                               max: 100,
@@ -107,7 +172,9 @@ export function SchemasAccordion() {
                               unit: 'words',
                             },
                             semanticType:
-                              rule?.kind === 'semantic' ? rule.semanticType ?? 'unknown' : undefined,
+                              rule?.kind === 'semantic'
+                                ? (rule.semanticType ?? 'unknown')
+                                : undefined,
                             reference: rule?.kind === 'reference' ? rule.reference : undefined,
                           });
                           return (
@@ -139,21 +206,30 @@ export function SchemasAccordion() {
             >
               <CardContent>
                 <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
-                  Table Index
+                  Index
                 </Typography>
                 <Stack spacing={0.5}>
-                  {context.designerModel.tables.map((table) => (
+                  {context.designerModel.tables.map((table, index) => (
                     <Button
                       key={`toc-${table.name}`}
                       size="small"
-                      sx={{ justifyContent: 'flex-start' }}
-                      onClick={() => {
-                        document
-                          .getElementById(tableAnchorId(table.name))
-                          ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      sx={{
+                        justifyContent: 'flex-start',
+                        color: visibleTableNames.has(table.name) ? 'primary.dark' : 'text.primary',
+                        backgroundColor:
+                          visibleTableNames.has(table.name)
+                            ? 'rgba(29, 78, 216, 0.12)'
+                            : 'transparent',
+                        '&:hover': {
+                          backgroundColor:
+                            visibleTableNames.has(table.name)
+                              ? 'rgba(29, 78, 216, 0.18)'
+                              : 'action.hover',
+                        },
                       }}
+                      onClick={() => scrollToTable(table.name)}
                     >
-                      {table.name}
+                      {index + 1}. {table.name}
                     </Button>
                   ))}
                 </Stack>

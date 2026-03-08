@@ -23,10 +23,20 @@ export function RequestDetailHeader() {
         </IconButton>
         <Typography variant="h5" sx={{ fontWeight: 700 }}>
           Request: {context.requestName}
-          {context.hasUnsavedChanges ? ' (Unsaved changes)' : ''}
+          {context.hasUnsavedChanges ? (
+            <Typography variant="body1" display={'inline'}>
+              <i>{' (Unsaved changes)'}</i>
+            </Typography>
+          ) : (
+            ''
+          )}
         </Typography>
         <Box sx={{ flex: 1 }} />
-        <Button variant="outlined" onClick={() => void context.handlePreview()} disabled={context.loading}>
+        <Button
+          variant="outlined"
+          onClick={() => void context.handlePreview()}
+          disabled={context.loading}
+        >
           Preview
         </Button>
         <Button
@@ -36,7 +46,11 @@ export function RequestDetailHeader() {
         >
           Generate SQL
         </Button>
-        <Button variant="contained" onClick={() => void context.saveDetail()} disabled={context.loading}>
+        <Button
+          variant="contained"
+          onClick={() => void context.saveDetail()}
+          disabled={context.loading}
+        >
           Save
         </Button>
       </Stack>
