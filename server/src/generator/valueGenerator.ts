@@ -25,6 +25,11 @@ interface GenerateContext {
   runSalt: string;
 }
 
+interface DigitSequenceFormatPart {
+  kind: 'text' | 'reference';
+  value: string;
+}
+
 const DEFAULT_TABLE_ROWS = 10;
 const MAX_ROWS_PER_TABLE = 100_000;
 const MAX_TOTAL_ROWS = 200_000;
@@ -39,50 +44,232 @@ function toDayjsFormat(format: string): string {
   return format.replace(/yyyy/g, 'YYYY').replace(/dd/g, 'DD');
 }
 
-function generateDigitSequenceValue(format: string): string {
+function applyDigitSequenceTokens(input: string): string {
+  let result = '';
+
+  for (let index = 0; index < input.length; index += 1) {
+    const char = input[index];
+    const nextChar = input[index + 1];
+
+    if (char === '\\' && nextChar) {
+      result += nextChar;
+      index += 1;
+      continue;
+    }
+
+    switch (char) {
+      case '#':
+        result += faker.string.numeric(1);
+        break;
+      case '@':
+        result += faker.string.alpha({ length: 1, casing: 'lower' });
+        break;
+      case '^':
+        result += faker.string.alpha({ length: 1, casing: 'upper' });
+        break;
+      case '*':
+        result += faker.helpers.arrayElement([
+          faker.string.numeric(1),
+          faker.string.alpha({ length: 1, casing: 'lower' }),
+          faker.string.alpha({ length: 1, casing: 'upper' }),
+        ]);
+        break;
+      case '$':
+        result += faker.helpers.arrayElement([
+          faker.string.numeric(1),
+          faker.string.alpha({ length: 1, casing: 'lower' }),
+        ]);
+        break;
+      case '%':
+        result += faker.helpers.arrayElement([
+          faker.string.numeric(1),
+          faker.string.alpha({ length: 1, casing: 'upper' }),
+        ]);
+        break;
+      default:
+        result += char;
+        break;
+    }
+  }
+
+  return result;
+}
+
+function parseDigitSequenceFormat(format: string): DigitSequenceFormatPart[] {
+  if (!format) {
+    return [];
+  }
+
+  const parts: DigitSequenceFormatPart[] = [];
+  const referencePattern = /\{([^}]+)\}/g;
+  let cursor = 0;
+
+  for (const match of format.matchAll(referencePattern)) {
+    const matchedText = match[0];
+    const matchedValue = match[1]?.trim();
+    const startIndex = match.index ?? -1;
+    if (!matchedText || startIndex < 0 || !matchedValue) {
+      continue;
+    }
+    if (startIndex > cursor) {
+      parts.push({
+        kind: 'text',
+        value: format.slice(cursor, startIndex),
+      });
+    }
+    parts.push({
+      kind: 'reference',
+      value: matchedValue,
+    });
+    cursor = startIndex + matchedText.length;
+  }
+
+  if (cursor < format.length) {
+    parts.push({
+      kind: 'text',
+      value: format.slice(cursor),
+    });
+  }
+
+  return parts;
+}
+
+function extractDigitSequenceDependencies(format: string): string[] {
+  return parseDigitSequenceFormat(format)
+    .filter((part) => part.kind === 'reference')
+    .map((part) => part.value);
+}
+
+function stringifyReferencedValue(value: string | number | boolean | null | undefined): string {
+  if (typeof value === 'string') {
+    return value
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '')
+      .replace(/[^a-z0-9._-]/g, '');
+  }
+
+  if (typeof value === 'boolean') {
+    return value ? 'true' : 'false';
+  }
+
+  return String(value);
+}
+
+function generateDigitSequenceValue(
+  format: string,
+  row: Record<string, string | number | boolean | null>,
+  tableName: string,
+  columnName: string,
+): string {
   if (!format) {
     return '';
   }
 
-  return format
-    .split('')
-    .map((char) => {
-      switch (char) {
-        case '#':
-          return faker.string.numeric(1);
-        case '@':
-          return faker.string.alpha({ length: 1, casing: 'lower' });
-        case '^':
-          return faker.string.alpha({ length: 1, casing: 'upper' });
-        case '*':
-          return faker.helpers.arrayElement([
-            faker.string.numeric(1),
-            faker.string.alpha({ length: 1, casing: 'lower' }),
-            faker.string.alpha({ length: 1, casing: 'upper' }),
-          ]);
-        case '$':
-          return faker.helpers.arrayElement([
-            faker.string.numeric(1),
-            faker.string.alpha({ length: 1, casing: 'lower' }),
-          ]);
-        case '%':
-          return faker.helpers.arrayElement([
-            faker.string.numeric(1),
-            faker.string.alpha({ length: 1, casing: 'upper' }),
-          ]);
-        default:
-          return char;
+  return parseDigitSequenceFormat(format)
+    .map((part) => {
+      if (part.kind === 'reference') {
+        if (!(part.value in row)) {
+          throw new Error(
+            `Digit Sequence in '${tableName}.${columnName}' could not resolve ` +
+              `referenced column '${part.value}' in the same row.`,
+          );
+        }
+        if (row[part.value] === null || row[part.value] === undefined) {
+          throw new Error(
+            `Digit Sequence in '${tableName}.${columnName}' references ` +
+              `'${part.value}', but that value is null or undefined.`,
+          );
+        }
+        return stringifyReferencedValue(row[part.value]);
       }
+      return applyDigitSequenceTokens(part.value);
     })
     .join('');
+}
+
+function resolveColumnGenerationOrder(
+  table: TableSchema,
+  rules?: TableColumnRules,
+): ColumnSchema[] {
+  const columnsByName = new Map(table.columns.map((column) => [column.name, column]));
+  const dependenciesByColumn = new Map<string, Set<string>>();
+  const dependentsByColumn = new Map<string, Set<string>>();
+  const indegreeByColumn = new Map<string, number>();
+
+  for (const column of table.columns) {
+    dependenciesByColumn.set(column.name, new Set());
+    dependentsByColumn.set(column.name, new Set());
+    indegreeByColumn.set(column.name, 0);
+  }
+
+  for (const column of table.columns) {
+    const rule = getColumnRule(table.name, column, rules);
+    if (rule.kind !== 'semantic' || rule.semanticType !== 'digitSequence') {
+      continue;
+    }
+
+    const format = rule.digitSequenceOptions?.format?.trim() ?? '';
+    for (const dependencyName of extractDigitSequenceDependencies(format)) {
+      if (!columnsByName.has(dependencyName)) {
+        throw new Error(
+          `Digit Sequence in '${table.name}.${column.name}' references unknown column '${dependencyName}'.`,
+        );
+      }
+
+      dependenciesByColumn.get(column.name)?.add(dependencyName);
+    }
+  }
+
+  for (const [columnName, dependencySet] of dependenciesByColumn.entries()) {
+    indegreeByColumn.set(columnName, dependencySet.size);
+    for (const dependencyName of dependencySet) {
+      dependentsByColumn.get(dependencyName)?.add(columnName);
+    }
+  }
+
+  const orderedNames: string[] = [];
+  const queue = table.columns
+    .map((column) => column.name)
+    .filter((columnName) => (indegreeByColumn.get(columnName) ?? 0) === 0);
+
+  while (queue.length > 0) {
+    const columnName = queue.shift();
+    if (!columnName) {
+      continue;
+    }
+
+    orderedNames.push(columnName);
+
+    for (const dependentName of dependentsByColumn.get(columnName) ?? []) {
+      const nextIndegree = (indegreeByColumn.get(dependentName) ?? 0) - 1;
+      indegreeByColumn.set(dependentName, nextIndegree);
+      if (nextIndegree === 0) {
+        queue.push(dependentName);
+      }
+    }
+  }
+
+  if (orderedNames.length !== table.columns.length) {
+    throw new Error(
+      `Digit Sequence dependencies are cyclic in table '${table.name}'. ` +
+        `Adjust the referenced columns to remove the loop.`,
+    );
+  }
+
+  return orderedNames.map((columnName) => columnsByName.get(columnName) as ColumnSchema);
 }
 
 function generateScalarValue(
   semanticType: SemanticDataType,
   rule: ColumnGenerationRule,
+  tableName: string,
   column: ColumnSchema,
   rowIndex: number,
   runSalt: string,
+  row: Record<string, string | number | boolean | null>,
 ): string | number | boolean {
   const salt = runSalt.slice(0, 8).toLowerCase();
 
@@ -90,7 +277,12 @@ function generateScalarValue(
     case 'guid':
       return faker.string.uuid().toUpperCase();
     case 'digitSequence':
-      return generateDigitSequenceValue(rule.digitSequenceOptions?.format?.trim() ?? '');
+      return generateDigitSequenceValue(
+        rule.digitSequenceOptions?.format?.trim() ?? '',
+        row,
+        tableName,
+        column.name,
+      );
     case 'sequence': {
       const startAt = rule.sequenceOptions?.startAt ?? 1;
       const step = rule.sequenceOptions?.step ?? 1;
@@ -120,8 +312,9 @@ function generateScalarValue(
       return faker.person.sexType();
     case 'email':
       const domains =
-        rule.emailOptions?.domains?.filter((domain) => typeof domain === 'string' && domain.trim()) ??
-        [];
+        rule.emailOptions?.domains?.filter(
+          (domain) => typeof domain === 'string' && domain.trim(),
+        ) ?? [];
       return faker.internet.email({
         provider: domains.length > 0 ? faker.helpers.arrayElement(domains) : 'example.com',
         firstName: `user${rowIndex + 1}`,
@@ -466,12 +659,13 @@ function generateRowsForTable(
   rules?: TableColumnRules,
 ): GeneratedTableRows {
   const rowCount = context.plan.rowCountByTable.get(table.name) ?? 0;
+  const orderedColumns = resolveColumnGenerationOrder(table, rules);
   const rows: Record<string, string | number | boolean | null>[] = [];
 
   for (let rowIndex = 0; rowIndex < rowCount; rowIndex += 1) {
     const row: Record<string, string | number | boolean | null> = {};
 
-    for (const column of table.columns) {
+    for (const column of orderedColumns) {
       const rule = getColumnRule(table.name, column, rules);
       const hasForeignKey = table.foreignKeys.some((foreignKey) =>
         foreignKey.columns.includes(column.name),
@@ -498,7 +692,7 @@ function generateRowsForTable(
         continue;
       }
 
-      if (hasForeignKey && column.nullable) {
+      if (rule.kind === 'reference' && hasForeignKey && column.nullable) {
         row[column.name] = null;
         continue;
       }
@@ -507,7 +701,15 @@ function generateRowsForTable(
         rule.kind === 'semantic'
           ? (rule.semanticType ?? inferFallbackSemanticType(column))
           : inferFallbackSemanticType(column);
-      row[column.name] = generateScalarValue(semanticType, rule, column, rowIndex, context.runSalt);
+      row[column.name] = generateScalarValue(
+        semanticType,
+        rule,
+        table.name,
+        column,
+        rowIndex,
+        context.runSalt,
+        row,
+      );
     }
 
     rows.push(row);

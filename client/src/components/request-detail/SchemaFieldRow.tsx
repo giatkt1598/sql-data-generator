@@ -65,6 +65,8 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
     unit: 'words' as const,
   };
   const digitSequenceHelp = [
+    'Use "{column_name}" to reuse another column in the same row.',
+    'Use "\\@" to keep @ as a literal character.',
     'Use "#" for a random digit.',
     'Use "@" for a random lower case letter.',
     'Use "^" for a random upper case letter.',
@@ -244,7 +246,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
             size="small"
             label="Format"
             defaultValue={digitSequenceOptions.format}
-            placeholder="example: Ticket-###-@@@"
+            placeholder="example: {first_name}+##\\@gmail.com"
             onBlur={(event) =>
               context.onDigitSequenceOptionChange(
                 tableName,
@@ -253,7 +255,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
                 event.target.value,
               )
             }
-            sx={{ minWidth: 300 }}
+            sx={{ minWidth: 346 }}
             slotProps={{
               input: {
                 endAdornment: (

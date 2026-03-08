@@ -40,7 +40,7 @@ export const DATA_TYPE_DEFINITIONS: DataTypeDefinition[] = [
   {
     value: 'digitSequence',
     displayName: 'Digit Sequence',
-    description: 'Pattern-based random string.\nExample: Ticket-391-ajQ',
+    description: 'Pattern-based random string or row references.\nExample: Ticket-391-ajQ',
     group: 'Basic',
   },
   {
