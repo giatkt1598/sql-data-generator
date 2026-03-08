@@ -344,6 +344,11 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         end: defaultDateTimeEnd,
         format: 'yyyy-MM-dd',
       },
+      sequenceOptions: current?.sequenceOptions ?? {
+        startAt: 1,
+        step: 1,
+        repeat: 1,
+      },
     });
     setTypePickerOpen(false);
   }
@@ -388,6 +393,12 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         end: defaultDateTimeEnd,
         format: 'yyyy-MM-dd',
       },
+      sequenceOptions:
+        columnRules[pickerTarget.tableName]?.[pickerTarget.columnName]?.sequenceOptions ?? {
+          startAt: 1,
+          step: 1,
+          repeat: 1,
+        },
     });
     setTypePickerOpen(false);
   }
@@ -409,6 +420,11 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         start: defaultDateTimeStart,
         end: defaultDateTimeEnd,
         format: 'yyyy-MM-dd',
+      },
+      sequenceOptions: {
+        startAt: 1,
+        step: 1,
+        repeat: 1,
       },
     };
     onRuleChange(tableName, columnName, {
@@ -435,6 +451,11 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         start: defaultDateTimeStart,
         end: defaultDateTimeEnd,
         format: 'yyyy-MM-dd',
+      },
+      sequenceOptions: {
+        startAt: 1,
+        step: 1,
+        repeat: 1,
       },
     };
     onRuleChange(tableName, columnName, {
@@ -480,6 +501,11 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         end: defaultDateTimeEnd,
         format: 'yyyy-MM-dd',
       },
+      sequenceOptions: columnRules[tableName]?.[columnName]?.sequenceOptions ?? {
+        startAt: 1,
+        step: 1,
+        repeat: 1,
+      },
     });
   }
 
@@ -506,6 +532,11 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         start: defaultDateTimeStart,
         end: defaultDateTimeEnd,
         format: 'yyyy-MM-dd',
+      },
+      sequenceOptions: {
+        startAt: 1,
+        step: 1,
+        repeat: 1,
       },
     };
     const currentOptions = fallbackRule.numberOptions ?? {
@@ -555,6 +586,11 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         end: defaultDateTimeEnd,
         format: 'yyyy-MM-dd',
       },
+      sequenceOptions: {
+        startAt: 1,
+        step: 1,
+        repeat: 1,
+      },
     };
     const currentOptions = fallbackRule.dateTimeOptions ?? {
       start: defaultDateTimeStart,
@@ -568,6 +604,52 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
       dateTimeOptions: {
         ...currentOptions,
         [key]: value.trim() || currentOptions[key],
+      },
+    });
+  }
+
+  function onSequenceOptionChange(
+    tableName: string,
+    columnName: string,
+    key: 'startAt' | 'step' | 'repeat',
+    value: string,
+  ) {
+    const parsed = Number(value);
+    const safeValue = Number.isFinite(parsed) ? parsed : 1;
+    const current = columnRules[tableName]?.[columnName];
+    const fallbackRule: TableColumnRules[string][string] = current ?? {
+      kind: 'semantic',
+      semanticType: 'sequence',
+      fieldName: columnName,
+      blankPercentage: 0,
+      numberOptions: {
+        min: 0,
+        max: 100,
+        decimals: 0,
+      },
+      dateTimeOptions: {
+        start: defaultDateTimeStart,
+        end: defaultDateTimeEnd,
+        format: 'yyyy-MM-dd',
+      },
+      sequenceOptions: {
+        startAt: 1,
+        step: 1,
+        repeat: 1,
+      },
+    };
+    const currentOptions = fallbackRule.sequenceOptions ?? {
+      startAt: 1,
+      step: 1,
+      repeat: 1,
+    };
+
+    onRuleChange(tableName, columnName, {
+      ...fallbackRule,
+      fieldName: fallbackRule.fieldName ?? columnName,
+      sequenceOptions: {
+        ...currentOptions,
+        [key]: key === 'repeat' ? Math.max(1, Math.floor(safeValue)) : safeValue,
       },
     });
   }
@@ -626,6 +708,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     onCustomListValueChange,
     onNumberOptionChange,
     onDateTimeOptionChange,
+    onSequenceOptionChange,
     applyRule,
     applyCustomListRule,
     handleBack: () => navigate(-1),

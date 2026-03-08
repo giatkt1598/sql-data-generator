@@ -27,6 +27,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
   const value = stringifyRule(context.semanticTypes, rule);
   const isNumberRule = rule?.kind === 'semantic' && rule.semanticType === 'number';
   const isDateTimeRule = rule?.kind === 'semantic' && rule.semanticType === 'dateTime';
+  const isSequenceRule = rule?.kind === 'semantic' && rule.semanticType === 'sequence';
   const numberOptions = rule?.numberOptions ?? {
     min: 0,
     max: 100,
@@ -38,6 +39,11 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
     format: 'yyyy-MM-dd',
   };
   const dateTimeFormats = ['yyyy-MM-dd', 'yyyy-MM-dd HH:mm:ss', 'dd/MM/yyyy', 'MM-dd-yyyy HH:mm'];
+  const sequenceOptions = rule?.sequenceOptions ?? {
+    startAt: 1,
+    step: 1,
+    repeat: 1,
+  };
 
   return (
     <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ md: 'center' }}>
@@ -166,6 +172,40 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
                 }
               />
             )}
+          />
+        </Stack>
+      )}
+      {isSequenceRule && (
+        <Stack direction="row" spacing={1}>
+          <TextField
+            size="small"
+            label="Start At"
+            type="number"
+            defaultValue={sequenceOptions.startAt}
+            onBlur={(event) =>
+              context.onSequenceOptionChange(tableName, column.name, 'startAt', event.target.value)
+            }
+            sx={{ width: 120 }}
+          />
+          <TextField
+            size="small"
+            label="Step"
+            type="number"
+            defaultValue={sequenceOptions.step}
+            onBlur={(event) =>
+              context.onSequenceOptionChange(tableName, column.name, 'step', event.target.value)
+            }
+            sx={{ width: 100 }}
+          />
+          <TextField
+            size="small"
+            label="Repeat"
+            type="number"
+            defaultValue={sequenceOptions.repeat}
+            onBlur={(event) =>
+              context.onSequenceOptionChange(tableName, column.name, 'repeat', event.target.value)
+            }
+            sx={{ width: 100 }}
           />
         </Stack>
       )}

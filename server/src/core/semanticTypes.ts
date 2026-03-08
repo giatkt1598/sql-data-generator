@@ -3,6 +3,7 @@ import { DataTypeDefinition, SemanticDataType } from './types';
 export const SUPPORTED_SEMANTIC_TYPES: SemanticDataType[] = [
   'unknown',
   'guid',
+  'sequence',
   'fullName',
   'firstName',
   'lastName',
@@ -33,6 +34,12 @@ export const DATA_TYPE_DEFINITIONS: DataTypeDefinition[] = [
     value: 'guid',
     displayName: 'GUID',
     description: 'GUID/UUID value.',
+    group: 'Basic',
+  },
+  {
+    value: 'sequence',
+    displayName: 'Sequence',
+    description: 'Incrementing numeric sequence with configurable start, step, and repeat.',
     group: 'Basic',
   },
   {

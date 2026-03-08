@@ -304,12 +304,7 @@ export class GenerationService {
     const { tables, columnRules } = buildSchemaAndRules(input);
     const relationships = parseSchemaRelationshipsJson(input.schemaRelationshipsJson);
     const orderedTables = resolveTableOrder(tables, columnRules);
-    const generatedRows = generateDataByTableOrder(
-      orderedTables,
-      {},
-      columnRules,
-      relationships,
-    );
+    const generatedRows = generateDataByTableOrder(orderedTables, columnRules, relationships);
     const files = buildInsertFileArtifacts(generatedRows);
     const fullText = files.map((file) => `-- file: ${file.fileName}\n${file.content}`).join('\n');
     const lines = fullText.split(/\r?\n/);

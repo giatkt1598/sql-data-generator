@@ -51,6 +51,12 @@ function generateScalarValue(
   switch (semanticType) {
     case 'guid':
       return faker.string.uuid().toUpperCase();
+    case 'sequence': {
+      const startAt = rule.sequenceOptions?.startAt ?? 1;
+      const step = rule.sequenceOptions?.step ?? 1;
+      const repeat = Math.max(1, Math.floor(rule.sequenceOptions?.repeat ?? 1));
+      return startAt + Math.floor(rowIndex / repeat) * step;
+    }
     case 'number': {
       const min = rule.numberOptions?.min ?? 0;
       const max = rule.numberOptions?.max ?? 100;

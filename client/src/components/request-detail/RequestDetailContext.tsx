@@ -56,6 +56,12 @@ export interface RequestDetailContextValue {
     key: 'start' | 'end' | 'format',
     value: string,
   ) => void;
+  onSequenceOptionChange: (
+    tableName: string,
+    columnName: string,
+    key: 'startAt' | 'step' | 'repeat',
+    value: string,
+  ) => void;
   applyRule: (rule: TableColumnRules[string][string]) => void;
   applyCustomListRule: () => void;
   handleBack: () => void;

@@ -92,6 +92,30 @@ function normalizeDateTimeOptions(
   return { start, end, format };
 }
 
+function normalizeSequenceOptionValue(value: unknown, fallback: number): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return fallback;
+  }
+  return value;
+}
+
+function normalizeSequenceOptions(
+  rule: ColumnGenerationRule | undefined,
+  fallback: { startAt?: number; step?: number; repeat?: number } | undefined,
+) {
+  const startAt = normalizeSequenceOptionValue(
+    rule?.sequenceOptions?.startAt,
+    fallback?.startAt ?? 1,
+  );
+  const step = normalizeSequenceOptionValue(rule?.sequenceOptions?.step, fallback?.step ?? 1);
+  const repeat = Math.max(
+    1,
+    Math.floor(normalizeSequenceOptionValue(rule?.sequenceOptions?.repeat, fallback?.repeat ?? 1)),
+  );
+
+  return { startAt, step, repeat };
+}
+
 function readCandidateFieldName(rule: ColumnGenerationRule | undefined): unknown {
   if (!rule) {
     return undefined;
@@ -143,6 +167,11 @@ export function buildDefaultColumnRules(
           start: dayjs().subtract(1, 'year').format('YYYY-MM-DD'),
           end: dayjs().format('YYYY-MM-DD'),
           format: 'yyyy-MM-dd',
+        },
+        sequenceOptions: {
+          startAt: 1,
+          step: 1,
+          repeat: 1,
         },
       };
     }
@@ -211,6 +240,10 @@ export function sanitizeColumnRules(
             candidate,
             fallbackRules[table.name][column.name].dateTimeOptions,
           ),
+          sequenceOptions: normalizeSequenceOptions(
+            candidate,
+            fallbackRules[table.name][column.name].sequenceOptions,
+          ),
         };
         continue;
       }
@@ -238,6 +271,10 @@ export function sanitizeColumnRules(
               candidate,
               fallbackRules[table.name][column.name].dateTimeOptions,
             ),
+            sequenceOptions: normalizeSequenceOptions(
+              candidate,
+              fallbackRules[table.name][column.name].sequenceOptions,
+            ),
           };
           continue;
         }
@@ -257,6 +294,10 @@ export function sanitizeColumnRules(
           dateTimeOptions: normalizeDateTimeOptions(
             candidate,
             fallbackRules[table.name][column.name].dateTimeOptions,
+          ),
+          sequenceOptions: normalizeSequenceOptions(
+            candidate,
+            fallbackRules[table.name][column.name].sequenceOptions,
           ),
         };
         continue;
@@ -278,6 +319,10 @@ export function sanitizeColumnRules(
         dateTimeOptions: normalizeDateTimeOptions(
           candidate,
           fallbackRules[table.name][column.name].dateTimeOptions,
+        ),
+        sequenceOptions: normalizeSequenceOptions(
+          candidate,
+          fallbackRules[table.name][column.name].sequenceOptions,
         ),
       };
     }

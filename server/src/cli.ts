@@ -66,7 +66,7 @@ function runGenerate(): void {
 
   const columnRules = buildDefaultColumnRules(schema.tables, classification);
   const orderedTables = resolveTableOrder(schema.tables, columnRules);
-  const generatedRows = generateDataByTableOrder(orderedTables, {}, columnRules);
+  const generatedRows = generateDataByTableOrder(orderedTables, columnRules);
   const files = writeInsertFiles(generatedRows, path.resolve(outputDir));
 
   console.log('Generated SQL files:');

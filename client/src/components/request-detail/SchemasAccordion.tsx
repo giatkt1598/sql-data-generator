@@ -90,6 +90,11 @@ export function SchemasAccordion() {
                               end: '2026-12-31',
                               format: 'yyyy-MM-dd HH:mm:ss',
                             },
+                            sequenceOptions: rule?.sequenceOptions ?? {
+                              startAt: 1,
+                              step: 1,
+                              repeat: 1,
+                            },
                             semanticType: rule?.kind === 'semantic' ? rule.semanticType ?? 'unknown' : undefined,
                             reference: rule?.kind === 'reference' ? rule.reference : undefined,
                           });

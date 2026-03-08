@@ -3,6 +3,7 @@ export type SqlDialect = 'postgres' | 'mysql' | 'sqlserver' | 'generic';
 export type SemanticDataType =
   | 'unknown'
   | 'guid'
+  | 'sequence'
   | 'fullName'
   | 'firstName'
   | 'lastName'
@@ -84,6 +85,11 @@ export interface ColumnGenerationRule {
     start?: string;
     end?: string;
     format?: string;
+  };
+  sequenceOptions?: {
+    startAt?: number;
+    step?: number;
+    repeat?: number;
   };
 }
 
