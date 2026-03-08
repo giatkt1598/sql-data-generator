@@ -6,6 +6,7 @@ import {
   Button,
   Card,
   CardContent,
+  Skeleton,
   Stack,
   Typography,
 } from '@mui/material';
@@ -18,6 +19,8 @@ import { SchemaFieldRow } from './SchemaFieldRow';
 export function SchemasAccordion() {
   const context = useRequestDetailContext();
   const [visibleTableNames, setVisibleTableNames] = useState<Set<string>>(new Set());
+  const hasSchemaInputs =
+    context.form.schemaSql.trim().length > 0 || context.form.classificationJson.trim().length > 0;
   const tableNames = useMemo(
     () => context.designerModel?.tables.map((table) => table.name) ?? [],
     [context.designerModel],
@@ -74,6 +77,55 @@ export function SchemasAccordion() {
     });
   }
 
+  const schemaSkeleton = (
+    <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} alignItems="flex-start">
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Stack spacing={1.5}>
+          {Array.from({ length: 3 }).map((_, tableIndex) => (
+            <Card key={`schema-skeleton-${tableIndex}`} variant="outlined">
+              <CardContent>
+                <Skeleton variant="text" width={180} height={36} sx={{ mb: 1 }} />
+                <Stack spacing={1}>
+                  {Array.from({ length: 4 }).map((__, rowIndex) => (
+                    <Stack
+                      key={`schema-skeleton-row-${tableIndex}-${rowIndex}`}
+                      direction={{ xs: 'column', md: 'row' }}
+                      spacing={1}
+                    >
+                      <Skeleton variant="rounded" width={28} height={36} />
+                      <Skeleton variant="rounded" width={160} height={40} />
+                      <Skeleton variant="rounded" width={160} height={40} />
+                      <Skeleton variant="rounded" height={40} sx={{ flex: 1 }} />
+                    </Stack>
+                  ))}
+                </Stack>
+              </CardContent>
+            </Card>
+          ))}
+        </Stack>
+      </Box>
+
+      <Card
+        variant="outlined"
+        sx={{
+          width: { xs: '100%', lg: 260 },
+          position: { lg: 'sticky' },
+          top: { lg: 84 },
+          alignSelf: { lg: 'flex-start' },
+        }}
+      >
+        <CardContent>
+          <Skeleton variant="text" width={72} height={28} sx={{ mb: 1 }} />
+          <Stack spacing={0.75}>
+            {Array.from({ length: 8 }).map((_, index) => (
+              <Skeleton key={`schema-index-skeleton-${index}`} variant="rounded" height={32} />
+            ))}
+          </Stack>
+        </CardContent>
+      </Card>
+    </Stack>
+  );
+
   return (
     <Accordion
       expanded={context.schemasExpanded}
@@ -83,7 +135,8 @@ export function SchemasAccordion() {
         <Typography sx={{ fontWeight: 700 }}>Schemas</Typography>
       </AccordionSummary>
       <AccordionDetails>
-        {!context.designerModel && (
+        {(context.loading || hasSchemaInputs) && !context.designerModel && schemaSkeleton}
+        {!context.loading && !hasSchemaInputs && !context.designerModel && (
           <Typography color="text.secondary">
             No schemas yet. Click "Analyze & Build Schemas" in General.
           </Typography>
