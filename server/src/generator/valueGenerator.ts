@@ -36,6 +36,7 @@ function inferFallbackSemanticType(column: ColumnSchema): SemanticDataType {
 
 function generateScalarValue(
   semanticType: SemanticDataType,
+  rule: ColumnGenerationRule,
   column: ColumnSchema,
   rowIndex: number,
   runSalt: string,
@@ -45,11 +46,20 @@ function generateScalarValue(
   switch (semanticType) {
     case 'guid':
       return faker.string.uuid().toUpperCase();
-    case 'int':
     case 'number':
-      return faker.number.int({ min: 1, max: 1_000_000 });
-    case 'float':
-      return faker.number.float({ min: 1, max: 1_000_000, fractionDigits: 2 });
+      {
+        const min = rule.numberOptions?.min ?? 0;
+        const max = rule.numberOptions?.max ?? 100;
+        const decimals = Math.max(0, Math.floor(rule.numberOptions?.decimals ?? 0));
+        if (decimals === 0) {
+          return faker.number.int({ min: Math.ceil(min), max: Math.floor(Math.max(min, max)) });
+        }
+        return faker.number.float({
+          min,
+          max: Math.max(min, max),
+          fractionDigits: decimals,
+        });
+      }
     case 'fullName':
       return faker.person.fullName();
     case 'firstName':
@@ -426,7 +436,13 @@ function generateRowsForTable(
         rule.kind === 'semantic'
           ? (rule.semanticType ?? inferFallbackSemanticType(column))
           : inferFallbackSemanticType(column);
-      row[column.name] = generateScalarValue(semanticType, column, rowIndex, context.runSalt);
+      row[column.name] = generateScalarValue(
+        semanticType,
+        rule,
+        column,
+        rowIndex,
+        context.runSalt,
+      );
     }
 
     rows.push(row);

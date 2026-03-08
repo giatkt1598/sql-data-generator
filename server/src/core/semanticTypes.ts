@@ -3,8 +3,6 @@ import { DataTypeDefinition, SemanticDataType } from './types';
 export const SUPPORTED_SEMANTIC_TYPES: SemanticDataType[] = [
   'unknown',
   'guid',
-  'int',
-  'float',
   'fullName',
   'firstName',
   'lastName',
@@ -36,18 +34,6 @@ export const DATA_TYPE_DEFINITIONS: DataTypeDefinition[] = [
     value: 'guid',
     displayName: 'GUID',
     description: 'GUID/UUID value.',
-    group: 'Basic',
-  },
-  {
-    value: 'int',
-    displayName: 'Int',
-    description: 'Integer numeric value.',
-    group: 'Basic',
-  },
-  {
-    value: 'float',
-    displayName: 'Float',
-    description: 'Floating-point numeric value.',
     group: 'Basic',
   },
   {
@@ -167,16 +153,16 @@ export const DATA_TYPE_DEFINITIONS: DataTypeDefinition[] = [
 ];
 
 export const SQL_TYPE_DEFAULT_CLASSIFICATION: Record<string, SemanticDataType> = {
-  int: 'int',
-  integer: 'int',
-  bigint: 'int',
-  smallint: 'int',
-  tinyint: 'int',
+  int: 'number',
+  integer: 'number',
+  bigint: 'number',
+  smallint: 'number',
+  tinyint: 'number',
   decimal: 'number',
   numeric: 'number',
-  float: 'float',
-  real: 'float',
-  double: 'float',
+  float: 'number',
+  real: 'number',
+  double: 'number',
   uniqueidentifier: 'guid',
   uuid: 'guid',
   bit: 'boolean',

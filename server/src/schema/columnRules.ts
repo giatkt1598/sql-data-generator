@@ -16,6 +16,13 @@ function fallbackSemantic(dbType: string): SemanticDataType {
   return SQL_TYPE_DEFAULT_CLASSIFICATION[normalized] ?? 'unknown';
 }
 
+function normalizeSemanticType(value: unknown, fallback: SemanticDataType): SemanticDataType {
+  if (typeof value === 'string' && SUPPORTED_SEMANTIC_TYPES.includes(value as SemanticDataType)) {
+    return value as SemanticDataType;
+  }
+  return fallback;
+}
+
 function normalizeBlankPercentage(value: unknown, fallback = 0): number {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
     return fallback;
@@ -35,6 +42,31 @@ function normalizeFieldName(value: unknown, fallback: string): string {
   }
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : fallback;
+}
+
+function normalizeNumberOptionValue(value: unknown, fallback: number): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return fallback;
+  }
+  return value;
+}
+
+function normalizeNumberOptions(
+  rule: ColumnGenerationRule | undefined,
+  fallback: { min?: number; max?: number; decimals?: number } | undefined,
+) {
+  const min = normalizeNumberOptionValue(rule?.numberOptions?.min, fallback?.min ?? 0);
+  const max = normalizeNumberOptionValue(rule?.numberOptions?.max, fallback?.max ?? 100);
+  const decimals = Math.max(
+    0,
+    Math.floor(normalizeNumberOptionValue(rule?.numberOptions?.decimals, fallback?.decimals ?? 0)),
+  );
+
+  return {
+    min,
+    max: max >= min ? max : min,
+    decimals,
+  };
 }
 
 function readCandidateFieldName(rule: ColumnGenerationRule | undefined): unknown {
@@ -77,8 +109,13 @@ export function buildDefaultColumnRules(
       result[table.name][column.name] = {
         kind: 'semantic',
         fieldName: column.name,
-        semanticType: fromAi ?? fallbackSemantic(column.dbType),
+        semanticType: normalizeSemanticType(fromAi, fallbackSemantic(column.dbType)),
         blankPercentage: 0,
+        numberOptions: {
+          min: 0,
+          max: 100,
+          decimals: 0,
+        },
       };
     }
   }
@@ -90,7 +127,7 @@ function isSemanticRule(rule: ColumnGenerationRule): boolean {
   return (
     rule.kind === 'semantic' &&
     typeof rule.semanticType === 'string' &&
-    SUPPORTED_SEMANTIC_TYPES.includes(rule.semanticType as SemanticDataType)
+    SUPPORTED_SEMANTIC_TYPES.includes(normalizeSemanticType(rule.semanticType, 'unknown'))
   );
 }
 
@@ -130,10 +167,17 @@ export function sanitizeColumnRules(
         merged[table.name][column.name] = {
           ...candidate,
           fieldName: normalizeFieldName(readCandidateFieldName(candidate), column.name),
-          semanticType: candidate.semanticType ?? fallbackSemantic(column.dbType),
+          semanticType: normalizeSemanticType(
+            candidate.semanticType,
+            fallbackSemantic(column.dbType),
+          ),
           blankPercentage: normalizeBlankPercentage(
             candidate.blankPercentage,
             fallbackRules[table.name][column.name].blankPercentage ?? 0,
+          ),
+          numberOptions: normalizeNumberOptions(
+            candidate,
+            fallbackRules[table.name][column.name].numberOptions,
           ),
         };
         continue;
@@ -154,6 +198,10 @@ export function sanitizeColumnRules(
               candidate.blankPercentage,
               fallbackRules[table.name][column.name].blankPercentage ?? 0,
             ),
+            numberOptions: normalizeNumberOptions(
+              candidate,
+              fallbackRules[table.name][column.name].numberOptions,
+            ),
           };
           continue;
         }
@@ -165,6 +213,10 @@ export function sanitizeColumnRules(
           blankPercentage: normalizeBlankPercentage(
             candidate.blankPercentage,
             fallbackRules[table.name][column.name].blankPercentage ?? 0,
+          ),
+          numberOptions: normalizeNumberOptions(
+            candidate,
+            fallbackRules[table.name][column.name].numberOptions,
           ),
         };
         continue;
@@ -178,6 +230,10 @@ export function sanitizeColumnRules(
         blankPercentage: normalizeBlankPercentage(
           candidate?.blankPercentage ?? fallbackRules[table.name][column.name].blankPercentage,
           0,
+        ),
+        numberOptions: normalizeNumberOptions(
+          candidate,
+          fallbackRules[table.name][column.name].numberOptions,
         ),
       };
     }

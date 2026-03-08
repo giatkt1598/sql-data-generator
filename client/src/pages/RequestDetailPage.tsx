@@ -321,6 +321,11 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
       ...rule,
       fieldName: current?.fieldName ?? pickerTarget.columnName,
       blankPercentage: current?.blankPercentage ?? 0,
+      numberOptions: current?.numberOptions ?? {
+        min: 0,
+        max: 100,
+        decimals: 0,
+      },
     });
     setTypePickerOpen(false);
   }
@@ -355,6 +360,11 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
       customValues: parsedValues,
       blankPercentage:
         columnRules[pickerTarget.tableName]?.[pickerTarget.columnName]?.blankPercentage ?? 0,
+      numberOptions: columnRules[pickerTarget.tableName]?.[pickerTarget.columnName]?.numberOptions ?? {
+        min: 0,
+        max: 100,
+        decimals: 0,
+      },
     });
     setTypePickerOpen(false);
   }
@@ -367,6 +377,11 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
       kind: 'semantic',
       semanticType: 'unknown',
       blankPercentage: 0,
+      numberOptions: {
+        min: 0,
+        max: 100,
+        decimals: 0,
+      },
     };
     onRuleChange(tableName, columnName, {
       ...fallbackRule,
@@ -383,6 +398,11 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
       semanticType: 'unknown',
       fieldName: columnName,
       blankPercentage: 0,
+      numberOptions: {
+        min: 0,
+        max: 100,
+        decimals: 0,
+      },
     };
     onRuleChange(tableName, columnName, {
       ...fallbackRule,
@@ -417,6 +437,56 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
       fieldName: columnRules[tableName]?.[columnName]?.fieldName ?? columnName,
       customValues: parsedValues,
       blankPercentage: columnRules[tableName]?.[columnName]?.blankPercentage ?? 0,
+      numberOptions: columnRules[tableName]?.[columnName]?.numberOptions ?? {
+        min: 0,
+        max: 100,
+        decimals: 0,
+      },
+    });
+  }
+
+  function onNumberOptionChange(
+    tableName: string,
+    columnName: string,
+    key: 'min' | 'max' | 'decimals',
+    value: string,
+  ) {
+    const parsed = Number(value);
+    const safeValue = Number.isFinite(parsed) ? parsed : key === 'max' ? 100 : 0;
+    const current = columnRules[tableName]?.[columnName];
+    const fallbackRule: TableColumnRules[string][string] = current ?? {
+      kind: 'semantic',
+      semanticType: 'number',
+      fieldName: columnName,
+      blankPercentage: 0,
+      numberOptions: {
+        min: 0,
+        max: 100,
+        decimals: 0,
+      },
+    };
+    const currentOptions = fallbackRule.numberOptions ?? {
+      min: 0,
+      max: 100,
+      decimals: 0,
+    };
+    const nextOptions = {
+      ...currentOptions,
+      [key]: key === 'decimals' ? Math.max(0, Math.floor(safeValue)) : safeValue,
+    };
+
+    if ((nextOptions.max ?? 100) < (nextOptions.min ?? 0)) {
+      if (key === 'min') {
+        nextOptions.max = nextOptions.min;
+      } else if (key === 'max') {
+        nextOptions.min = nextOptions.max;
+      }
+    }
+
+    onRuleChange(tableName, columnName, {
+      ...fallbackRule,
+      fieldName: fallbackRule.fieldName ?? columnName,
+      numberOptions: nextOptions,
     });
   }
 
@@ -472,6 +542,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     onFieldNameChange,
     onBlankPercentageChange,
     onCustomListValueChange,
+    onNumberOptionChange,
     applyRule,
     applyCustomListRule,
     handleBack: () => navigate(-1),

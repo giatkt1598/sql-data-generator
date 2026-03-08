@@ -44,6 +44,12 @@ export interface RequestDetailContextValue {
   onFieldNameChange: (tableName: string, columnName: string, value: string) => void;
   onBlankPercentageChange: (tableName: string, columnName: string, value: string) => void;
   onCustomListValueChange: (tableName: string, columnName: string, value: string) => void;
+  onNumberOptionChange: (
+    tableName: string,
+    columnName: string,
+    key: 'min' | 'max' | 'decimals',
+    value: string,
+  ) => void;
   applyRule: (rule: TableColumnRules[string][string]) => void;
   applyCustomListRule: () => void;
   handleBack: () => void;

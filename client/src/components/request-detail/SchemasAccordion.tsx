@@ -80,6 +80,11 @@ export function SchemasAccordion() {
                             fieldName: fieldNameText,
                             blankPercentage,
                             customValues: rule?.kind === 'customList' ? rule.customValues ?? [] : [],
+                            numberOptions: rule?.numberOptions ?? {
+                              min: 0,
+                              max: 100,
+                              decimals: 0,
+                            },
                             semanticType: rule?.kind === 'semantic' ? rule.semanticType ?? 'unknown' : undefined,
                             reference: rule?.kind === 'reference' ? rule.reference : undefined,
                           });

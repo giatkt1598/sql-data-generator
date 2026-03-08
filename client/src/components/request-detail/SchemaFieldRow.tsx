@@ -1,13 +1,5 @@
 import { memo } from 'react';
-import {
-  Box,
-  MenuItem,
-  Select,
-  Stack,
-  TextField,
-  Tooltip,
-  Typography,
-} from '@mui/material';
+import { Box, MenuItem, Select, Stack, TextField, Tooltip, Typography } from '@mui/material';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import { stringifyRule } from '../../utilities/ruleUtils';
 import { useRequestDetailContext } from './RequestDetailContext';
@@ -24,6 +16,12 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
   const context = useRequestDetailContext();
   const rule = context.columnRules[tableName]?.[column.name];
   const value = stringifyRule(context.semanticTypes, rule);
+  const isNumberRule = rule?.kind === 'semantic' && rule.semanticType === 'number';
+  const numberOptions = rule?.numberOptions ?? {
+    min: 0,
+    max: 100,
+    decimals: 0,
+  };
 
   return (
     <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ md: 'center' }}>
@@ -73,6 +71,40 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
             context.onCustomListValueChange(tableName, column.name, event.target.value);
           }}
         />
+      )}
+      {isNumberRule && (
+        <Stack direction="row" spacing={1}>
+          <TextField
+            size="small"
+            label="Min"
+            type="number"
+            defaultValue={numberOptions.min}
+            onBlur={(event) =>
+              context.onNumberOptionChange(tableName, column.name, 'min', event.target.value)
+            }
+            sx={{ width: 110 }}
+          />
+          <TextField
+            size="small"
+            label="Max"
+            type="number"
+            defaultValue={numberOptions.max}
+            onBlur={(event) =>
+              context.onNumberOptionChange(tableName, column.name, 'max', event.target.value)
+            }
+            sx={{ width: 110 }}
+          />
+          <TextField
+            size="small"
+            label="Decimals"
+            type="number"
+            defaultValue={numberOptions.decimals}
+            onBlur={(event) =>
+              context.onNumberOptionChange(tableName, column.name, 'decimals', event.target.value)
+            }
+            sx={{ width: 110 }}
+          />
+        </Stack>
       )}
       <Box width={90}>
         <TextField

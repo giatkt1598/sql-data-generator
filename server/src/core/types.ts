@@ -3,8 +3,6 @@ export type SqlDialect = 'postgres' | 'mysql' | 'sqlserver' | 'generic';
 export type SemanticDataType =
   | 'unknown'
   | 'guid'
-  | 'int'
-  | 'float'
   | 'fullName'
   | 'firstName'
   | 'lastName'
@@ -78,6 +76,11 @@ export interface ColumnGenerationRule {
   reference?: ColumnReference;
   customValues?: Array<string | number | boolean>;
   blankPercentage?: number;
+  numberOptions?: {
+    min?: number;
+    max?: number;
+    decimals?: number;
+  };
 }
 
 export type TableColumnRules = Record<string, Record<string, ColumnGenerationRule>>;
