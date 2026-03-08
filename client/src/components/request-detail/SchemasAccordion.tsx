@@ -8,13 +8,15 @@ import {
   Button,
   Card,
   CardContent,
+  MenuItem,
+  Select,
   Stack,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { stringifyRule } from '../../utilities/ruleUtils';
 import { tableAnchorId } from '../../utilities/schemaAnchor';
 import { useRequestDetailContext } from './RequestDetailContext';
@@ -141,29 +143,41 @@ export function SchemasAccordion() {
                               >
                                 <DragIndicatorIcon fontSize="small" />
                               </Box>
-                              <Box sx={{ minWidth: 200 }}>
+                              <Box sx={{ width: 160 }}>
                                 <TextField
                                   size="small"
                                   fullWidth
                                   defaultValue={fieldNameText}
-                                  onBlur={(event) =>
-                                    {
-                                      const nextValue = event.target.value.trim() || column.name;
-                                      setFieldNameDrafts((prev) => ({
-                                        ...prev,
-                                        [fieldKey]: nextValue,
-                                      }));
-                                      context.onFieldNameChange(table.name, column.name, nextValue);
-                                    }
-                                  }
+                                  onBlur={(event) => {
+                                    const nextValue = event.target.value.trim() || column.name;
+                                    setFieldNameDrafts((prev) => ({
+                                      ...prev,
+                                      [fieldKey]: nextValue,
+                                    }));
+                                    context.onFieldNameChange(table.name, column.name, nextValue);
+                                  }}
                                 />
                               </Box>
-                              <Button
+                              <Box width={160}>
+                                <Tooltip title={value} arrow placement="right">
+                                  <Select
+                                    size="small"
+                                    variant="outlined"
+                                    value={value}
+                                    onClick={() => context.openTypePicker(table.name, column.name)}
+                                    fullWidth
+                                    readOnly
+                                  >
+                                    <MenuItem value={value}>{value}</MenuItem>
+                                  </Select>
+                                </Tooltip>
+                              </Box>
+                              {/* <Button
                                 variant="outlined"
                                 onClick={() => context.openTypePicker(table.name, column.name)}
                                 endIcon={<KeyboardArrowDownIcon />}
                                 sx={{
-                                  width: { xs: '100%', md: 220 },
+                                  width: 160,
                                   justifyContent: 'space-between',
                                   textTransform: 'none',
                                   color: 'text.primary',
@@ -174,11 +188,10 @@ export function SchemasAccordion() {
                                 }}
                               >
                                 {value}
-                              </Button>
-                              {rule?.kind === 'customList' ? (
+                              </Button> */}
+                              {rule?.kind === 'customList' && (
                                 <TextField
                                   size="small"
-                                  fullWidth
                                   defaultValue={customListText}
                                   placeholder="item 1, item 2, item 3"
                                   onBlur={(event) => {
@@ -193,8 +206,6 @@ export function SchemasAccordion() {
                                     );
                                   }}
                                 />
-                              ) : (
-                                <Box sx={{ flex: 1, minHeight: 40 }} />
                               )}
                               <TextField
                                 size="small"
