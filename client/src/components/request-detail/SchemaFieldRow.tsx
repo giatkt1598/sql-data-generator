@@ -239,7 +239,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
         </Stack>
       )}
       {isDateTimeRule && (
-        <Stack direction="row" spacing={1} sx={{ flex: 1 }}>
+        <Stack direction="row" spacing={1}>
           <TextField
             size="small"
             label="Start"

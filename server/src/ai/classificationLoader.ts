@@ -122,15 +122,12 @@ export function parseClassificationJson(jsonText: string): AiClassificationResul
         continue;
       }
       if (!tableNames.has(columnValue.references.tableName)) {
-        throw new Error(
-          `Column '${tableName}.${columnName}' references unknown table '${columnValue.references.tableName}'.`,
-        );
+        columnValue.references = null;
+        continue;
       }
       const referencedTable = result.tables[columnValue.references.tableName];
       if (!referencedTable.columns[columnValue.references.columnName]) {
-        throw new Error(
-          `Column '${tableName}.${columnName}' references unknown column '${columnValue.references.tableName}.${columnValue.references.columnName}'.`,
-        );
+        columnValue.references = null;
       }
     }
   }
