@@ -440,6 +440,8 @@ export function sanitizeColumnRules(
         merged[table.name][column.name] = {
           ...candidate,
           fieldName: normalizeFieldName(readCandidateFieldName(candidate), column.name),
+          customTypeName:
+            typeof candidate.customTypeName === 'string' ? candidate.customTypeName : undefined,
           blankPercentage: normalizeBlankPercentage(
             candidate.blankPercentage,
             fallbackRules[table.name][column.name].blankPercentage ?? 0,
@@ -489,6 +491,8 @@ export function sanitizeColumnRules(
           readCandidateFieldName(candidate) ?? fallbackRules[table.name][column.name].fieldName,
           column.name,
         ),
+        customTypeName:
+          typeof candidate?.customTypeName === 'string' ? candidate.customTypeName : undefined,
         blankPercentage: normalizeBlankPercentage(
           candidate?.blankPercentage ?? fallbackRules[table.name][column.name].blankPercentage,
           0,

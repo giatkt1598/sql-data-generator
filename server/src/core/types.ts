@@ -65,6 +65,7 @@ export interface ColumnGenerationRule {
   fieldName?: string;
   semanticType?: SemanticDataType;
   reference?: ColumnReference;
+  customTypeName?: string;
   customValues?: Array<string | number | boolean>;
   blankPercentage?: number;
   numberOptions?: {
@@ -114,6 +115,14 @@ export interface DataTypeDefinition {
   displayName: string;
   description: string;
   groups: DataTypeGroup[];
+}
+
+export interface CustomListTypeDefinition {
+  id: string;
+  name: string;
+  values: Array<string | number | boolean>;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface SchemaRelationshipNode {

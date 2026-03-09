@@ -5,6 +5,7 @@ import { AppStorageState } from './models';
 const defaultState: AppStorageState = {
   projects: [],
   generationRequests: [],
+  customListTypes: [],
 };
 
 export class JsonFileStorage {
@@ -28,6 +29,7 @@ export class JsonFileStorage {
     return {
       projects: parsed.projects ?? [],
       generationRequests: parsed.generationRequests ?? [],
+      customListTypes: parsed.customListTypes ?? [],
     };
   }
 

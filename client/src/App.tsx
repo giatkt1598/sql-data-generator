@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Container } from '@mui/material';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { getProjects, getSemanticTypes, getSupportedLocales } from './apis';
+import { getCustomListTypes, getProjects, getSemanticTypes, getSupportedLocales } from './apis';
 import { FeedbackSnackbars } from './components/FeedbackSnackbars';
 import type {
+  CustomListTypeDefinition,
   DataTypeDefinition,
   ProjectEntity,
   SupportedLocaleDefinition,
@@ -17,6 +18,7 @@ function App() {
   const [projects, setProjects] = useState<ProjectEntity[]>([]);
   const [semanticTypes, setSemanticTypes] = useState<DataTypeDefinition[]>([]);
   const [supportedLocales, setSupportedLocales] = useState<SupportedLocaleDefinition[]>([]);
+  const [customListTypes, setCustomListTypes] = useState<CustomListTypeDefinition[]>([]);
   const [loading, setLoading] = useState(false);
   const [snack, setSnack] = useState('');
   const [error, setError] = useState('');
@@ -26,18 +28,25 @@ function App() {
     setProjects(data);
   }
 
+  async function reloadCustomListTypes() {
+    const data = await getCustomListTypes();
+    setCustomListTypes(data);
+  }
+
   useEffect(() => {
     void (async () => {
       try {
         setLoading(true);
-        const [projectData, semanticData, localeData] = await Promise.all([
+        const [projectData, semanticData, localeData, customTypeData] = await Promise.all([
           getProjects(),
           getSemanticTypes(),
           getSupportedLocales(),
+          getCustomListTypes(),
         ]);
         setProjects(projectData);
         setSemanticTypes(semanticData);
         setSupportedLocales(localeData);
+        setCustomListTypes(customTypeData);
       } catch (exception) {
         setError(getErrorMessage(exception, 'Failed to load initial data.'));
         console.error(exception);
@@ -82,6 +91,8 @@ function App() {
               projects={projects}
               semanticTypes={semanticTypes}
               supportedLocales={supportedLocales}
+              customListTypes={customListTypes}
+              reloadCustomListTypes={reloadCustomListTypes}
               loading={loading}
               setLoading={setLoading}
               setSnack={setSnack}

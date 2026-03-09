@@ -1,4 +1,9 @@
-import { SqlProvider, TableColumnOrder, TableColumnRules } from '../core/types';
+import {
+  CustomListTypeDefinition,
+  SqlProvider,
+  TableColumnOrder,
+  TableColumnRules,
+} from '../core/types';
 
 export interface ProjectEntity {
   id: string;
@@ -26,4 +31,5 @@ export interface GenerationRequestEntity {
 export interface AppStorageState {
   projects: ProjectEntity[];
   generationRequests: GenerationRequestEntity[];
+  customListTypes: CustomListTypeDefinition[];
 }

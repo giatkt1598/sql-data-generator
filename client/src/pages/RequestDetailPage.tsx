@@ -10,10 +10,13 @@ import {
 } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
+  createCustomListType as createCustomListTypeApi,
+  deleteCustomListType as deleteCustomListTypeApi,
   generateClassificationPrompt,
   generateSqlScript,
   getColumnDesignerModel,
   getGenerationRequests,
+  updateCustomListType as updateCustomListTypeApi,
   updateGenerationRequest,
 } from '../apis';
 import type {
@@ -699,6 +702,93 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     setTypePickerOpen(false);
   }
 
+  function parseCustomTypeValues(valuesText: string): Array<string | number | boolean> {
+    return valuesText
+      .replace(/\r\n|\r|\n/g, ',')
+      .split(',')
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0)
+      .map((item) => {
+        const lower = item.toLowerCase();
+        if (lower === 'true') {
+          return true;
+        }
+        if (lower === 'false') {
+          return false;
+        }
+        if (/^-?\d+(\.\d+)?$/.test(item)) {
+          return Number(item);
+        }
+        return item;
+      });
+  }
+
+  async function createCustomListType(input: { name: string; valuesText: string }) {
+    const item = await createCustomListTypeApi({
+      name: input.name,
+      values: parseCustomTypeValues(input.valuesText),
+    });
+    await props.reloadCustomListTypes();
+    props.setSnack(`Created ${item.name}.`);
+  }
+
+  async function updateCustomListType(id: string, input: { name: string; valuesText: string }) {
+    const previousName = props.customListTypes.find((item) => item.id === id)?.name;
+    const item = await updateCustomListTypeApi(id, {
+      name: input.name,
+      values: parseCustomTypeValues(input.valuesText),
+    });
+    setColumnRules((prev) =>
+      Object.fromEntries(
+        Object.entries(prev).map(([tableName, rules]) => [
+          tableName,
+          Object.fromEntries(
+            Object.entries(rules).map(([columnName, rule]) => [
+              columnName,
+              rule.kind === 'customList' &&
+              (rule.customTypeName === previousName || rule.customTypeName === item.name)
+                ? {
+                    ...rule,
+                    customTypeName: item.name,
+                    customValues: item.values,
+                  }
+                : rule,
+            ]),
+          ),
+        ]),
+      ),
+    );
+    await props.reloadCustomListTypes();
+    props.setSnack(`Updated ${item.name}.`);
+  }
+
+  async function deleteCustomListType(id: string) {
+    const deletedName = props.customListTypes.find((item) => item.id === id)?.name;
+    await deleteCustomListTypeApi(id);
+    if (deletedName) {
+      setColumnRules((prev) =>
+        Object.fromEntries(
+          Object.entries(prev).map(([tableName, rules]) => [
+            tableName,
+            Object.fromEntries(
+              Object.entries(rules).map(([columnName, rule]) => [
+                columnName,
+                rule.kind === 'customList' && rule.customTypeName === deletedName
+                  ? {
+                      ...rule,
+                      customTypeName: undefined,
+                    }
+                  : rule,
+              ]),
+            ),
+          ]),
+        ),
+      );
+    }
+    await props.reloadCustomListTypes();
+    props.setSnack('Custom type deleted.');
+  }
+
   function onBlankPercentageChange(tableName: string, columnName: string, value: string) {
     const parsed = Number(value);
     const blankPercentage = Number.isFinite(parsed) ? Math.max(0, Math.min(100, parsed)) : 0;
@@ -1063,6 +1153,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     analyzeConfirmOpen,
     setAnalyzeConfirmOpen,
     semanticTypes: props.semanticTypes,
+    customListTypes: props.customListTypes,
     supportedLocales: props.supportedLocales,
     primaryKeyOptions,
     openTypePicker,
@@ -1081,6 +1172,9 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     reorderColumns,
     applyRule,
     applyCustomListRule,
+    createCustomListType,
+    updateCustomListType,
+    deleteCustomListType,
     handleBack: () => {
       void (async () => {
         const canLeave = await confirmLeavePage();

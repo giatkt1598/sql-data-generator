@@ -14,12 +14,14 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useEffect, useMemo, useState } from 'react';
 import { tableAnchorId } from '../../utilities/schemaAnchor';
 import { useRequestDetailContext } from './RequestDetailContext';
-import { SchemaFieldRow } from './SchemaFieldRow';
+import { SchemaTableCard } from './SchemaTableCard';
 
 export function SchemasAccordion() {
   const context = useRequestDetailContext();
   const [visibleTableNames, setVisibleTableNames] = useState<Set<string>>(new Set());
-  const [dragState, setDragState] = useState<{ tableName: string; columnName: string } | null>(null);
+  const [dragState, setDragState] = useState<{ tableName: string; columnName: string } | null>(
+    null,
+  );
   const hasSchemaInputs =
     context.form.schemaSql.trim().length > 0 || context.form.classificationJson.trim().length > 0;
   const tableNames = useMemo(
@@ -147,129 +149,16 @@ export function SchemasAccordion() {
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Stack spacing={1.5}>
                 {context.designerModel.tables.map((table, tableIndex) => (
-                  <Card
+                  <SchemaTableCard
                     key={table.name}
-                    id={tableAnchorId(table.name)}
-                    data-table-name={table.name}
-                    variant="outlined"
-                  >
-                    <CardContent>
-                      <Typography sx={{ fontWeight: 700, mb: 1 }}>
-                        {tableIndex + 1}.&nbsp;{table.name}
-                      </Typography>
-                      <Stack spacing={1}>
-                        <Stack
-                          direction={{ xs: 'column', md: 'row' }}
-                          spacing={1}
-                          sx={{ px: 0.25 }}
-                        >
-                          <Box sx={{ width: 28 }} />
-                          <Typography
-                            variant="caption"
-                            sx={{ minWidth: 160, fontWeight: 700, color: 'text.secondary' }}
-                          >
-                            Field Name
-                          </Typography>
-                          <Typography
-                            variant="caption"
-                            sx={{
-                              width: { xs: '100%', md: 160 },
-                              fontWeight: 700,
-                              color: 'text.secondary',
-                            }}
-                          >
-                            Type
-                          </Typography>
-                          <Typography
-                            variant="caption"
-                            sx={{ flex: 1, fontWeight: 700, color: 'text.secondary' }}
-                          >
-                            Options
-                          </Typography>
-                        </Stack>
-                        {(context.columnOrder[table.name] ?? table.columns.map((column) => column.name))
-                          .map(
-                            (columnName) =>
-                              table.columns.find((column) => column.name === columnName) ?? null,
-                          )
-                          .filter((column): column is (typeof table.columns)[number] => Boolean(column))
-                          .map((column) => {
-                          const rule = context.columnRules[table.name]?.[column.name];
-                          const customListText =
-                            rule?.kind === 'customList' ? (rule.customValues ?? []).join(', ') : '';
-                          const fieldNameText = rule?.fieldName ?? column.name;
-                          const blankPercentage = rule?.blankPercentage ?? 0;
-                          const ruleSignature = JSON.stringify({
-                            kind: rule?.kind ?? 'semantic',
-                            fieldName: fieldNameText,
-                            blankPercentage,
-                            customValues:
-                              rule?.kind === 'customList' ? (rule.customValues ?? []) : [],
-                            numberOptions: rule?.numberOptions ?? {
-                              min: 0,
-                              max: 100,
-                              decimals: 0,
-                            },
-                            dateTimeOptions: rule?.dateTimeOptions ?? {
-                              start: '2024-01-01',
-                              end: '2026-12-31',
-                              format: 'yyyy-MM-dd HH:mm:ss',
-                            },
-                            sequenceOptions: rule?.sequenceOptions ?? {
-                              startAt: 1,
-                              step: 1,
-                              repeat: 1,
-                            },
-                            digitSequenceOptions: rule?.digitSequenceOptions ?? {
-                              format: '',
-                            },
-                            emailOptions: rule?.emailOptions ?? {
-                              domains: [],
-                            },
-                            textOptions: rule?.textOptions ?? {
-                              minLength: 1,
-                              maxLength: 4,
-                              unit: 'words',
-                            },
-                            semanticType:
-                              rule?.kind === 'semantic'
-                                ? (rule.semanticType ?? 'unknown')
-                                : undefined,
-                            reference: rule?.kind === 'reference' ? rule.reference : undefined,
-                          });
-                          return (
-                            <SchemaFieldRow
-                              key={`${table.name}.${column.name}:${ruleSignature}`}
-                              tableName={table.name}
-                              column={column}
-                              blankPercentage={blankPercentage}
-                              customListText={customListText}
-                              fieldNameText={fieldNameText}
-                              draggable
-                              isDragging={
-                                dragState?.tableName === table.name &&
-                                dragState.columnName === column.name
-                              }
-                              onDragStart={() =>
-                                setDragState({ tableName: table.name, columnName: column.name })
-                              }
-                              onDragOver={() => {
-                                if (
-                                  dragState &&
-                                  dragState.tableName === table.name &&
-                                  dragState.columnName !== column.name
-                                ) {
-                                  context.reorderColumns(table.name, dragState.columnName, column.name);
-                                }
-                              }}
-                              onDrop={() => setDragState(null)}
-                              onDragEnd={() => setDragState(null)}
-                            />
-                          );
-                        })}
-                      </Stack>
-                    </CardContent>
-                  </Card>
+                    table={table}
+                    tableIndex={tableIndex}
+                    columnRules={context.columnRules}
+                    columnOrder={context.columnOrder}
+                    dragState={dragState}
+                    onDragStateChange={setDragState}
+                    reorderColumns={context.reorderColumns}
+                  />
                 ))}
               </Stack>
             </Box>
@@ -295,15 +184,13 @@ export function SchemasAccordion() {
                       sx={{
                         justifyContent: 'flex-start',
                         color: visibleTableNames.has(table.name) ? 'primary.dark' : 'text.primary',
-                        backgroundColor:
-                          visibleTableNames.has(table.name)
-                            ? 'rgba(29, 78, 216, 0.12)'
-                            : 'transparent',
+                        backgroundColor: visibleTableNames.has(table.name)
+                          ? 'rgba(29, 78, 216, 0.12)'
+                          : 'transparent',
                         '&:hover': {
-                          backgroundColor:
-                            visibleTableNames.has(table.name)
-                              ? 'rgba(29, 78, 216, 0.18)'
-                              : 'action.hover',
+                          backgroundColor: visibleTableNames.has(table.name)
+                            ? 'rgba(29, 78, 216, 0.18)'
+                            : 'action.hover',
                         },
                       }}
                       onClick={() => scrollToTable(table.name)}

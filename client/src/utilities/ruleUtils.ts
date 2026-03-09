@@ -1,5 +1,6 @@
 import type {
   ColumnGenerationRule,
+  CustomListTypeDefinition,
   DataTypeCatalogValue,
   DataTypeDefinition,
   SemanticDataType,
@@ -7,13 +8,18 @@ import type {
 
 export function stringifyRule(
   semanticTypes: DataTypeDefinition[],
+  customListTypes: CustomListTypeDefinition[],
   rule?: ColumnGenerationRule,
 ): string {
   if (!rule) {
     return 'NULL';
   }
   if (rule.kind === 'customList') {
-    return 'Custom List';
+    if (rule.customTypeName) {
+      return rule.customTypeName;
+    }
+    const matchedType = customListTypes.find((item) => item.values === rule.customValues);
+    return matchedType?.name ?? 'Custom List';
   }
   if (rule.kind === 'reference' && rule.reference) {
     return `${rule.reference.tableName}.${rule.reference.columnName}`;

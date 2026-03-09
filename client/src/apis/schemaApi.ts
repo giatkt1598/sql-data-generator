@@ -1,6 +1,7 @@
 import { httpClient } from './httpClient';
 import type {
   ColumnDesignerModel,
+  CustomListTypeDefinition,
   DataTypeDefinition,
   SupportedLocaleDefinition,
   TableColumnOrder,
@@ -23,6 +24,34 @@ export async function getSemanticTypes(): Promise<DataTypeDefinition[]> {
 export async function getSupportedLocales(): Promise<SupportedLocaleDefinition[]> {
   const response = await httpClient.get<{ items: SupportedLocaleDefinition[] }>('/locales');
   return response.data.items;
+}
+
+export async function getCustomListTypes(): Promise<CustomListTypeDefinition[]> {
+  const response = await httpClient.get<{ items: CustomListTypeDefinition[] }>('/custom-list-types');
+  return response.data.items;
+}
+
+export async function createCustomListType(payload: {
+  name: string;
+  values: Array<string | number | boolean>;
+}): Promise<CustomListTypeDefinition> {
+  const response = await httpClient.post<CustomListTypeDefinition>('/custom-list-types', payload);
+  return response.data;
+}
+
+export async function updateCustomListType(
+  id: string,
+  payload: { name: string; values: Array<string | number | boolean> },
+): Promise<CustomListTypeDefinition> {
+  const response = await httpClient.put<CustomListTypeDefinition>(
+    `/custom-list-types/${id}`,
+    payload,
+  );
+  return response.data;
+}
+
+export async function deleteCustomListType(id: string): Promise<void> {
+  await httpClient.delete(`/custom-list-types/${id}`);
 }
 
 export async function getColumnDesignerModel(payload: {

@@ -2,6 +2,7 @@
 import { createContext, useContext } from 'react';
 import type { Dispatch, ReactNode, SetStateAction } from 'react';
 import type {
+  CustomListTypeDefinition,
   DataTypeDefinition,
   SupportedLocaleDefinition,
   TableColumnOrder,
@@ -39,6 +40,7 @@ export interface RequestDetailContextValue {
   analyzeConfirmOpen: boolean;
   setAnalyzeConfirmOpen: (open: boolean) => void;
   semanticTypes: DataTypeDefinition[];
+  customListTypes: CustomListTypeDefinition[];
   supportedLocales: SupportedLocaleDefinition[];
   primaryKeyOptions: Array<{ value: string; description: string }>;
   openTypePicker: (tableName: string, columnName: string) => void;
@@ -102,6 +104,9 @@ export interface RequestDetailContextValue {
   reorderColumns: (tableName: string, fromColumnName: string, toColumnName: string) => void;
   applyRule: (rule: TableColumnRules[string][string]) => void;
   applyCustomListRule: () => void;
+  createCustomListType: (input: { name: string; valuesText: string }) => Promise<void>;
+  updateCustomListType: (id: string, input: { name: string; valuesText: string }) => Promise<void>;
+  deleteCustomListType: (id: string) => Promise<void>;
   handleBack: () => void;
   buildPrompt: () => Promise<void>;
   handlePreview: () => Promise<void>;

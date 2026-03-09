@@ -1,8 +1,12 @@
 import { randomUUID } from 'crypto';
-import { buildDatabaseSchemaFromClassification, parseClassificationJson } from '../ai/classificationLoader';
+import {
+  buildDatabaseSchemaFromClassification,
+  parseClassificationJson,
+} from '../ai/classificationLoader';
 import { buildClassificationPrompt } from '../ai/promptBuilder';
 import {
   SchemaRelationshipsConfig,
+  CustomListTypeDefinition,
   SqlProvider,
   TableColumnOrder,
   TableColumnRules,
@@ -59,6 +63,11 @@ export interface PreviewResult {
   totalLines: number;
 }
 
+export interface UpsertCustomListTypeInput {
+  name: string;
+  values: Array<string | number | boolean>;
+}
+
 function asText(value: unknown): string {
   if (typeof value !== 'string') {
     return '';
@@ -66,7 +75,9 @@ function asText(value: unknown): string {
   return value.trim();
 }
 
-function parseSchemaRelationshipsJson(rawJson: string | undefined): SchemaRelationshipsConfig | undefined {
+function parseSchemaRelationshipsJson(
+  rawJson: string | undefined,
+): SchemaRelationshipsConfig | undefined {
   const trimmed = (rawJson ?? '').trim();
   if (!trimmed) {
     return undefined;
@@ -149,6 +160,105 @@ export class GenerationService {
 
   listProjects(): ProjectEntity[] {
     return this.storage.read().projects;
+  }
+
+  listCustomListTypes(): CustomListTypeDefinition[] {
+    return this.storage.read().customListTypes;
+  }
+
+  createCustomListType(input: UpsertCustomListTypeInput): CustomListTypeDefinition {
+    const state = this.storage.read();
+    const rawName = asText(input.name);
+    if (!rawName) {
+      throw new Error('Custom type name is required.');
+    }
+    const name = `Custom:${rawName.replace(/^Custom:/i, '').trim()}`;
+    const values = input.values.filter(
+      (value) =>
+        typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean',
+    );
+    if (values.length === 0) {
+      throw new Error('Custom type must contain at least one value.');
+    }
+    if (state.customListTypes.some((item) => item.name.toLowerCase() === name.toLowerCase())) {
+      throw new Error(`Custom type '${name}' already exists.`);
+    }
+
+    const now = new Date().toISOString();
+    const item: CustomListTypeDefinition = {
+      id: randomUUID(),
+      name,
+      values,
+      createdAt: now,
+      updatedAt: now,
+    };
+    state.customListTypes.push(item);
+    this.storage.write(state);
+    return item;
+  }
+
+  updateCustomListType(id: string, input: UpsertCustomListTypeInput): CustomListTypeDefinition {
+    const state = this.storage.read();
+    const item = state.customListTypes.find((entry) => entry.id === id);
+    if (!item) {
+      throw new Error('Custom type not found.');
+    }
+
+    const rawName = asText(input.name);
+    if (!rawName) {
+      throw new Error('Custom type name is required.');
+    }
+    const name = `Custom:${rawName.replace(/^Custom:/i, '').trim()}`;
+    const values = input.values.filter(
+      (value) =>
+        typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean',
+    );
+    if (values.length === 0) {
+      throw new Error('Custom type must contain at least one value.');
+    }
+    if (
+      state.customListTypes.some(
+        (entry) => entry.id !== id && entry.name.toLowerCase() === name.toLowerCase(),
+      )
+    ) {
+      throw new Error(`Custom type '${name}' already exists.`);
+    }
+
+    item.name = name;
+    item.values = values;
+    item.updatedAt = new Date().toISOString();
+    this.storage.write(state);
+    return item;
+  }
+
+  deleteCustomListType(id: string): void {
+    const state = this.storage.read();
+    const deletedType = state.customListTypes.find((item) => item.id === id);
+    state.customListTypes = state.customListTypes.filter((item) => item.id !== id);
+
+    if (deletedType) {
+      state.generationRequests = state.generationRequests.map((request) => ({
+        ...request,
+        columnRules: Object.fromEntries(
+          Object.entries(request.columnRules ?? {}).map(([tableName, rules]) => [
+            tableName,
+            Object.fromEntries(
+              Object.entries(rules).map(([columnName, rule]) => [
+                columnName,
+                rule.kind === 'customList' && rule.customTypeName === deletedType.name
+                  ? {
+                      ...rule,
+                      customTypeName: undefined,
+                    }
+                  : rule,
+              ]),
+            ),
+          ]),
+        ),
+      }));
+    }
+
+    this.storage.write(state);
   }
 
   createProject(input: CreateProjectInput): ProjectEntity {

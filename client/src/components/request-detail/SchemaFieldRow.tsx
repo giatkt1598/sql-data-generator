@@ -98,7 +98,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
   } = props;
   const context = useRequestDetailContext();
   const rule = context.columnRules[tableName]?.[column.name];
-  const value = stringifyRule(context.semanticTypes, rule);
+  const value = stringifyRule(context.semanticTypes, context.customListTypes, rule);
   const isNumberRule = rule?.kind === 'semantic' && rule.semanticType === 'number';
   const isDateTimeRule = rule?.kind === 'semantic' && rule.semanticType === 'dateTime';
   const isTimeRule = rule?.kind === 'semantic' && rule.semanticType === 'time';

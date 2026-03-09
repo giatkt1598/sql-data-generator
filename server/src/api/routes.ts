@@ -28,6 +28,45 @@ export function buildApiRouter(service: GenerationService): Router {
     res.json({ items: SUPPORTED_LOCALES });
   });
 
+  router.get('/custom-list-types', (_req, res) => {
+    res.json({ items: service.listCustomListTypes() });
+  });
+
+  router.post('/custom-list-types', (req, res) => {
+    try {
+      const body = parseBody<{ name?: string; values?: Array<string | number | boolean> }>(req);
+      const item = service.createCustomListType({
+        name: body.name ?? '',
+        values: Array.isArray(body.values) ? body.values : [],
+      });
+      res.status(201).json(item);
+    } catch (error) {
+      handleError(error, res);
+    }
+  });
+
+  router.put('/custom-list-types/:id', (req, res) => {
+    try {
+      const body = parseBody<{ name?: string; values?: Array<string | number | boolean> }>(req);
+      const item = service.updateCustomListType(req.params.id, {
+        name: body.name ?? '',
+        values: Array.isArray(body.values) ? body.values : [],
+      });
+      res.json(item);
+    } catch (error) {
+      handleError(error, res);
+    }
+  });
+
+  router.delete('/custom-list-types/:id', (req, res) => {
+    try {
+      service.deleteCustomListType(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      handleError(error, res);
+    }
+  });
+
   router.post('/column-designer-model', (req, res) => {
     try {
       const body = parseBody<{

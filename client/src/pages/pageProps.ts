@@ -1,4 +1,5 @@
 import type {
+  CustomListTypeDefinition,
   DataTypeDefinition,
   ProjectEntity,
   SupportedLocaleDefinition,
@@ -24,4 +25,6 @@ export interface RequestDetailPageProps extends AppPageBaseProps {
   projects: ProjectEntity[];
   semanticTypes: DataTypeDefinition[];
   supportedLocales: SupportedLocaleDefinition[];
+  customListTypes: CustomListTypeDefinition[];
+  reloadCustomListTypes: () => Promise<void>;
 }

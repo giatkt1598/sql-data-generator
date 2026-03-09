@@ -25,6 +25,7 @@ export interface ColumnGenerationRule {
     tableName: string;
     columnName: string;
   };
+  customTypeName?: string;
   customValues?: Array<string | number | boolean>;
   blankPercentage?: number;
   numberOptions?: {
@@ -117,4 +118,12 @@ export interface SupportedLocaleDefinition {
 export interface SqlProviderDefinition {
   value: 'sqlserver' | 'postgres' | 'mysql';
   label: string;
+}
+
+export interface CustomListTypeDefinition {
+  id: string;
+  name: string;
+  values: Array<string | number | boolean>;
+  createdAt: string;
+  updatedAt: string;
 }
