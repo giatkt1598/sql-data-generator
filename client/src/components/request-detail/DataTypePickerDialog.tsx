@@ -101,33 +101,33 @@ export const DataTypePickerDialog = memo(function DataTypePickerDialog() {
     return [...semanticItems, ...primaryKeyItems, ...customTypeItems];
   }, [customListTypes, primaryKeyOptions, semanticTypes]);
 
+  const keyword = deferredSearchText.trim().toLowerCase();
+  const hasSearchKeyword = keyword.length > 0;
+  const searchMatchedItems = useMemo(() => {
+    if (!keyword) {
+      return items;
+    }
+
+    return items.filter((item) =>
+      [item.title, item.description, item.groups.join(' ')].join(' ').toLowerCase().includes(keyword),
+    );
+  }, [items, keyword]);
+
   const filteredItems = useMemo(() => {
-    const keyword = deferredSearchText.trim().toLowerCase();
-    return items.filter((item) => {
-      const matchesGroup = selectedGroup === 'All' || item.groups.includes(selectedGroup);
-      if (!matchesGroup) {
-        return false;
-      }
-      if (!keyword) {
-        return true;
-      }
-      return [item.title, item.description, item.groups.join(' ')]
-        .join(' ')
-        .toLowerCase()
-        .includes(keyword);
-    });
-  }, [deferredSearchText, items, selectedGroup]);
-  const hasSearchKeyword = deferredSearchText.trim().length > 0;
+    return searchMatchedItems.filter(
+      (item) => selectedGroup === 'All' || item.groups.includes(selectedGroup),
+    );
+  }, [searchMatchedItems, selectedGroup]);
 
   const countsByGroup = useMemo(() => {
     const counts = new Map<GroupName, number>();
     const allGroups = GROUPS as readonly GroupName[];
-    counts.set('All', items.length);
+    counts.set('All', searchMatchedItems.length);
     for (const group of allGroups.slice(1)) {
       counts.set(group, 0);
     }
 
-    for (const item of items) {
+    for (const item of searchMatchedItems) {
       for (const group of item.groups) {
         const key = group as GroupName;
         counts.set(key, (counts.get(key) ?? 0) + 1);
@@ -135,7 +135,7 @@ export const DataTypePickerDialog = memo(function DataTypePickerDialog() {
     }
 
     return counts;
-  }, [items]);
+  }, [searchMatchedItems]);
 
   const handleSelectItem = useCallback(
     (item: PickerItem) => {
