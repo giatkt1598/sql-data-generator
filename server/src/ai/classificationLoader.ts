@@ -49,13 +49,14 @@ export function parseClassificationJson(jsonText: string): AiClassificationResul
       }
 
       const columnObj = columnValue as Record<string, unknown>;
-      if (typeof columnObj.dbType !== 'string' || columnObj.dbType.trim().length === 0) {
-        throw new Error(`Column '${tableName}.${columnName}' must have dbType.`);
-      }
       if (
-        typeof columnObj.nullable !== 'undefined' &&
-        typeof columnObj.nullable !== 'boolean'
+        typeof columnObj.dbType !== 'undefined' &&
+        columnObj.dbType !== null &&
+        typeof columnObj.dbType !== 'string'
       ) {
+        throw new Error(`Column '${tableName}.${columnName}' dbType must be a string or null.`);
+      }
+      if (typeof columnObj.nullable !== 'undefined' && typeof columnObj.nullable !== 'boolean') {
         throw new Error(
           `Column '${tableName}.${columnName}' nullable must be boolean when provided.`,
         );
@@ -81,7 +82,9 @@ export function parseClassificationJson(jsonText: string): AiClassificationResul
         columnObj.references !== null &&
         (!columnObj.references || typeof columnObj.references !== 'object')
       ) {
-        throw new Error(`Column '${tableName}.${columnName}' references must be an object or null.`);
+        throw new Error(
+          `Column '${tableName}.${columnName}' references must be an object or null.`,
+        );
       }
 
       if (typeof columnObj.references !== 'undefined' && columnObj.references !== null) {
@@ -89,14 +92,17 @@ export function parseClassificationJson(jsonText: string): AiClassificationResul
         if (typeof references.tableName !== 'string' || references.tableName.trim().length === 0) {
           throw new Error(`Column '${tableName}.${columnName}' references.tableName is required.`);
         }
-        if (typeof references.columnName !== 'string' || references.columnName.trim().length === 0) {
+        if (
+          typeof references.columnName !== 'string' ||
+          references.columnName.trim().length === 0
+        ) {
           throw new Error(`Column '${tableName}.${columnName}' references.columnName is required.`);
         }
       }
 
       normalizedColumns[columnName] = {
         semanticType: columnObj.semanticType,
-        dbType: columnObj.dbType.trim(),
+        dbType: typeof columnObj.dbType === 'string' ? columnObj.dbType.trim() || null : null,
         nullable: columnObj.nullable === true,
         isPrimaryKey: columnObj.isPrimaryKey === true,
         references:
@@ -142,7 +148,7 @@ export function buildDatabaseSchemaFromClassification(
     tables: Object.entries(classification.tables).map(([tableName, tableValue]) => {
       const columns = Object.entries(tableValue.columns).map(([columnName, columnValue]) => ({
         name: columnName,
-        dbType: columnValue.dbType,
+        dbType: columnValue.dbType ?? '',
         nullable: columnValue.nullable,
         isPrimaryKey: columnValue.isPrimaryKey,
       }));

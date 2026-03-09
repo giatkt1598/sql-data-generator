@@ -1,4 +1,5 @@
-import { Box, Card, CardContent, Stack, Typography } from '@mui/material';
+import { Box, Button, Card, CardContent, Stack, Typography } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
 import type {
   ColumnDesignerModel,
   TableColumnOrder,
@@ -15,6 +16,8 @@ export function SchemaTableCard(props: {
   dragState: { tableName: string; columnName: string } | null;
   onDragStateChange: (value: { tableName: string; columnName: string } | null) => void;
   reorderColumns: (tableName: string, fromColumnName: string, toColumnName: string) => void;
+  addField: (tableName: string) => void;
+  deleteField: (tableName: string, columnName: string) => void;
 }) {
   const {
     table,
@@ -24,6 +27,8 @@ export function SchemaTableCard(props: {
     dragState,
     onDragStateChange,
     reorderColumns,
+    addField,
+    deleteField,
   } = props;
 
   return (
@@ -129,10 +134,19 @@ export function SchemaTableCard(props: {
                   }}
                   onDrop={() => onDragStateChange(null)}
                   onDragEnd={() => onDragStateChange(null)}
+                  onDelete={() => deleteField(table.name, column.name)}
                 />
               );
             })}
         </Stack>
+        <Button
+          size="small"
+          startIcon={<AddIcon />}
+          onClick={() => addField(table.name)}
+          sx={{ mt: 1, ml: 4.5 }}
+        >
+          Add field
+        </Button>
       </CardContent>
     </Card>
   );

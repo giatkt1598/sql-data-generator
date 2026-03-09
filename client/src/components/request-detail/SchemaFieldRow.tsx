@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import CloseIcon from '@mui/icons-material/Close';
 import { stringifyRule } from '../../utilities/ruleUtils';
 import { useMockDataSchemaDetailContext } from './MockDataSchemaDetailContext';
 import type { ColumnDesignerModel } from '../../models/apiModels';
@@ -82,6 +83,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
   onDrop?: () => void;
   onDragEnd?: () => void;
   isDragging?: boolean;
+  onDelete?: () => void;
 }) {
   const {
     tableName,
@@ -95,6 +97,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
     onDrop,
     onDragEnd,
     isDragging,
+    onDelete,
   } = props;
   const context = useMockDataSchemaDetailContext();
   const rule = context.columnRules[tableName]?.[column.name];
@@ -148,6 +151,12 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
     maxLength: 4,
     unit: 'words' as const,
   };
+  const semanticTypeTooltipLine =
+    rule?.kind === 'semantic'
+      ? `Semantic Type: ${value}`
+      : rule?.kind === 'reference'
+        ? `Semantic Type: ${rule.reference?.tableName}.${rule.reference?.columnName ?? ''}`
+        : `Semantic Type: ${rule?.customTypeName ?? 'Custom List'}`;
   const digitSequenceHelp = [
     'Use "{column_name}" to reuse another column in the same row.',
     'Use "\\@" to keep @ as a literal character.',
@@ -171,6 +180,14 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
     'Example: [A-Z]{3}-\\d{4}',
     'Generated with randexp.',
   ].join('\n');
+  const fieldNameTooltipLines = [
+    `Db Type: ${column.dbType || '-'}`,
+    ...(column.isPrimaryKey ? ['Is Primary: true'] : []),
+    ...(rule?.kind === 'reference' ? ['Is Foreign Key: true'] : []),
+    ...(rule?.kind === 'reference' && rule.reference
+      ? [`References: ${rule.reference.tableName}.${rule.reference.columnName}`]
+      : []),
+  ];
 
   return (
     <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ md: 'center' }}>
@@ -205,18 +222,32 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
         </IconButton>
       </Box>
       <Box sx={{ width: 160 }}>
-        <TextField
-          size="small"
-          fullWidth
-          defaultValue={fieldNameText}
-          onBlur={(event) => {
-            const nextValue = event.target.value.trim() || column.name;
-            context.onFieldNameChange(tableName, column.name, nextValue);
-          }}
-        />
+        <Tooltip
+          arrow
+          placement="right"
+          title={<Box sx={{ whiteSpace: 'pre-line' }}>{fieldNameTooltipLines.join('\n')}</Box>}
+        >
+          <TextField
+            size="small"
+            fullWidth
+            defaultValue={fieldNameText}
+            onBlur={(event) => {
+              const nextValue = event.target.value.trim() || column.name;
+              context.onFieldNameChange(tableName, column.name, nextValue);
+            }}
+          />
+        </Tooltip>
       </Box>
       <Box width={160}>
-        <Tooltip title={value} arrow placement="right">
+        <Tooltip
+          arrow
+          placement="right"
+          title={
+            <Box sx={{ whiteSpace: 'pre-line' }}>
+              {[`Db Type: ${column.dbType || '-'}`, semanticTypeTooltipLine].join('\n')}
+            </Box>
+          }
+        >
           <Select
             size="small"
             variant="outlined"
@@ -552,6 +583,13 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
           }}
           sx={{ width: 90 }}
         />
+      </Box>
+      <Box sx={{ width: 36, display: 'flex', justifyContent: 'center' }}>
+        <Tooltip title={'Remove field'}>
+          <IconButton color="default" size="small" onClick={onDelete}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
       </Box>
     </Stack>
   );

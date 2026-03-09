@@ -43,6 +43,26 @@ import { SchemasAccordion } from '../components/request-detail/SchemasAccordion'
 import type { MockDataSchemaDetailForm, PickerTarget } from '../components/request-detail/types';
 import type { MockDataSchemaDetailPageProps } from './pageProps';
 
+interface LocalClassificationColumn {
+  semanticType: SemanticDataType;
+  dbType: string | null;
+  nullable?: boolean;
+  isPrimaryKey?: boolean;
+  references?: {
+    tableName: string;
+    columnName: string;
+  } | null;
+}
+
+interface LocalClassificationResult {
+  tables: Record<
+    string,
+    {
+      columns: Record<string, LocalClassificationColumn>;
+    }
+  >;
+}
+
 function toLocalDateInputValue(value: Date): string {
   const year = value.getFullYear();
   const month = `${value.getMonth() + 1}`.padStart(2, '0');
@@ -148,6 +168,19 @@ export function MockDataSchemaDetailPage(props: MockDataSchemaDetailPageProps) {
     }),
     [defaultDateTimeEnd, defaultDateTimeStart],
   );
+
+  function parseClassificationJsonOrNull(rawJson: string): LocalClassificationResult | null {
+    const trimmed = rawJson.trim();
+    if (!trimmed) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(trimmed) as LocalClassificationResult;
+    } catch {
+      return null;
+    }
+  }
 
   function buildFallbackRule(
     semanticType: SemanticDataType,
@@ -612,6 +645,157 @@ export function MockDataSchemaDetailPage(props: MockDataSchemaDetailPageProps) {
         [columnName]: rule,
       },
     }));
+  }
+
+  function addField(tableName: string) {
+    const classification = parseClassificationJsonOrNull(formRef.current.classificationJson);
+    const table = classification?.tables?.[tableName];
+    if (!classification || !table) {
+      props.setError('Cannot add field because classification JSON is invalid.');
+      return;
+    }
+
+    const existingColumnNames = new Set(Object.keys(table.columns));
+    let nextIndex = 1;
+    let nextColumnName = `field_${nextIndex}`;
+    while (existingColumnNames.has(nextColumnName)) {
+      nextIndex += 1;
+      nextColumnName = `field_${nextIndex}`;
+    }
+
+    table.columns[nextColumnName] = {
+      dbType: null,
+      semanticType: 'text',
+      nullable: true,
+      references: null,
+    };
+
+    const nextClassificationJson = JSON.stringify(classification, null, 2);
+    const nextColumnRule = buildFallbackRule('text', nextColumnName);
+    const nextDesignerModelTables =
+      designerModel?.tables.map((tableItem) =>
+        tableItem.name === tableName
+          ? {
+              ...tableItem,
+              columns: [
+                ...tableItem.columns,
+                {
+                  name: nextColumnName,
+                  dbType: null,
+                  nullable: true,
+                  isPrimaryKey: false,
+                },
+              ],
+            }
+          : tableItem,
+      ) ?? null;
+
+    setDirtyForm((prev) => ({
+      ...prev,
+      classificationJson: nextClassificationJson,
+    }));
+    setDesignerModel((prev) =>
+      prev
+        ? {
+            ...prev,
+            tables: nextDesignerModelTables ?? prev.tables,
+            columnRules: {
+              ...prev.columnRules,
+              [tableName]: {
+                ...(prev.columnRules[tableName] ?? {}),
+                [nextColumnName]: nextColumnRule,
+              },
+            },
+          }
+        : prev,
+    );
+    setHasUnsavedChanges(true);
+    setColumnRules((prev) => ({
+      ...prev,
+      [tableName]: {
+        ...(prev[tableName] ?? {}),
+        [nextColumnName]: nextColumnRule,
+      },
+    }));
+    setColumnOrder((prev) => {
+      const currentOrder =
+        prev[tableName] ??
+        designerModel?.tables.find((tableItem) => tableItem.name === tableName)?.columns.map((c) => c.name) ??
+        Object.keys(table.columns).filter((columnName) => columnName !== nextColumnName);
+
+      return {
+        ...prev,
+        [tableName]: [...currentOrder, nextColumnName],
+      };
+    });
+  }
+
+  function deleteField(tableName: string, columnName: string) {
+    const classification = parseClassificationJsonOrNull(formRef.current.classificationJson);
+    const table = classification?.tables?.[tableName];
+    if (!classification || !table) {
+      props.setError('Cannot delete field because classification JSON is invalid.');
+      return;
+    }
+
+    if (!table.columns[columnName]) {
+      return;
+    }
+
+    delete table.columns[columnName];
+    const nextClassificationJson = JSON.stringify(classification, null, 2);
+
+    setDirtyForm((prev) => ({
+      ...prev,
+      classificationJson: nextClassificationJson,
+    }));
+    setDesignerModel((prev) =>
+      prev
+        ? {
+            ...prev,
+            tables: prev.tables.map((tableItem) =>
+              tableItem.name === tableName
+                ? {
+                    ...tableItem,
+                    columns: tableItem.columns.filter((column) => column.name !== columnName),
+                  }
+                : tableItem,
+            ),
+            columnRules: Object.fromEntries(
+              Object.entries(prev.columnRules).map(([tableItemName, rules]) => [
+                tableItemName,
+                tableItemName === tableName
+                  ? Object.fromEntries(
+                      Object.entries(rules).filter(([name]) => name !== columnName),
+                    )
+                  : rules,
+              ]),
+            ),
+          }
+        : prev,
+    );
+    setHasUnsavedChanges(true);
+    setColumnRules((prev) =>
+      Object.fromEntries(
+        Object.entries(prev).map(([tableItemName, rules]) => [
+          tableItemName,
+          tableItemName === tableName
+            ? Object.fromEntries(Object.entries(rules).filter(([name]) => name !== columnName))
+            : rules,
+        ]),
+      ),
+    );
+    setColumnOrder((prev) => {
+      const currentOrder =
+        prev[tableName] ??
+        designerModel?.tables.find((tableItem) => tableItem.name === tableName)?.columns.map((c) => c.name) ??
+        Object.keys(table.columns);
+
+      return {
+        ...prev,
+        [tableName]: currentOrder.filter((name) => name !== columnName),
+      };
+    });
   }
 
   function reorderColumns(tableName: string, fromColumnName: string, toColumnName: string) {
@@ -1173,6 +1357,8 @@ export function MockDataSchemaDetailPage(props: MockDataSchemaDetailPageProps) {
     onRegularExpressionOptionChange,
     onEmailOptionChange,
     onTextOptionChange,
+    addField,
+    deleteField,
     reorderColumns,
     applyRule,
     applyCustomListRule,

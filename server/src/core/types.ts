@@ -38,7 +38,7 @@ export interface DatabaseSchema {
 
 export interface ColumnClassification {
   semanticType: SemanticDataType;
-  dbType: string;
+  dbType: string | null;
   nullable: boolean;
   isPrimaryKey: boolean;
   references: {

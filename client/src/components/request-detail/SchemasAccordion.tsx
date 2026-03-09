@@ -154,12 +154,14 @@ export function SchemasAccordion() {
                     table={table}
                     tableIndex={tableIndex}
                     columnRules={context.columnRules}
-                    columnOrder={context.columnOrder}
-                    dragState={dragState}
-                    onDragStateChange={setDragState}
-                    reorderColumns={context.reorderColumns}
-                  />
-                ))}
+                  columnOrder={context.columnOrder}
+                  dragState={dragState}
+                  onDragStateChange={setDragState}
+                  reorderColumns={context.reorderColumns}
+                  addField={context.addField}
+                  deleteField={context.deleteField}
+                />
+              ))}
               </Stack>
             </Box>
 

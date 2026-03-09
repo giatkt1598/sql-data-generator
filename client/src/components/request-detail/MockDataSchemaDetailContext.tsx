@@ -101,6 +101,8 @@ export interface MockDataSchemaDetailContextValue {
     key: 'minLength' | 'maxLength' | 'unit',
     value: string,
   ) => void;
+  addField: (tableName: string) => void;
+  deleteField: (tableName: string, columnName: string) => void;
   reorderColumns: (tableName: string, fromColumnName: string, toColumnName: string) => void;
   applyRule: (rule: TableColumnRules[string][string]) => void;
   applyCustomListRule: () => void;

@@ -20,6 +20,7 @@ module.exports = [
     rules: {
       ...tsPlugin.configs.recommended.rules,
       'prettier/prettier': 'off',
+      '@typescript-eslint/no-unused-vars': 'error',
     },
   },
 ];

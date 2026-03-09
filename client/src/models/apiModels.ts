@@ -90,7 +90,7 @@ export interface ColumnDesignerModel {
     name: string;
     columns: Array<{
       name: string;
-      dbType: string;
+      dbType: string | null;
       nullable: boolean;
       isPrimaryKey: boolean;
     }>;
