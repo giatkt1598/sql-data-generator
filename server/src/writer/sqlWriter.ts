@@ -32,7 +32,18 @@ function resolveToolVersion(): string {
 
 const TOOL_VERSION = resolveToolVersion();
 
-function sqlValue(value: string | number | boolean | null): string {
+function sqlBooleanValue(value: boolean, sqlProvider?: SqlProvider | ''): string {
+  switch (sqlProvider) {
+    case 'postgres':
+    case 'mysql':
+      return value ? 'true' : 'false';
+    case 'sqlserver':
+    default:
+      return value ? '1' : '0';
+  }
+}
+
+function sqlValue(value: string | number | boolean | null, sqlProvider?: SqlProvider | ''): string {
   if (value === null) {
     return 'NULL';
   }
@@ -40,7 +51,7 @@ function sqlValue(value: string | number | boolean | null): string {
     return String(value);
   }
   if (typeof value === 'boolean') {
-    return value ? '1' : '0';
+    return sqlBooleanValue(value, sqlProvider);
   }
   return `'${value.replace(/'/g, "''")}'`;
 }
@@ -53,7 +64,7 @@ function chunkRows<T>(items: T[], size: number): T[][] {
   return chunks;
 }
 
-function buildInsertSql(tableData: GeneratedTableRows): string {
+function buildInsertSql(tableData: GeneratedTableRows, sqlProvider?: SqlProvider | ''): string {
   if (tableData.rows.length === 0) {
     return '';
   }
@@ -62,7 +73,9 @@ function buildInsertSql(tableData: GeneratedTableRows): string {
   const rowChunks = chunkRows(tableData.rows, MAX_ROWS_PER_INSERT);
   const insertStatements = rowChunks.map((rowChunk) => {
     const valueLines = rowChunk.map((row) => {
-      const values = columns.map((column) => sqlValue(row[column] ?? null)).join(', ');
+      const values = columns
+        .map((column) => sqlValue(row[column] ?? null, sqlProvider))
+        .join(', ');
       return `(${values})`;
     });
 
@@ -153,7 +166,7 @@ export function buildInsertFileArtifacts(
   const totalRecords = tableRows.reduce((sum, tableData) => sum + tableData.rows.length, 0);
   return tableRows.map((tableData, index) => {
     const order = String(index + 1).padStart(3, '0');
-    const insertSql = buildInsertSql(tableData);
+    const insertSql = buildInsertSql(tableData, sqlProvider);
     const transactionWrapper = includeTransaction
       ? buildTransactionWrapper(sqlProvider)
       : { prefix: [], suffix: [] };
