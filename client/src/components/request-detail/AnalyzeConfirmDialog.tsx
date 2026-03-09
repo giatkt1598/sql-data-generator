@@ -1,8 +1,8 @@
 import { Button, Dialog, DialogContent, DialogTitle, Stack, Typography } from '@mui/material';
-import { useRequestDetailContext } from './RequestDetailContext';
+import { useMockDataSchemaDetailContext } from './MockDataSchemaDetailContext';
 
 export function AnalyzeConfirmDialog() {
-  const context = useRequestDetailContext();
+  const context = useMockDataSchemaDetailContext();
 
   return (
     <Dialog

@@ -5,7 +5,7 @@ import type {
 } from '../../models/apiModels';
 import { DATA_TYPE_GROUPS } from '../../models/apiModels';
 
-export interface RequestDetailForm {
+export interface MockDataSchemaDetailForm {
   name: string;
   schemaSql: string;
   classificationJson: string;

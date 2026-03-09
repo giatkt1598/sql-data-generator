@@ -18,7 +18,7 @@ import {
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { stringifyRule } from '../../utilities/ruleUtils';
-import { useRequestDetailContext } from './RequestDetailContext';
+import { useMockDataSchemaDetailContext } from './MockDataSchemaDetailContext';
 import type { ColumnDesignerModel } from '../../models/apiModels';
 
 function normalizeCustomListPaste(value: string): string {
@@ -96,7 +96,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
     onDragEnd,
     isDragging,
   } = props;
-  const context = useRequestDetailContext();
+  const context = useMockDataSchemaDetailContext();
   const rule = context.columnRules[tableName]?.[column.name];
   const value = stringifyRule(context.semanticTypes, context.customListTypes, rule);
   const isNumberRule = rule?.kind === 'semantic' && rule.semanticType === 'number';

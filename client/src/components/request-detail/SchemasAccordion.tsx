@@ -13,11 +13,11 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useEffect, useMemo, useState } from 'react';
 import { tableAnchorId } from '../../utilities/schemaAnchor';
-import { useRequestDetailContext } from './RequestDetailContext';
+import { useMockDataSchemaDetailContext } from './MockDataSchemaDetailContext';
 import { SchemaTableCard } from './SchemaTableCard';
 
 export function SchemasAccordion() {
-  const context = useRequestDetailContext();
+  const context = useMockDataSchemaDetailContext();
   const [visibleTableNames, setVisibleTableNames] = useState<Set<string>>(new Set());
   const [dragState, setDragState] = useState<{ tableName: string; columnName: string } | null>(
     null,

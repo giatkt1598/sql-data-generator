@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { SUPPORTED_LOCALES } from '../core/locales';
 import { DATA_TYPE_DEFINITIONS } from '../core/semanticTypes';
 import { TableColumnOrder, TableColumnRules } from '../core/types';
-import { GenerationService } from './generationService';
+import { MockDataSchemaService } from './mockDataSchemaService';
 
 function parseBody<T>(req: Request): T {
   return req.body as T;
@@ -13,7 +13,7 @@ function handleError(error: unknown, res: Response): void {
   res.status(400).json({ message });
 }
 
-export function buildApiRouter(service: GenerationService): Router {
+export function buildApiRouter(service: MockDataSchemaService): Router {
   const router = Router();
 
   router.get('/health', (_req, res) => {
@@ -187,12 +187,12 @@ export function buildApiRouter(service: GenerationService): Router {
     }
   });
 
-  router.get('/generation-requests', (req, res) => {
+  router.get('/mock-data-schemas', (req, res) => {
     const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : undefined;
-    res.json({ items: service.listGenerationRequests(projectId) });
+    res.json({ items: service.listMockDataSchemas(projectId) });
   });
 
-  router.post('/generation-requests', (req, res) => {
+  router.post('/mock-data-schemas', (req, res) => {
     try {
       const body = parseBody<{
         projectId?: string;
@@ -205,7 +205,7 @@ export function buildApiRouter(service: GenerationService): Router {
         columnOrder?: TableColumnOrder;
         schemaRelationshipsJson?: string;
       }>(req);
-      const item = service.createGenerationRequest({
+      const item = service.createMockDataSchema({
         projectId: body.projectId ?? '',
         name: body.name ?? '',
         schemaSql: body.schemaSql ?? '',
@@ -222,7 +222,7 @@ export function buildApiRouter(service: GenerationService): Router {
     }
   });
 
-  router.put('/generation-requests/:id', (req, res) => {
+  router.put('/mock-data-schemas/:id', (req, res) => {
     try {
       const body = parseBody<{
         projectId?: string;
@@ -235,32 +235,32 @@ export function buildApiRouter(service: GenerationService): Router {
         columnOrder?: TableColumnOrder;
         schemaRelationshipsJson?: string;
       }>(req);
-      const item = service.updateGenerationRequest(req.params.id, body);
+      const item = service.updateMockDataSchema(req.params.id, body);
       res.json(item);
     } catch (error) {
       handleError(error, res);
     }
   });
 
-  router.delete('/generation-requests/:id', (req, res) => {
+  router.delete('/mock-data-schemas/:id', (req, res) => {
     try {
-      service.deleteGenerationRequest(req.params.id);
+      service.deleteMockDataSchema(req.params.id);
       res.status(204).send();
     } catch (error) {
       handleError(error, res);
     }
   });
 
-  router.post('/generation-requests/:id/preview', (req, res) => {
+  router.post('/mock-data-schemas/:id/preview', (req, res) => {
     try {
-      const result = service.generatePreviewForRequest(req.params.id);
+      const result = service.generatePreviewForMockDataSchema(req.params.id);
       res.json(result);
     } catch (error) {
       handleError(error, res);
     }
   });
 
-  router.get('/generation-requests/:id/download', (req, res) => {
+  router.get('/mock-data-schemas/:id/download', (req, res) => {
     try {
       const script = service.exportCombinedScript(req.params.id);
       const fileName = `generated_${req.params.id}.sql`;

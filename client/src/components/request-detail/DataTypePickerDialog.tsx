@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import SearchIcon from '@mui/icons-material/Search';
-import { useRequestDetailContext } from './RequestDetailContext';
+import { useMockDataSchemaDetailContext } from './MockDataSchemaDetailContext';
 import { DATA_TYPE_GROUPS } from '../../models/apiModels';
 import type { CustomListTypeDefinition, SemanticDataType } from '../../models/apiModels';
 import { getErrorMessage } from '../../utilities/errorUtils';
@@ -44,7 +44,7 @@ export const DataTypePickerDialog = memo(function DataTypePickerDialog() {
     createCustomListType,
     updateCustomListType,
     deleteCustomListType,
-  } = useRequestDetailContext();
+  } = useMockDataSchemaDetailContext();
   const [selectedGroup, setSelectedGroup] = useState<GroupName>('All');
   const [searchText, setSearchText] = useState('');
   const [editorOpen, setEditorOpen] = useState(false);
@@ -109,7 +109,10 @@ export const DataTypePickerDialog = memo(function DataTypePickerDialog() {
     }
 
     return items.filter((item) =>
-      [item.title, item.description, item.groups.join(' ')].join(' ').toLowerCase().includes(keyword),
+      [item.title, item.description, item.groups.join(' ')]
+        .join(' ')
+        .toLowerCase()
+        .includes(keyword),
     );
   }, [items, keyword]);
 

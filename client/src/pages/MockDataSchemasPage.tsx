@@ -23,29 +23,31 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  createGenerationRequest,
-  deleteGenerationRequest,
-  getGenerationRequests,
-  updateGenerationRequest,
+  createMockDataSchema,
+  deleteMockDataSchema,
+  getMockDataSchemas,
+  updateMockDataSchema,
 } from '../apis';
-import type { GenerationRequestEntity } from '../models/apiModels';
+import type { MockDataSchemaEntity } from '../models/apiModels';
 import { getErrorMessage } from '../utilities/errorUtils';
-import type { RequestsPageProps } from './pageProps';
+import type { MockDataSchemasPageProps } from './pageProps';
 
-interface RequestDialogForm {
+interface MockDataSchemaDialogForm {
   name: string;
 }
 
-const emptyRequestDialogForm: RequestDialogForm = { name: '' };
+const emptyMockDataSchemaDialogForm: MockDataSchemaDialogForm = { name: '' };
 const DEFAULT_PROJECT_ID = 'local';
 
-export function RequestsPage(props: RequestsPageProps) {
+export function MockDataSchemasPage(props: MockDataSchemasPageProps) {
   const { projectId } = useParams();
   const navigate = useNavigate();
-  const [requests, setRequests] = useState<GenerationRequestEntity[]>([]);
+  const [mockDataSchemas, setMockDataSchemas] = useState<MockDataSchemaEntity[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingRequest, setEditingRequest] = useState<GenerationRequestEntity | null>(null);
-  const [form, setForm] = useState<RequestDialogForm>(emptyRequestDialogForm);
+  const [editingMockDataSchema, setEditingMockDataSchema] = useState<MockDataSchemaEntity | null>(
+    null,
+  );
+  const [form, setForm] = useState<MockDataSchemaDialogForm>(emptyMockDataSchemaDialogForm);
 
   const project = useMemo(
     () => props.projects.find((item) => item.id === projectId),
@@ -56,79 +58,83 @@ export function RequestsPage(props: RequestsPageProps) {
     props.projects[0]?.id ??
     DEFAULT_PROJECT_ID;
 
-  async function reloadRequests() {
+  async function reloadMockDataSchemas() {
     if (!projectId) {
       return;
     }
-    const data = await getGenerationRequests(projectId);
-    setRequests(data);
+    const data = await getMockDataSchemas(projectId);
+    setMockDataSchemas(data);
   }
 
   useEffect(() => {
     if (!projectId) {
       return;
     }
-    void reloadRequests();
+    void reloadMockDataSchemas();
   }, [projectId]);
 
   function openNewDialog() {
-    setEditingRequest(null);
-    setForm(emptyRequestDialogForm);
+    setEditingMockDataSchema(null);
+    setForm(emptyMockDataSchemaDialogForm);
     setDialogOpen(true);
   }
 
-  function openEditDialog(request: GenerationRequestEntity) {
-    setEditingRequest(request);
-    setForm({ name: request.name });
+  function openEditDialog(mockDataSchema: MockDataSchemaEntity) {
+    setEditingMockDataSchema(mockDataSchema);
+    setForm({ name: mockDataSchema.name });
     setDialogOpen(true);
   }
 
-  async function saveRequest() {
+  async function saveMockDataSchema() {
     if (!projectId) {
       return;
     }
     try {
       props.setLoading(true);
-      if (editingRequest) {
-        await updateGenerationRequest(editingRequest.id, {
+      if (editingMockDataSchema) {
+        await updateMockDataSchema(editingMockDataSchema.id, {
           projectId,
           name: form.name,
-          schemaSql: editingRequest.schemaSql,
-          classificationJson: editingRequest.classificationJson,
-          locale: editingRequest.locale,
-          columnRules: editingRequest.columnRules,
-          schemaRelationshipsJson: editingRequest.schemaRelationshipsJson,
+          schemaSql: editingMockDataSchema.schemaSql,
+          classificationJson: editingMockDataSchema.classificationJson,
+          locale: editingMockDataSchema.locale,
+          sqlProvider: editingMockDataSchema.sqlProvider,
+          columnRules: editingMockDataSchema.columnRules,
+          columnOrder: editingMockDataSchema.columnOrder,
+          schemaRelationshipsJson: editingMockDataSchema.schemaRelationshipsJson,
         });
       } else {
-        await createGenerationRequest({
+        await createMockDataSchema({
           projectId,
           name: form.name,
           schemaSql: '',
           classificationJson: '',
           locale: 'en',
+          sqlProvider: '',
           columnRules: {},
+          columnOrder: {},
           schemaRelationshipsJson: '',
         });
       }
-      await reloadRequests();
+      await reloadMockDataSchemas();
       setDialogOpen(false);
-      props.setSnack('Generation request saved.');
+      props.setSnack('Mock data schema saved.');
     } catch (exception) {
-      props.setError(getErrorMessage(exception, 'Failed to save generation request.'));
+      props.setError(getErrorMessage(exception, 'Failed to save mock data schema.'));
       console.error(exception);
     } finally {
       props.setLoading(false);
     }
   }
 
-  async function removeRequest(id: string) {
+  async function removeMockDataSchema(id: string) {
     try {
       props.setLoading(true);
-      await deleteGenerationRequest(id);
-      await reloadRequests();
-      props.setSnack('Generation request deleted.');
+      await deleteMockDataSchema(id);
+      await reloadMockDataSchemas();
+      props.setSnack('Mock data schema deleted.');
     } catch (exception) {
-      props.setError(getErrorMessage(exception, 'Failed to delete generation request.'));
+      props.setError(getErrorMessage(exception, 'Failed to delete mock data schema.'));
       console.error(exception);
     } finally {
       props.setLoading(false);
@@ -142,10 +148,10 @@ export function RequestsPage(props: RequestsPageProps) {
           <Typography>{props.loading ? 'Loading...' : 'Project not found.'}</Typography>
           {!props.loading && (
             <Button
-              onClick={() => navigate(`/projects/${fallbackProjectId}/requests`)}
+              onClick={() => navigate(`/projects/${fallbackProjectId}/mock-data-schemas`)}
               sx={{ mt: 1 }}
             >
-              Back to Requests
+              Back to Mock Data Schemas
             </Button>
           )}
         </CardContent>
@@ -158,7 +164,7 @@ export function RequestsPage(props: RequestsPageProps) {
       <CardContent>
         <Stack direction="row" justifyContent="space-between" sx={{ mb: 2 }}>
           <Typography variant="h5" sx={{ fontWeight: 700 }}>
-            Generate Requests - {project.name}
+            Mock Data Schemas - {project.name}
           </Typography>
           <Button startIcon={<AddIcon />} variant="contained" onClick={openNewDialog}>
             New
@@ -175,21 +181,23 @@ export function RequestsPage(props: RequestsPageProps) {
               </TableRow>
             </TableHead>
             <TableBody>
-              {requests.map((request) => (
+              {mockDataSchemas.map((mockDataSchema) => (
                 <TableRow
-                  key={request.id}
+                  key={mockDataSchema.id}
                   hover
                   sx={{ cursor: 'pointer' }}
-                  onClick={() => navigate(`/projects/${projectId}/requests/${request.id}`)}
+                  onClick={() =>
+                    navigate(`/projects/${projectId}/mock-data-schemas/${mockDataSchema.id}`)
+                  }
                 >
-                  <TableCell>{request.name}</TableCell>
-                  <TableCell>{new Date(request.updatedAt).toLocaleString()}</TableCell>
+                  <TableCell>{mockDataSchema.name}</TableCell>
+                  <TableCell>{new Date(mockDataSchema.updatedAt).toLocaleString()}</TableCell>
                   <TableCell align="right">
                     <IconButton
                       size="small"
                       onClick={(event) => {
                         event.stopPropagation();
-                        openEditDialog(request);
+                        openEditDialog(mockDataSchema);
                       }}
                     >
                       <EditIcon fontSize="small" />
@@ -199,7 +207,7 @@ export function RequestsPage(props: RequestsPageProps) {
                       color="error"
                       onClick={(event) => {
                         event.stopPropagation();
-                        void removeRequest(request.id);
+                        void removeMockDataSchema(mockDataSchema.id);
                       }}
                     >
                       <DeleteIcon fontSize="small" />
@@ -214,7 +222,7 @@ export function RequestsPage(props: RequestsPageProps) {
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="sm">
         <DialogTitle>
-          {editingRequest ? 'Edit Generate Request' : 'New Generate Request'}
+          {editingMockDataSchema ? 'Edit Mock Data Schema' : 'New Mock Data Schema'}
         </DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
@@ -227,7 +235,11 @@ export function RequestsPage(props: RequestsPageProps) {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={() => void saveRequest()} disabled={props.loading}>
+          <Button
+            variant="contained"
+            onClick={() => void saveMockDataSchema()}
+            disabled={props.loading}
+          >
             Save
           </Button>
         </DialogActions>

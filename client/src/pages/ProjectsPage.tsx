@@ -113,7 +113,7 @@ export function ProjectsPage(props: ProjectsPageProps) {
                   key={project.id}
                   hover
                   sx={{ cursor: 'pointer' }}
-                  onClick={() => navigate(`/projects/${project.id}/requests`)}
+                  onClick={() => navigate(`/projects/${project.id}/mock-data-schemas`)}
                 >
                   <TableCell>{project.name}</TableCell>
                   <TableCell>{project.description}</TableCell>

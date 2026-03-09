@@ -13,7 +13,7 @@ export interface ProjectEntity {
   updatedAt: string;
 }
 
-export interface GenerationRequestEntity {
+export interface MockDataSchemaEntity {
   id: string;
   projectId: string;
   name: string;
@@ -30,6 +30,6 @@ export interface GenerationRequestEntity {
 
 export interface AppStorageState {
   projects: ProjectEntity[];
-  generationRequests: GenerationRequestEntity[];
+  mockDataSchemas: MockDataSchemaEntity[];
   customListTypes: CustomListTypeDefinition[];
 }

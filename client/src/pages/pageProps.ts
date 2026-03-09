@@ -17,11 +17,11 @@ export interface ProjectsPageProps extends AppPageBaseProps {
   reloadProjects: () => Promise<void>;
 }
 
-export interface RequestsPageProps extends AppPageBaseProps {
+export interface MockDataSchemasPageProps extends AppPageBaseProps {
   projects: ProjectEntity[];
 }
 
-export interface RequestDetailPageProps extends AppPageBaseProps {
+export interface MockDataSchemaDetailPageProps extends AppPageBaseProps {
   projects: ProjectEntity[];
   semanticTypes: DataTypeDefinition[];
   supportedLocales: SupportedLocaleDefinition[];

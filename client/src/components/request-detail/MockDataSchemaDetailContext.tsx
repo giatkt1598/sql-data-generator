@@ -9,15 +9,15 @@ import type {
   TableColumnRules,
   ColumnDesignerModel,
 } from '../../models/apiModels';
-import type { RequestDetailForm } from './types';
+import type { MockDataSchemaDetailForm } from './types';
 
-export interface RequestDetailContextValue {
+export interface MockDataSchemaDetailContextValue {
   projectId: string;
   requestName: string;
   hasUnsavedChanges: boolean;
   loading: boolean;
-  form: RequestDetailForm;
-  setForm: Dispatch<SetStateAction<RequestDetailForm>>;
+  form: MockDataSchemaDetailForm;
+  setForm: Dispatch<SetStateAction<MockDataSchemaDetailForm>>;
   columnRules: TableColumnRules;
   columnOrder: TableColumnOrder;
   designerModel: ColumnDesignerModel | null;
@@ -116,23 +116,25 @@ export interface RequestDetailContextValue {
   handleCopyPreview: () => Promise<void>;
 }
 
-const RequestDetailContext = createContext<RequestDetailContextValue | null>(null);
+const MockDataSchemaDetailContext = createContext<MockDataSchemaDetailContextValue | null>(null);
 
-export function RequestDetailProvider(props: {
-  value: RequestDetailContextValue;
+export function MockDataSchemaDetailProvider(props: {
+  value: MockDataSchemaDetailContextValue;
   children: ReactNode;
 }) {
   return (
-    <RequestDetailContext.Provider value={props.value}>
+    <MockDataSchemaDetailContext.Provider value={props.value}>
       {props.children}
-    </RequestDetailContext.Provider>
+    </MockDataSchemaDetailContext.Provider>
   );
 }
 
-export function useRequestDetailContext(): RequestDetailContextValue {
-  const context = useContext(RequestDetailContext);
+export function useMockDataSchemaDetailContext(): MockDataSchemaDetailContextValue {
+  const context = useContext(MockDataSchemaDetailContext);
   if (!context) {
-    throw new Error('useRequestDetailContext must be used within RequestDetailProvider.');
+    throw new Error(
+      'useMockDataSchemaDetailContext must be used within MockDataSchemaDetailProvider.',
+    );
   }
   return context;
 }

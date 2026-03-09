@@ -15,15 +15,15 @@ import {
   generateClassificationPrompt,
   generateSqlScript,
   getColumnDesignerModel,
-  getGenerationRequests,
+  getMockDataSchemas,
   updateCustomListType as updateCustomListTypeApi,
-  updateGenerationRequest,
+  updateMockDataSchema,
 } from '../apis';
 import type {
   ColumnDesignerModel,
   ColumnGenerationRule,
   SemanticDataType,
-  GenerationRequestEntity,
+  MockDataSchemaEntity,
   TableColumnOrder,
   TableColumnRules,
 } from '../models/apiModels';
@@ -34,14 +34,14 @@ import { DataTypePickerDialog } from '../components/request-detail/DataTypePicke
 import { GeneralAccordion } from '../components/request-detail/GeneralAccordion';
 import { PreviewDialog } from '../components/request-detail/PreviewDialog';
 import {
-  RequestDetailProvider,
-  type RequestDetailContextValue,
-} from '../components/request-detail/RequestDetailContext';
-import { RequestDetailHeader } from '../components/request-detail/RequestDetailHeader';
+  MockDataSchemaDetailProvider,
+  type MockDataSchemaDetailContextValue,
+} from '../components/request-detail/MockDataSchemaDetailContext';
+import { MockDataSchemaDetailHeader } from '../components/request-detail/MockDataSchemaDetailHeader';
 import { SchemaRelationshipsAccordion } from '../components/request-detail/SchemaRelationshipsAccordion';
 import { SchemasAccordion } from '../components/request-detail/SchemasAccordion';
-import type { PickerTarget, RequestDetailForm } from '../components/request-detail/types';
-import type { RequestDetailPageProps } from './pageProps';
+import type { MockDataSchemaDetailForm, PickerTarget } from '../components/request-detail/types';
+import type { MockDataSchemaDetailPageProps } from './pageProps';
 
 function toLocalDateInputValue(value: Date): string {
   const year = value.getFullYear();
@@ -51,7 +51,7 @@ function toLocalDateInputValue(value: Date): string {
 }
 
 function buildSavedSnapshot(
-  form: RequestDetailForm,
+  form: MockDataSchemaDetailForm,
   columnRules: TableColumnRules,
   columnOrder: TableColumnOrder,
 ): string {
@@ -67,11 +67,11 @@ function buildSavedSnapshot(
   });
 }
 
-export function RequestDetailPage(props: RequestDetailPageProps) {
+export function MockDataSchemaDetailPage(props: MockDataSchemaDetailPageProps) {
   const { projectId, requestId } = useParams();
   const navigate = useNavigate();
-  const [request, setRequest] = useState<GenerationRequestEntity | null>(null);
-  const [form, setForm] = useState<RequestDetailForm>({
+  const [request, setRequest] = useState<MockDataSchemaEntity | null>(null);
+  const [form, setForm] = useState<MockDataSchemaDetailForm>({
     name: '',
     schemaSql: '',
     classificationJson: '',
@@ -210,7 +210,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     void (async () => {
       try {
         props.setLoading(true);
-        const items = await getGenerationRequests(projectId);
+        const items = await getMockDataSchemas(projectId);
         const found = items.find((item) => item.id === requestId) ?? null;
         setRequest(found);
         if (!found) {
@@ -273,7 +273,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
           );
         }
       } catch (exception) {
-        props.setError(getErrorMessage(exception, 'Failed to load request detail.'));
+        props.setError(getErrorMessage(exception, 'Failed to load mock data schema detail.'));
         console.error(exception);
       } finally {
         props.setLoading(false);
@@ -283,8 +283,8 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
 
   useEffect(() => {
     document.title = hasUnsavedChanges
-      ? `Request: ${form.name || request?.name || ''} (Unsaved changes)`
-      : `Request: ${form.name || request?.name || ''}`;
+      ? `Mock Data Schema: ${form.name || request?.name || ''} (Unsaved changes)`
+      : `Mock Data Schema: ${form.name || request?.name || ''}`;
   }, [form.name, hasUnsavedChanges, request?.name]);
 
   useEffect(() => {
@@ -337,7 +337,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     try {
       props.setLoading(true);
       await flushPendingInput();
-      const updated = await updateGenerationRequest(requestId, {
+      const updated = await updateMockDataSchema(requestId, {
         projectId,
         name: form.name,
         schemaSql: form.schemaSql,
@@ -374,9 +374,9 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         ),
       );
       setHasUnsavedChanges(false);
-      props.setSnack('Request detail saved.');
+      props.setSnack('Mock data schema saved.');
     } catch (exception) {
-      props.setError(getErrorMessage(exception, 'Failed to save request detail.'));
+      props.setError(getErrorMessage(exception, 'Failed to save mock data schema.'));
       console.error(exception);
     } finally {
       props.setLoading(false);
@@ -408,7 +408,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
 
     try {
       props.setLoading(true);
-      const updated = await updateGenerationRequest(requestId, {
+      const updated = await updateMockDataSchema(requestId, {
         projectId,
         name: formRef.current.name,
         schemaSql: formRef.current.schemaSql,
@@ -446,10 +446,10 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         ),
       );
       setHasUnsavedChanges(false);
-      props.setSnack('Request detail saved.');
+      props.setSnack('Mock data schema saved.');
       return true;
     } catch (exception) {
-      props.setError(getErrorMessage(exception, 'Failed to save request detail.'));
+      props.setError(getErrorMessage(exception, 'Failed to save mock data schema.'));
       return false;
     } finally {
       props.setLoading(false);
@@ -488,7 +488,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         model,
         model.columnRules,
       );
-      const updated = await updateGenerationRequest(requestId, {
+      const updated = await updateMockDataSchema(requestId, {
         projectId,
         name: form.name,
         schemaSql: form.schemaSql,
@@ -623,7 +623,9 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     setColumnOrder((prev) => {
       const currentOrder =
         prev[tableName] ??
-        designerModel?.tables.find((table) => table.name === tableName)?.columns.map((c) => c.name) ??
+        designerModel?.tables
+          .find((table) => table.name === tableName)
+          ?.columns.map((c) => c.name) ??
         [];
       const fromIndex = currentOrder.indexOf(fromColumnName);
       const toIndex = currentOrder.indexOf(toColumnName);
@@ -1112,9 +1114,11 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     return (
       <Card>
         <CardContent>
-          <Typography>Request not found.</Typography>
+          <Typography>Mock data schema not found.</Typography>
           <Button
-            onClick={() => navigate(projectId ? `/projects/${projectId}/requests` : '/projects')}
+            onClick={() =>
+              navigate(projectId ? `/projects/${projectId}/mock-data-schemas` : '/projects')
+            }
             sx={{ mt: 1 }}
           >
             Back
@@ -1124,7 +1128,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     );
   }
 
-  const contextValue: RequestDetailContextValue = {
+  const contextValue: MockDataSchemaDetailContextValue = {
     projectId: project.id,
     requestName: form.name || request.name,
     hasUnsavedChanges,
@@ -1192,7 +1196,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
   };
 
   return (
-    <RequestDetailProvider value={contextValue}>
+    <MockDataSchemaDetailProvider value={contextValue}>
       <>
         <Backdrop
           open={isProcessingData}
@@ -1207,7 +1211,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
           <Typography variant="h6">Processing...</Typography>
         </Backdrop>
         <Stack spacing={2}>
-          <RequestDetailHeader />
+          <MockDataSchemaDetailHeader />
           <GeneralAccordion />
           <SchemaRelationshipsAccordion />
           <SchemasAccordion />
@@ -1216,6 +1220,6 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
           <PreviewDialog />
         </Stack>
       </>
-    </RequestDetailProvider>
+    </MockDataSchemaDetailProvider>
   );
 }

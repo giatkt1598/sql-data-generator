@@ -2,10 +2,10 @@ import { Box, Button, Dialog, DialogContent, DialogTitle, Stack, Typography } fr
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
 import { useEffect, useState } from 'react';
-import { useRequestDetailContext } from './RequestDetailContext';
+import { useMockDataSchemaDetailContext } from './MockDataSchemaDetailContext';
 
 export function PreviewDialog() {
-  const context = useRequestDetailContext();
+  const context = useMockDataSchemaDetailContext();
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -21,7 +21,12 @@ export function PreviewDialog() {
   }
 
   return (
-    <Dialog open={context.previewOpen} onClose={() => context.setPreviewOpen(false)} fullWidth maxWidth="lg">
+    <Dialog
+      open={context.previewOpen}
+      onClose={() => context.setPreviewOpen(false)}
+      fullWidth
+      maxWidth="lg"
+    >
       <DialogTitle>
         <Stack direction="row" alignItems="center" spacing={1}>
           <Typography variant="h6" sx={{ flex: 1 }}>

@@ -9,8 +9,8 @@ import type {
   ProjectEntity,
   SupportedLocaleDefinition,
 } from './models/apiModels';
-import { RequestDetailPage } from './pages/RequestDetailPage';
-import { RequestsPage } from './pages/RequestsPage';
+import { MockDataSchemaDetailPage } from './pages/MockDataSchemaDetailPage';
+import { MockDataSchemasPage } from './pages/MockDataSchemasPage';
 import { getErrorMessage } from './utilities/errorUtils';
 
 const DEFAULT_PROJECT_ID = 'local';
@@ -62,12 +62,12 @@ function App() {
       <Routes>
         <Route
           path="/projects"
-          element={<Navigate to={`/projects/${defaultProjectId}/requests`} replace />}
+          element={<Navigate to={`/projects/${defaultProjectId}/mock-data-schemas`} replace />}
         />
         <Route
-          path="/projects/:projectId/requests"
+          path="/projects/:projectId/mock-data-schemas"
           element={
-            <RequestsPage
+            <MockDataSchemasPage
               projects={projects}
               loading={loading}
               setLoading={setLoading}
@@ -77,9 +77,9 @@ function App() {
           }
         />
         <Route
-          path="/projects/:projectId/requests/:requestId"
+          path="/projects/:projectId/mock-data-schemas/:requestId"
           element={
-            <RequestDetailPage
+            <MockDataSchemaDetailPage
               projects={projects}
               semanticTypes={semanticTypes}
               supportedLocales={supportedLocales}
@@ -94,7 +94,7 @@ function App() {
         />
         <Route
           path="*"
-          element={<Navigate to={`/projects/${defaultProjectId}/requests`} replace />}
+          element={<Navigate to={`/projects/${defaultProjectId}/mock-data-schemas`} replace />}
         />
       </Routes>
 

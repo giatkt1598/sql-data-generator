@@ -15,10 +15,10 @@ import {
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import { useRequestDetailContext } from './RequestDetailContext';
+import { useMockDataSchemaDetailContext } from './MockDataSchemaDetailContext';
 
 export function GeneralAccordion() {
-  const context = useRequestDetailContext();
+  const context = useMockDataSchemaDetailContext();
   const sqlProviderOptions = [
     { value: 'sqlserver', label: 'SQL Server' },
     { value: 'postgres', label: 'Postgres' },

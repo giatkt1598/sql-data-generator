@@ -20,7 +20,7 @@ import {
   buildInsertFileArtifacts,
   SqlFileArtifact,
 } from '../writer/sqlWriter';
-import { AppStorageState, GenerationRequestEntity, ProjectEntity } from './models';
+import { AppStorageState, MockDataSchemaEntity, ProjectEntity } from './models';
 import { JsonFileStorage } from './storage';
 
 export interface CreateProjectInput {
@@ -33,7 +33,7 @@ export interface UpdateProjectInput {
   description?: string;
 }
 
-export interface CreateGenerationRequestInput {
+export interface CreateMockDataSchemaInput {
   projectId: string;
   name: string;
   schemaSql: string;
@@ -45,7 +45,7 @@ export interface CreateGenerationRequestInput {
   schemaRelationshipsJson?: string;
 }
 
-export interface UpdateGenerationRequestInput {
+export interface UpdateMockDataSchemaInput {
   projectId?: string;
   name?: string;
   schemaSql?: string;
@@ -151,7 +151,7 @@ function canBuildSchemaAndRules(schemaSql: string, classificationJson: string): 
   return classificationJson.trim().length > 0;
 }
 
-export class GenerationService {
+export class MockDataSchemaService {
   private readonly storage: JsonFileStorage;
 
   constructor(storage: JsonFileStorage) {
@@ -237,10 +237,10 @@ export class GenerationService {
     state.customListTypes = state.customListTypes.filter((item) => item.id !== id);
 
     if (deletedType) {
-      state.generationRequests = state.generationRequests.map((request) => ({
-        ...request,
+      state.mockDataSchemas = state.mockDataSchemas.map((mockDataSchema) => ({
+        ...mockDataSchema,
         columnRules: Object.fromEntries(
-          Object.entries(request.columnRules ?? {}).map(([tableName, rules]) => [
+          Object.entries(mockDataSchema.columnRules ?? {}).map(([tableName, rules]) => [
             tableName,
             Object.fromEntries(
               Object.entries(rules).map(([columnName, rule]) => [
@@ -307,19 +307,19 @@ export class GenerationService {
   deleteProject(id: string): void {
     const state = this.storage.read();
     state.projects = state.projects.filter((item) => item.id !== id);
-    state.generationRequests = state.generationRequests.filter((item) => item.projectId !== id);
+    state.mockDataSchemas = state.mockDataSchemas.filter((item) => item.projectId !== id);
     this.storage.write(state);
   }
 
-  listGenerationRequests(projectId?: string): GenerationRequestEntity[] {
-    const requests = this.storage.read().generationRequests;
+  listMockDataSchemas(projectId?: string): MockDataSchemaEntity[] {
+    const mockDataSchemas = this.storage.read().mockDataSchemas;
     if (!projectId) {
-      return requests;
+      return mockDataSchemas;
     }
-    return requests.filter((item) => item.projectId === projectId);
+    return mockDataSchemas.filter((item) => item.projectId === projectId);
   }
 
-  createGenerationRequest(input: CreateGenerationRequestInput): GenerationRequestEntity {
+  createMockDataSchema(input: CreateMockDataSchemaInput): MockDataSchemaEntity {
     const state = this.storage.read();
     const project = state.projects.find((item) => item.id === input.projectId);
     if (!project) {
@@ -348,7 +348,7 @@ export class GenerationService {
     }
 
     const now = new Date().toISOString();
-    const request: GenerationRequestEntity = {
+    const mockDataSchema: MockDataSchemaEntity = {
       id: randomUUID(),
       projectId: input.projectId,
       name,
@@ -363,19 +363,16 @@ export class GenerationService {
       updatedAt: now,
     };
 
-    state.generationRequests.push(request);
+    state.mockDataSchemas.push(mockDataSchema);
     this.storage.write(state);
-    return request;
+    return mockDataSchema;
   }
 
-  updateGenerationRequest(
-    id: string,
-    input: UpdateGenerationRequestInput,
-  ): GenerationRequestEntity {
+  updateMockDataSchema(id: string, input: UpdateMockDataSchemaInput): MockDataSchemaEntity {
     const state = this.storage.read();
-    const request = state.generationRequests.find((item) => item.id === id);
-    if (!request) {
-      throw new Error('Generation request not found.');
+    const mockDataSchema = state.mockDataSchemas.find((item) => item.id === id);
+    if (!mockDataSchema) {
+      throw new Error('Mock data schema not found.');
     }
 
     if (typeof input.projectId !== 'undefined') {
@@ -383,78 +380,78 @@ export class GenerationService {
       if (!project) {
         throw new Error('Project not found.');
       }
-      request.projectId = input.projectId;
+      mockDataSchema.projectId = input.projectId;
     }
     if (typeof input.name !== 'undefined') {
       const name = asText(input.name);
       if (!name) {
         throw new Error('name is required.');
       }
-      request.name = name;
+      mockDataSchema.name = name;
     }
     if (typeof input.schemaSql !== 'undefined') {
       const schemaSql = asText(input.schemaSql);
-      request.schemaSql = schemaSql;
+      mockDataSchema.schemaSql = schemaSql;
     }
     if (typeof input.classificationJson !== 'undefined') {
       const classificationJson = asText(input.classificationJson);
-      request.classificationJson = classificationJson;
+      mockDataSchema.classificationJson = classificationJson;
     }
     if (typeof input.locale !== 'undefined') {
-      request.locale = asText(input.locale) || 'en';
+      mockDataSchema.locale = asText(input.locale) || 'en';
     }
     if (typeof input.sqlProvider !== 'undefined') {
-      request.sqlProvider = (asText(input.sqlProvider) as SqlProvider | '') || '';
+      mockDataSchema.sqlProvider = (asText(input.sqlProvider) as SqlProvider | '') || '';
     }
     if (typeof input.columnRules !== 'undefined') {
-      request.columnRules = input.columnRules;
+      mockDataSchema.columnRules = input.columnRules;
     }
     if (typeof input.columnOrder !== 'undefined') {
-      request.columnOrder = input.columnOrder;
+      mockDataSchema.columnOrder = input.columnOrder;
     }
     if (typeof input.schemaRelationshipsJson !== 'undefined') {
-      request.schemaRelationshipsJson = asText(input.schemaRelationshipsJson);
+      mockDataSchema.schemaRelationshipsJson = asText(input.schemaRelationshipsJson);
     }
 
-    if (canBuildSchemaAndRules(request.schemaSql, request.classificationJson)) {
+    if (canBuildSchemaAndRules(mockDataSchema.schemaSql, mockDataSchema.classificationJson)) {
       const { columnRules } = buildSchemaAndRules({
-        schemaSql: request.schemaSql,
-        classificationJson: request.classificationJson,
-        columnRules: request.columnRules,
-        columnOrder: request.columnOrder,
+        schemaSql: mockDataSchema.schemaSql,
+        classificationJson: mockDataSchema.classificationJson,
+        columnRules: mockDataSchema.columnRules,
+        columnOrder: mockDataSchema.columnOrder,
       });
-      request.columnRules = columnRules;
+      mockDataSchema.columnRules = columnRules;
     }
 
-    request.updatedAt = new Date().toISOString();
+    mockDataSchema.updatedAt = new Date().toISOString();
     this.storage.write(state);
-    return request;
+    return mockDataSchema;
   }
 
-  deleteGenerationRequest(id: string): void {
+  deleteMockDataSchema(id: string): void {
     const state = this.storage.read();
-    state.generationRequests = state.generationRequests.filter((item) => item.id !== id);
+    state.mockDataSchemas = state.mockDataSchemas.filter((item) => item.id !== id);
     this.storage.write(state);
   }
 
-  getGenerationRequest(id: string): GenerationRequestEntity {
-    const request = this.storage.read().generationRequests.find((item) => item.id === id);
-    if (!request) {
-      throw new Error('Generation request not found.');
+  getMockDataSchema(id: string): MockDataSchemaEntity {
+    const mockDataSchema = this.storage.read().mockDataSchemas.find((item) => item.id === id);
+    if (!mockDataSchema) {
+      throw new Error('Mock data schema not found.');
     }
-    return request;
+    return mockDataSchema;
   }
 
-  generatePreviewForRequest(id: string): PreviewResult {
-    const request = this.getGenerationRequest(id);
+  generatePreviewForMockDataSchema(id: string): PreviewResult {
+    const mockDataSchema = this.getMockDataSchema(id);
     return this.generatePreviewFromInput({
-      schemaSql: request.schemaSql,
-      classificationJson: request.classificationJson,
-      locale: request.locale,
-      sqlProvider: request.sqlProvider,
-      columnRules: request.columnRules,
-      columnOrder: request.columnOrder,
-      schemaRelationshipsJson: request.schemaRelationshipsJson,
+      schemaSql: mockDataSchema.schemaSql,
+      classificationJson: mockDataSchema.classificationJson,
+      locale: mockDataSchema.locale,
+      sqlProvider: mockDataSchema.sqlProvider,
+      columnRules: mockDataSchema.columnRules,
+      columnOrder: mockDataSchema.columnOrder,
+      schemaRelationshipsJson: mockDataSchema.schemaRelationshipsJson,
     });
   }
 
@@ -532,7 +529,7 @@ export class GenerationService {
   }
 
   exportCombinedScript(id: string): string {
-    const preview = this.generatePreviewForRequest(id);
+    const preview = this.generatePreviewForMockDataSchema(id);
     return preview.preview;
   }
 

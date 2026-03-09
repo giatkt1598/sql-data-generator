@@ -11,10 +11,10 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useEffect, useRef, useState } from 'react';
 import { estimateRelationshipRows } from '../../utilities/relationshipEstimate';
-import { useRequestDetailContext } from './RequestDetailContext';
+import { useMockDataSchemaDetailContext } from './MockDataSchemaDetailContext';
 
 export function SchemaRelationshipsAccordion() {
-  const context = useRequestDetailContext();
+  const context = useMockDataSchemaDetailContext();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [estimate, setEstimate] = useState(() =>
     estimateRelationshipRows(context.form.schemaRelationshipsJson, context.designerModel),

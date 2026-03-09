@@ -1,9 +1,9 @@
 import { Box, Button, IconButton, Stack, Typography } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { useRequestDetailContext } from './RequestDetailContext';
+import { useMockDataSchemaDetailContext } from './MockDataSchemaDetailContext';
 
-export function RequestDetailHeader() {
-  const context = useRequestDetailContext();
+export function MockDataSchemaDetailHeader() {
+  const context = useMockDataSchemaDetailContext();
 
   return (
     <Box
@@ -22,7 +22,7 @@ export function RequestDetailHeader() {
           <ArrowBackIcon />
         </IconButton>
         <Typography variant="h5" sx={{ fontWeight: 700 }}>
-          Request: {context.requestName}
+          Mock Data Schema: {context.requestName}
           {context.hasUnsavedChanges ? (
             <Typography variant="body1" display={'inline'}>
               <i>{' (Unsaved changes)'}</i>

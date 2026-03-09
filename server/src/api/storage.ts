@@ -12,7 +12,7 @@ const DEFAULT_PROJECT = {
 
 const defaultState: AppStorageState = {
   projects: [DEFAULT_PROJECT],
-  generationRequests: [],
+  mockDataSchemas: [],
   customListTypes: [],
 };
 
@@ -47,7 +47,7 @@ export class JsonFileStorage {
     const parsed = JSON.parse(raw) as AppStorageState;
     return ensureDefaultProject({
       projects: parsed.projects ?? [],
-      generationRequests: parsed.generationRequests ?? [],
+      mockDataSchemas: parsed.mockDataSchemas ?? [],
       customListTypes: parsed.customListTypes ?? [],
     });
   }
