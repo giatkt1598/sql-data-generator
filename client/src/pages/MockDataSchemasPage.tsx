@@ -21,6 +21,8 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   createMockDataSchema,
@@ -36,8 +38,49 @@ interface MockDataSchemaDialogForm {
   name: string;
 }
 
-const emptyMockDataSchemaDialogForm: MockDataSchemaDialogForm = { name: '' };
 const DEFAULT_PROJECT_ID = 'local';
+
+dayjs.extend(relativeTime);
+
+function getTableNames(classificationJson: string): string[] {
+  const trimmed = classificationJson.trim();
+  if (!trimmed) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(trimmed) as {
+      tables?: Record<string, unknown>;
+    };
+    return Object.keys(parsed.tables ?? {});
+  } catch {
+    return [];
+  }
+}
+
+function formatTableNames(tableNames: string[]): string {
+  if (tableNames.length === 0) {
+    return '-';
+  }
+
+  if (tableNames.length <= 4) {
+    return tableNames.join(', ');
+  }
+
+  const remainingCount = tableNames.length - 3;
+  return `${tableNames[0]}, ${tableNames[1]}, ${tableNames[2]}, ... and ${remainingCount} tables`;
+}
+
+function renderDateTimeWithRelative(value: string) {
+  return (
+    <Stack spacing={0.25}>
+      <Typography variant="body2">{new Date(value).toLocaleString()}</Typography>
+      <Typography variant="caption" color="text.secondary">
+        {dayjs(value).fromNow()}
+      </Typography>
+    </Stack>
+  );
+}
 
 export function MockDataSchemasPage(props: MockDataSchemasPageProps) {
   const { projectId } = useParams();
@@ -47,7 +90,8 @@ export function MockDataSchemasPage(props: MockDataSchemasPageProps) {
   const [editingMockDataSchema, setEditingMockDataSchema] = useState<MockDataSchemaEntity | null>(
     null,
   );
-  const [form, setForm] = useState<MockDataSchemaDialogForm>(emptyMockDataSchemaDialogForm);
+  const [deleteTarget, setDeleteTarget] = useState<MockDataSchemaEntity | null>(null);
+  const [form, setForm] = useState<MockDataSchemaDialogForm>({ name: '' });
 
   const project = useMemo(
     () => props.projects.find((item) => item.id === projectId),
@@ -57,6 +101,13 @@ export function MockDataSchemasPage(props: MockDataSchemasPageProps) {
     props.projects.find((item) => item.id === DEFAULT_PROJECT_ID)?.id ??
     props.projects[0]?.id ??
     DEFAULT_PROJECT_ID;
+  const sortedMockDataSchemas = useMemo(
+    () =>
+      [...mockDataSchemas].sort(
+        (left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
+      ),
+    [mockDataSchemas],
+  );
 
   async function reloadMockDataSchemas() {
     if (!projectId) {
@@ -73,12 +124,6 @@ export function MockDataSchemasPage(props: MockDataSchemasPageProps) {
     void reloadMockDataSchemas();
   }, [projectId]);
 
-  function openNewDialog() {
-    setEditingMockDataSchema(null);
-    setForm(emptyMockDataSchemaDialogForm);
-    setDialogOpen(true);
-  }
-
   function openEditDialog(mockDataSchema: MockDataSchemaEntity) {
     setEditingMockDataSchema(mockDataSchema);
     setForm({ name: mockDataSchema.name });
@@ -86,36 +131,22 @@ export function MockDataSchemasPage(props: MockDataSchemasPageProps) {
   }
 
   async function saveMockDataSchema() {
-    if (!projectId) {
+    if (!projectId || !editingMockDataSchema) {
       return;
     }
     try {
       props.setLoading(true);
-      if (editingMockDataSchema) {
-        await updateMockDataSchema(editingMockDataSchema.id, {
-          projectId,
-          name: form.name,
-          schemaSql: editingMockDataSchema.schemaSql,
-          classificationJson: editingMockDataSchema.classificationJson,
-          locale: editingMockDataSchema.locale,
-          sqlProvider: editingMockDataSchema.sqlProvider,
-          columnRules: editingMockDataSchema.columnRules,
-          columnOrder: editingMockDataSchema.columnOrder,
-          schemaRelationshipsJson: editingMockDataSchema.schemaRelationshipsJson,
-        });
-      } else {
-        await createMockDataSchema({
-          projectId,
-          name: form.name,
-          schemaSql: '',
-          classificationJson: '',
-          locale: 'en',
-          sqlProvider: '',
-          columnRules: {},
-          columnOrder: {},
-          schemaRelationshipsJson: '',
-        });
-      }
+      await updateMockDataSchema(editingMockDataSchema.id, {
+        projectId,
+        name: form.name,
+        schemaSql: editingMockDataSchema.schemaSql,
+        classificationJson: editingMockDataSchema.classificationJson,
+        locale: editingMockDataSchema.locale,
+        sqlProvider: editingMockDataSchema.sqlProvider,
+        columnRules: editingMockDataSchema.columnRules,
+        columnOrder: editingMockDataSchema.columnOrder,
+        schemaRelationshipsJson: editingMockDataSchema.schemaRelationshipsJson,
+      });
       await reloadMockDataSchemas();
       setDialogOpen(false);
       props.setSnack('Mock data schema saved.');
@@ -127,11 +158,59 @@ export function MockDataSchemasPage(props: MockDataSchemasPageProps) {
     }
   }
 
+  function buildNextMockDataSchemaName(): string {
+    const prefix = 'MOCK DATA - ';
+    const maxSequence = mockDataSchemas.reduce((currentMax, item) => {
+      if (!item.name.startsWith(prefix)) {
+        return currentMax;
+      }
+
+      const parsed = Number(item.name.slice(prefix.length).trim());
+      if (!Number.isFinite(parsed)) {
+        return currentMax;
+      }
+
+      return Math.max(currentMax, parsed);
+    }, 0);
+
+    return `${prefix}${maxSequence + 1}`;
+  }
+
+  async function createDefaultMockDataSchema() {
+    if (!projectId) {
+      return;
+    }
+
+    try {
+      props.setLoading(true);
+      const created = await createMockDataSchema({
+        projectId,
+        name: buildNextMockDataSchemaName(),
+        schemaSql: '',
+        classificationJson: '',
+        locale: 'en',
+        sqlProvider: '',
+        columnRules: {},
+        columnOrder: {},
+        schemaRelationshipsJson: '',
+      });
+      await reloadMockDataSchemas();
+      props.setSnack('Mock data schema created.');
+      navigate(`/projects/${projectId}/mock-data-schemas/${created.id}`);
+    } catch (exception) {
+      props.setError(getErrorMessage(exception, 'Failed to create mock data schema.'));
+      console.error(exception);
+    } finally {
+      props.setLoading(false);
+    }
+  }
+
   async function removeMockDataSchema(id: string) {
     try {
       props.setLoading(true);
       await deleteMockDataSchema(id);
       await reloadMockDataSchemas();
+      setDeleteTarget(null);
       props.setSnack('Mock data schema deleted.');
     } catch (exception) {
       props.setError(getErrorMessage(exception, 'Failed to delete mock data schema.'));
@@ -164,9 +243,13 @@ export function MockDataSchemasPage(props: MockDataSchemasPageProps) {
       <CardContent>
         <Stack direction="row" justifyContent="space-between" sx={{ mb: 2 }}>
           <Typography variant="h5" sx={{ fontWeight: 700 }}>
-            Mock Data Schemas - {project.name}
+            Mock Data Schemas
           </Typography>
-          <Button startIcon={<AddIcon />} variant="contained" onClick={openNewDialog}>
+          <Button
+            startIcon={<AddIcon />}
+            variant="contained"
+            onClick={() => void createDefaultMockDataSchema()}
+          >
             New
           </Button>
         </Stack>
@@ -176,12 +259,14 @@ export function MockDataSchemasPage(props: MockDataSchemasPageProps) {
             <TableHead>
               <TableRow>
                 <TableCell>Name</TableCell>
-                <TableCell>Updated</TableCell>
+                <TableCell>Table(s)</TableCell>
+                <TableCell>Created At</TableCell>
+                <TableCell>Updated At</TableCell>
                 <TableCell align="right">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {mockDataSchemas.map((mockDataSchema) => (
+              {sortedMockDataSchemas.map((mockDataSchema) => (
                 <TableRow
                   key={mockDataSchema.id}
                   hover
@@ -191,7 +276,9 @@ export function MockDataSchemasPage(props: MockDataSchemasPageProps) {
                   }
                 >
                   <TableCell>{mockDataSchema.name}</TableCell>
-                  <TableCell>{new Date(mockDataSchema.updatedAt).toLocaleString()}</TableCell>
+                  <TableCell>{formatTableNames(getTableNames(mockDataSchema.classificationJson))}</TableCell>
+                  <TableCell>{renderDateTimeWithRelative(mockDataSchema.createdAt)}</TableCell>
+                  <TableCell>{renderDateTimeWithRelative(mockDataSchema.updatedAt)}</TableCell>
                   <TableCell align="right">
                     <IconButton
                       size="small"
@@ -207,7 +294,7 @@ export function MockDataSchemasPage(props: MockDataSchemasPageProps) {
                       color="error"
                       onClick={(event) => {
                         event.stopPropagation();
-                        void removeMockDataSchema(mockDataSchema.id);
+                        setDeleteTarget(mockDataSchema);
                       }}
                     >
                       <DeleteIcon fontSize="small" />
@@ -221,9 +308,7 @@ export function MockDataSchemasPage(props: MockDataSchemasPageProps) {
       </CardContent>
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>
-          {editingMockDataSchema ? 'Edit Mock Data Schema' : 'New Mock Data Schema'}
-        </DialogTitle>
+        <DialogTitle>Edit Mock Data Schema</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField
@@ -241,6 +326,32 @@ export function MockDataSchemasPage(props: MockDataSchemasPageProps) {
             disabled={props.loading}
           >
             Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle>Delete Mock Data Schema?</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Do you want to delete{' '}
+            <strong>{deleteTarget?.name ?? 'this mock data schema'}</strong>?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteTarget(null)}>Cancel</Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={() => deleteTarget && void removeMockDataSchema(deleteTarget.id)}
+            disabled={props.loading}
+          >
+            Delete
           </Button>
         </DialogActions>
       </Dialog>
