@@ -9,10 +9,11 @@ import type {
   ProjectEntity,
   SupportedLocaleDefinition,
 } from './models/apiModels';
-import { ProjectsPage } from './pages/ProjectsPage';
 import { RequestDetailPage } from './pages/RequestDetailPage';
 import { RequestsPage } from './pages/RequestsPage';
 import { getErrorMessage } from './utilities/errorUtils';
+
+const DEFAULT_PROJECT_ID = 'local';
 
 function App() {
   const [projects, setProjects] = useState<ProjectEntity[]>([]);
@@ -22,11 +23,6 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [snack, setSnack] = useState('');
   const [error, setError] = useState('');
-
-  async function reloadProjects() {
-    const data = await getProjects();
-    setProjects(data);
-  }
 
   async function reloadCustomListTypes() {
     const data = await getCustomListTypes();
@@ -56,21 +52,17 @@ function App() {
     })();
   }, []);
 
+  const defaultProjectId =
+    projects.find((project) => project.id === DEFAULT_PROJECT_ID)?.id ??
+    projects[0]?.id ??
+    DEFAULT_PROJECT_ID;
+
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
       <Routes>
         <Route
           path="/projects"
-          element={
-            <ProjectsPage
-              projects={projects}
-              loading={loading}
-              setLoading={setLoading}
-              setSnack={setSnack}
-              setError={setError}
-              reloadProjects={reloadProjects}
-            />
-          }
+          element={<Navigate to={`/projects/${defaultProjectId}/requests`} replace />}
         />
         <Route
           path="/projects/:projectId/requests"
@@ -100,7 +92,10 @@ function App() {
             />
           }
         />
-        <Route path="*" element={<Navigate to="/projects" replace />} />
+        <Route
+          path="*"
+          element={<Navigate to={`/projects/${defaultProjectId}/requests`} replace />}
+        />
       </Routes>
 
       <FeedbackSnackbars

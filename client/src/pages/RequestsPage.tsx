@@ -19,7 +19,6 @@ import {
   Typography,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -38,6 +37,7 @@ interface RequestDialogForm {
 }
 
 const emptyRequestDialogForm: RequestDialogForm = { name: '' };
+const DEFAULT_PROJECT_ID = 'local';
 
 export function RequestsPage(props: RequestsPageProps) {
   const { projectId } = useParams();
@@ -51,6 +51,10 @@ export function RequestsPage(props: RequestsPageProps) {
     () => props.projects.find((item) => item.id === projectId),
     [props.projects, projectId],
   );
+  const fallbackProjectId =
+    props.projects.find((item) => item.id === DEFAULT_PROJECT_ID)?.id ??
+    props.projects[0]?.id ??
+    DEFAULT_PROJECT_ID;
 
   async function reloadRequests() {
     if (!projectId) {
@@ -135,10 +139,15 @@ export function RequestsPage(props: RequestsPageProps) {
     return (
       <Card>
         <CardContent>
-          <Typography>Project not found.</Typography>
-          <Button onClick={() => navigate('/projects')} sx={{ mt: 1 }}>
-            Back to Projects
-          </Button>
+          <Typography>{props.loading ? 'Loading...' : 'Project not found.'}</Typography>
+          {!props.loading && (
+            <Button
+              onClick={() => navigate(`/projects/${fallbackProjectId}/requests`)}
+              sx={{ mt: 1 }}
+            >
+              Back to Requests
+            </Button>
+          )}
         </CardContent>
       </Card>
     );
@@ -148,14 +157,9 @@ export function RequestsPage(props: RequestsPageProps) {
     <Card>
       <CardContent>
         <Stack direction="row" justifyContent="space-between" sx={{ mb: 2 }}>
-          <Stack direction="row" spacing={1} alignItems="center">
-            <IconButton onClick={() => navigate('/projects')}>
-              <ArrowBackIcon />
-            </IconButton>
-            <Typography variant="h5" sx={{ fontWeight: 700 }}>
-              Generate Requests - {project.name}
-            </Typography>
-          </Stack>
+          <Typography variant="h5" sx={{ fontWeight: 700 }}>
+            Generate Requests - {project.name}
+          </Typography>
           <Button startIcon={<AddIcon />} variant="contained" onClick={openNewDialog}>
             New
           </Button>
@@ -209,7 +213,9 @@ export function RequestsPage(props: RequestsPageProps) {
       </CardContent>
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>{editingRequest ? 'Edit Generate Request' : 'New Generate Request'}</DialogTitle>
+        <DialogTitle>
+          {editingRequest ? 'Edit Generate Request' : 'New Generate Request'}
+        </DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField
