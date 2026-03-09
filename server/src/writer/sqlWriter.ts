@@ -88,15 +88,23 @@ function buildInsertSql(tableData: GeneratedTableRows, sqlProvider?: SqlProvider
   return [...insertStatements, ''].join('');
 }
 
-function buildTransactionWrapper(sqlProvider?: SqlProvider | ''): {
+export function buildTransactionWrapper(sqlProvider?: SqlProvider | ''): {
   prefix: string[];
   suffix: string[];
 } {
   switch (sqlProvider) {
     case 'sqlserver':
       return {
-        prefix: ['BEGIN TRANSACTION;', ''],
-        suffix: ['', 'COMMIT TRANSACTION;'],
+        prefix: ['SET XACT_ABORT ON;', 'BEGIN TRY', 'BEGIN TRANSACTION;', ''],
+        suffix: [
+          '',
+          'COMMIT TRANSACTION;',
+          'END TRY',
+          'BEGIN CATCH',
+          'IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;',
+          'THROW;',
+          'END CATCH;',
+        ],
       };
     case 'postgres':
       return {

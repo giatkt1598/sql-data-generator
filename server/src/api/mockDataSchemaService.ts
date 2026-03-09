@@ -18,6 +18,7 @@ import { resolveTableOrder } from '../schema/dependencyResolver';
 import {
   buildGeneratedSqlHeader,
   buildInsertFileArtifacts,
+  buildTransactionWrapper,
   SqlFileArtifact,
 } from '../writer/sqlWriter';
 import { AppStorageState, MockDataSchemaEntity, ProjectEntity } from './models';
@@ -483,17 +484,7 @@ export class MockDataSchemaService {
       totalRecords,
       input.sqlProvider,
     );
-    const transactionWrapper =
-      input.sqlProvider === 'sqlserver'
-        ? { prefix: ['BEGIN TRANSACTION;', ''], suffix: ['', 'COMMIT TRANSACTION;'] }
-        : input.sqlProvider === 'postgres'
-          ? { prefix: ['BEGIN;', ''], suffix: ['', 'COMMIT;'] }
-          : input.sqlProvider === 'mysql'
-            ? { prefix: ['START TRANSACTION;', ''], suffix: ['', 'COMMIT;'] }
-            : {
-                prefix: [],
-                suffix: [],
-              };
+    const transactionWrapper = buildTransactionWrapper(input.sqlProvider);
     const fullText = [
       header,
       ...transactionWrapper.prefix,
