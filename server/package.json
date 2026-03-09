@@ -4,7 +4,7 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "start": "nodemon",
+    "start": "node dist/index.js",
     "dev": "nodemon",
     "cli": "ts-node src/cli.ts",
     "build:prompt": "ts-node src/cli.ts build-prompt",

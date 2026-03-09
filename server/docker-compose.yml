@@ -1,0 +1,13 @@
+services:
+  sql-data-generator:
+    build:
+      context: ..
+      dockerfile: server/Dockerfile
+    container_name: sql-data-generator
+    ports:
+      - '32023:32023'
+    environment:
+      PORT: '32023'
+    volumes:
+      - ./data:/app/server/data
+    restart: unless-stopped

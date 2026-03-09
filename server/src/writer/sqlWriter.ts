@@ -4,12 +4,33 @@ import { GeneratedTableRows, SqlProvider } from '../core/types';
 import dayjs from 'dayjs';
 
 const MAX_ROWS_PER_INSERT = 1000;
-const TOOL_VERSION =
-  (
-    JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../package.json'), 'utf-8')) as {
-      version?: string;
+
+function resolveToolVersion(): string {
+  const candidatePaths = [
+    path.resolve(process.cwd(), 'package.json'),
+    path.resolve(__dirname, '../package.json'),
+    path.resolve(__dirname, '../../package.json'),
+  ];
+
+  for (const candidatePath of candidatePaths) {
+    if (!fs.existsSync(candidatePath)) {
+      continue;
     }
-  ).version ?? 'unknown';
+
+    try {
+      const packageJson = JSON.parse(fs.readFileSync(candidatePath, 'utf-8')) as {
+        version?: string;
+      };
+      return packageJson.version ?? 'unknown';
+    } catch {
+      continue;
+    }
+  }
+
+  return 'unknown';
+}
+
+const TOOL_VERSION = resolveToolVersion();
 
 function sqlValue(value: string | number | boolean | null): string {
   if (value === null) {
