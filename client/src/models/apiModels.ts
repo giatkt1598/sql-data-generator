@@ -67,6 +67,7 @@ export interface ColumnGenerationRule {
 }
 
 export type TableColumnRules = Record<string, Record<string, ColumnGenerationRule>>;
+export type TableColumnOrder = Record<string, string[]>;
 
 export interface GenerationRequestEntity {
   id: string;
@@ -77,6 +78,7 @@ export interface GenerationRequestEntity {
   locale?: string;
   sqlProvider?: 'sqlserver' | 'postgres' | 'mysql' | '';
   columnRules?: TableColumnRules;
+  columnOrder?: TableColumnOrder;
   schemaRelationshipsJson?: string;
   createdAt: string;
   updatedAt: string;

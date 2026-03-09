@@ -1,4 +1,4 @@
-import { SqlProvider, TableColumnRules } from '../core/types';
+import { SqlProvider, TableColumnOrder, TableColumnRules } from '../core/types';
 
 export interface ProjectEntity {
   id: string;
@@ -17,6 +17,7 @@ export interface GenerationRequestEntity {
   locale?: string;
   sqlProvider?: SqlProvider | '';
   columnRules?: TableColumnRules;
+  columnOrder?: TableColumnOrder;
   schemaRelationshipsJson?: string;
   createdAt: string;
   updatedAt: string;

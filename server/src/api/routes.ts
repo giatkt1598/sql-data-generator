@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { SUPPORTED_LOCALES } from '../core/locales';
 import { DATA_TYPE_DEFINITIONS } from '../core/semanticTypes';
-import { TableColumnRules } from '../core/types';
+import { TableColumnOrder, TableColumnRules } from '../core/types';
 import { GenerationService } from './generationService';
 
 function parseBody<T>(req: Request): T {
@@ -34,11 +34,13 @@ export function buildApiRouter(service: GenerationService): Router {
         schemaSql?: string;
         classificationJson?: string;
         columnRules?: TableColumnRules;
+        columnOrder?: TableColumnOrder;
       }>(req);
       const result = service.buildColumnDesignerModel({
         schemaSql: body.schemaSql ?? '',
         classificationJson: body.classificationJson ?? '',
         columnRules: body.columnRules,
+        columnOrder: body.columnOrder,
       });
       res.json(result);
     } catch (error) {
@@ -54,6 +56,7 @@ export function buildApiRouter(service: GenerationService): Router {
         locale?: string;
         sqlProvider?: 'sqlserver' | 'postgres' | 'mysql' | '';
         columnRules?: TableColumnRules;
+        columnOrder?: TableColumnOrder;
         schemaRelationshipsJson?: string;
       }>(req);
       const result = service.generatePreviewFromInput({
@@ -62,6 +65,7 @@ export function buildApiRouter(service: GenerationService): Router {
         locale: body.locale,
         sqlProvider: body.sqlProvider,
         columnRules: body.columnRules,
+        columnOrder: body.columnOrder,
         schemaRelationshipsJson: body.schemaRelationshipsJson,
       });
       res.json(result);
@@ -78,6 +82,7 @@ export function buildApiRouter(service: GenerationService): Router {
         locale?: string;
         sqlProvider?: 'sqlserver' | 'postgres' | 'mysql' | '';
         columnRules?: TableColumnRules;
+        columnOrder?: TableColumnOrder;
         schemaRelationshipsJson?: string;
       }>(req);
       const script = service.exportCombinedScriptFromInput({
@@ -86,6 +91,7 @@ export function buildApiRouter(service: GenerationService): Router {
         locale: body.locale,
         sqlProvider: body.sqlProvider,
         columnRules: body.columnRules,
+        columnOrder: body.columnOrder,
         schemaRelationshipsJson: body.schemaRelationshipsJson,
       });
       res.setHeader('Content-Type', 'application/sql; charset=utf-8');
@@ -157,6 +163,7 @@ export function buildApiRouter(service: GenerationService): Router {
         locale?: string;
         sqlProvider?: 'sqlserver' | 'postgres' | 'mysql' | '';
         columnRules?: TableColumnRules;
+        columnOrder?: TableColumnOrder;
         schemaRelationshipsJson?: string;
       }>(req);
       const item = service.createGenerationRequest({
@@ -167,6 +174,7 @@ export function buildApiRouter(service: GenerationService): Router {
         locale: body.locale,
         sqlProvider: body.sqlProvider,
         columnRules: body.columnRules,
+        columnOrder: body.columnOrder,
         schemaRelationshipsJson: body.schemaRelationshipsJson,
       });
       res.status(201).json(item);
@@ -185,6 +193,7 @@ export function buildApiRouter(service: GenerationService): Router {
         locale?: string;
         sqlProvider?: 'sqlserver' | 'postgres' | 'mysql' | '';
         columnRules?: TableColumnRules;
+        columnOrder?: TableColumnOrder;
         schemaRelationshipsJson?: string;
       }>(req);
       const item = service.updateGenerationRequest(req.params.id, body);

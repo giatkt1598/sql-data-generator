@@ -19,6 +19,7 @@ import { SchemaFieldRow } from './SchemaFieldRow';
 export function SchemasAccordion() {
   const context = useRequestDetailContext();
   const [visibleTableNames, setVisibleTableNames] = useState<Set<string>>(new Set());
+  const [dragState, setDragState] = useState<{ tableName: string; columnName: string } | null>(null);
   const hasSchemaInputs =
     context.form.schemaSql.trim().length > 0 || context.form.classificationJson.trim().length > 0;
   const tableNames = useMemo(
@@ -186,7 +187,13 @@ export function SchemasAccordion() {
                             Options
                           </Typography>
                         </Stack>
-                        {table.columns.map((column) => {
+                        {(context.columnOrder[table.name] ?? table.columns.map((column) => column.name))
+                          .map(
+                            (columnName) =>
+                              table.columns.find((column) => column.name === columnName) ?? null,
+                          )
+                          .filter((column): column is (typeof table.columns)[number] => Boolean(column))
+                          .map((column) => {
                           const rule = context.columnRules[table.name]?.[column.name];
                           const customListText =
                             rule?.kind === 'customList' ? (rule.customValues ?? []).join(', ') : '';
@@ -238,6 +245,25 @@ export function SchemasAccordion() {
                               blankPercentage={blankPercentage}
                               customListText={customListText}
                               fieldNameText={fieldNameText}
+                              draggable
+                              isDragging={
+                                dragState?.tableName === table.name &&
+                                dragState.columnName === column.name
+                              }
+                              onDragStart={() =>
+                                setDragState({ tableName: table.name, columnName: column.name })
+                              }
+                              onDragOver={() => {
+                                if (
+                                  dragState &&
+                                  dragState.tableName === table.name &&
+                                  dragState.columnName !== column.name
+                                ) {
+                                  context.reorderColumns(table.name, dragState.columnName, column.name);
+                                }
+                              }}
+                              onDrop={() => setDragState(null)}
+                              onDragEnd={() => setDragState(null)}
                             />
                           );
                         })}

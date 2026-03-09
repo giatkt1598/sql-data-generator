@@ -21,6 +21,7 @@ import type {
   ColumnGenerationRule,
   SemanticDataType,
   GenerationRequestEntity,
+  TableColumnOrder,
   TableColumnRules,
 } from '../models/apiModels';
 import { buildDefaultSchemaRelationshipsJson } from '../utilities/schemaRelationships';
@@ -46,7 +47,11 @@ function toLocalDateInputValue(value: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-function buildSavedSnapshot(form: RequestDetailForm, columnRules: TableColumnRules): string {
+function buildSavedSnapshot(
+  form: RequestDetailForm,
+  columnRules: TableColumnRules,
+  columnOrder: TableColumnOrder,
+): string {
   return JSON.stringify({
     name: form.name,
     schemaSql: form.schemaSql,
@@ -55,6 +60,7 @@ function buildSavedSnapshot(form: RequestDetailForm, columnRules: TableColumnRul
     locale: form.locale,
     sqlProvider: form.sqlProvider,
     columnRules,
+    columnOrder,
   });
 }
 
@@ -71,6 +77,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     sqlProvider: '',
   });
   const [columnRules, setColumnRules] = useState<TableColumnRules>({});
+  const [columnOrder, setColumnOrder] = useState<TableColumnOrder>({});
   const [designerModel, setDesignerModel] = useState<ColumnDesignerModel | null>(null);
   const [generalExpanded, setGeneralExpanded] = useState(false);
   const [relationshipsExpanded, setRelationshipsExpanded] = useState(false);
@@ -89,6 +96,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
   const MAX_PREVIEW_LENGTH = 50_000_000;
   const formRef = useRef(form);
   const columnRulesRef = useRef(columnRules);
+  const columnOrderRef = useRef(columnOrder);
   const defaultDateTimeStart = useMemo(() => {
     const value = new Date();
     value.setFullYear(value.getFullYear() - 1);
@@ -179,6 +187,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
 
   formRef.current = form;
   columnRulesRef.current = columnRules;
+  columnOrderRef.current = columnOrder;
 
   const setDirtyForm: typeof setForm = (value) => {
     setForm((prev) => {
@@ -214,6 +223,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
           sqlProvider: found.sqlProvider ?? '',
         });
         setColumnRules(found.columnRules ?? {});
+        setColumnOrder(found.columnOrder ?? {});
         setGeneralExpanded(false);
         setRelationshipsExpanded(false);
         setSchemasExpanded(true);
@@ -224,6 +234,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
             schemaSql: found.schemaSql,
             classificationJson: found.classificationJson,
             columnRules: found.columnRules,
+            columnOrder: found.columnOrder,
           });
           setDesignerModel(model);
           setColumnRules(model.columnRules);
@@ -238,6 +249,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
                 sqlProvider: found.sqlProvider ?? '',
               },
               model.columnRules,
+              found.columnOrder ?? {},
             ),
           );
         } else {
@@ -253,6 +265,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
                 sqlProvider: found.sqlProvider ?? '',
               },
               found.columnRules ?? {},
+              found.columnOrder ?? {},
             ),
           );
         }
@@ -329,6 +342,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         locale: form.locale,
         sqlProvider: form.sqlProvider,
         columnRules,
+        columnOrder,
         schemaRelationshipsJson: form.schemaRelationshipsJson,
       });
       setRequest(updated);
@@ -341,6 +355,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         sqlProvider: updated.sqlProvider ?? '',
       });
       setColumnRules(updated.columnRules ?? {});
+      setColumnOrder(updated.columnOrder ?? {});
       setSavedSnapshot(
         buildSavedSnapshot(
           {
@@ -352,6 +367,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
             sqlProvider: updated.sqlProvider ?? '',
           },
           updated.columnRules ?? {},
+          updated.columnOrder ?? {},
         ),
       );
       setHasUnsavedChanges(false);
@@ -367,7 +383,11 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
   async function confirmLeavePage(): Promise<boolean> {
     await flushPendingInput();
 
-    const latestSnapshot = buildSavedSnapshot(formRef.current, columnRulesRef.current);
+    const latestSnapshot = buildSavedSnapshot(
+      formRef.current,
+      columnRulesRef.current,
+      columnOrderRef.current,
+    );
     const stillDirty = savedSnapshot.length > 0 && latestSnapshot !== savedSnapshot;
 
     if (!stillDirty) {
@@ -393,6 +413,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         locale: formRef.current.locale,
         sqlProvider: formRef.current.sqlProvider,
         columnRules: columnRulesRef.current,
+        columnOrder: columnOrderRef.current,
         schemaRelationshipsJson: formRef.current.schemaRelationshipsJson,
       });
 
@@ -406,6 +427,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         sqlProvider: updated.sqlProvider ?? '',
       });
       setColumnRules(updated.columnRules ?? {});
+      setColumnOrder(updated.columnOrder ?? {});
       setSavedSnapshot(
         buildSavedSnapshot(
           {
@@ -417,6 +439,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
             sqlProvider: updated.sqlProvider ?? '',
           },
           updated.columnRules ?? {},
+          updated.columnOrder ?? {},
         ),
       );
       setHasUnsavedChanges(false);
@@ -456,6 +479,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
       const model = await getColumnDesignerModel({
         schemaSql: form.schemaSql,
         classificationJson: form.classificationJson,
+        columnOrder,
       });
       const nextSchemaRelationshipsJson = buildDefaultSchemaRelationshipsJson(
         model,
@@ -469,6 +493,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         locale: form.locale,
         sqlProvider: form.sqlProvider,
         columnRules: model.columnRules,
+        columnOrder,
         schemaRelationshipsJson: nextSchemaRelationshipsJson,
       });
 
@@ -489,6 +514,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
           sqlProvider: updated.sqlProvider ?? '',
         },
         model.columnRules,
+        columnOrder,
       );
       setHasUnsavedChanges(savedSnapshot.length > 0 && nextSnapshot !== savedSnapshot);
       setRelationshipsExpanded(true);
@@ -513,6 +539,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         locale: form.locale,
         sqlProvider: form.sqlProvider,
         columnRules,
+        columnOrder,
         schemaRelationshipsJson: form.schemaRelationshipsJson,
       });
       const isTooLarge = script.length > MAX_PREVIEW_LENGTH;
@@ -539,6 +566,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         locale: form.locale,
         sqlProvider: form.sqlProvider,
         columnRules,
+        columnOrder,
         schemaRelationshipsJson: form.schemaRelationshipsJson,
       });
       const blob = new Blob([script], { type: 'application/sql;charset=utf-8' });
@@ -581,6 +609,35 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
         [columnName]: rule,
       },
     }));
+  }
+
+  function reorderColumns(tableName: string, fromColumnName: string, toColumnName: string) {
+    if (fromColumnName === toColumnName) {
+      return;
+    }
+
+    setHasUnsavedChanges(true);
+    setColumnOrder((prev) => {
+      const currentOrder =
+        prev[tableName] ??
+        designerModel?.tables.find((table) => table.name === tableName)?.columns.map((c) => c.name) ??
+        [];
+      const fromIndex = currentOrder.indexOf(fromColumnName);
+      const toIndex = currentOrder.indexOf(toColumnName);
+
+      if (fromIndex < 0 || toIndex < 0) {
+        return prev;
+      }
+
+      const nextOrder = [...currentOrder];
+      nextOrder.splice(fromIndex, 1);
+      nextOrder.splice(toIndex, 0, fromColumnName);
+
+      return {
+        ...prev,
+        [tableName]: nextOrder,
+      };
+    });
   }
 
   function openTypePicker(tableName: string, columnName: string) {
@@ -985,6 +1042,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     form,
     setForm: setDirtyForm,
     columnRules,
+    columnOrder,
     designerModel,
     generalExpanded,
     setGeneralExpanded,
@@ -1020,6 +1078,7 @@ export function RequestDetailPage(props: RequestDetailPageProps) {
     onRegularExpressionOptionChange,
     onEmailOptionChange,
     onTextOptionChange,
+    reorderColumns,
     applyRule,
     applyCustomListRule,
     handleBack: () => {

@@ -4,6 +4,7 @@ import { buildClassificationPrompt } from '../ai/promptBuilder';
 import {
   SchemaRelationshipsConfig,
   SqlProvider,
+  TableColumnOrder,
   TableColumnRules,
   TableSchema,
 } from '../core/types';
@@ -36,6 +37,7 @@ export interface CreateGenerationRequestInput {
   locale?: string;
   sqlProvider?: SqlProvider | '';
   columnRules?: TableColumnRules;
+  columnOrder?: TableColumnOrder;
   schemaRelationshipsJson?: string;
 }
 
@@ -47,6 +49,7 @@ export interface UpdateGenerationRequestInput {
   locale?: string;
   sqlProvider?: SqlProvider | '';
   columnRules?: TableColumnRules;
+  columnOrder?: TableColumnOrder;
   schemaRelationshipsJson?: string;
 }
 
@@ -99,16 +102,36 @@ function buildSchemaAndRules(input: {
   schemaSql: string;
   classificationJson: string;
   columnRules?: TableColumnRules;
+  columnOrder?: TableColumnOrder;
 }): { tables: TableSchema[]; columnRules: TableColumnRules } {
   const classification = parseClassificationJson(input.classificationJson);
   const schema = buildDatabaseSchemaFromClassification(classification);
   if (schema.tables.length === 0) {
     throw new Error('AI classification JSON does not contain any tables.');
   }
-  const defaultRules = buildDefaultColumnRules(schema.tables, classification);
-  const mergedRules = sanitizeColumnRules(schema.tables, input.columnRules, defaultRules);
+  const orderedTables = schema.tables.map((table) => {
+    const preferredOrder = input.columnOrder?.[table.name] ?? [];
+    if (preferredOrder.length === 0) {
+      return table;
+    }
+
+    const columnsByName = new Map(table.columns.map((column) => [column.name, column]));
+    const orderedColumns = preferredOrder
+      .map((columnName) => columnsByName.get(columnName))
+      .filter((column): column is TableSchema['columns'][number] => Boolean(column));
+    const remainingColumns = table.columns.filter(
+      (column) => !preferredOrder.includes(column.name),
+    );
+
+    return {
+      ...table,
+      columns: [...orderedColumns, ...remainingColumns],
+    };
+  });
+  const defaultRules = buildDefaultColumnRules(orderedTables, classification);
+  const mergedRules = sanitizeColumnRules(orderedTables, input.columnRules, defaultRules);
   return {
-    tables: schema.tables,
+    tables: orderedTables,
     columnRules: mergedRules,
   };
 }
@@ -209,6 +232,7 @@ export class GenerationService {
         schemaSql,
         classificationJson,
         columnRules: input.columnRules,
+        columnOrder: input.columnOrder,
       });
       columnRules = built.columnRules;
     }
@@ -223,6 +247,7 @@ export class GenerationService {
       locale,
       sqlProvider,
       columnRules,
+      columnOrder: input.columnOrder,
       schemaRelationshipsJson,
       createdAt: now,
       updatedAt: now,
@@ -274,6 +299,9 @@ export class GenerationService {
     if (typeof input.columnRules !== 'undefined') {
       request.columnRules = input.columnRules;
     }
+    if (typeof input.columnOrder !== 'undefined') {
+      request.columnOrder = input.columnOrder;
+    }
     if (typeof input.schemaRelationshipsJson !== 'undefined') {
       request.schemaRelationshipsJson = asText(input.schemaRelationshipsJson);
     }
@@ -283,6 +311,7 @@ export class GenerationService {
         schemaSql: request.schemaSql,
         classificationJson: request.classificationJson,
         columnRules: request.columnRules,
+        columnOrder: request.columnOrder,
       });
       request.columnRules = columnRules;
     }
@@ -314,6 +343,7 @@ export class GenerationService {
       locale: request.locale,
       sqlProvider: request.sqlProvider,
       columnRules: request.columnRules,
+      columnOrder: request.columnOrder,
       schemaRelationshipsJson: request.schemaRelationshipsJson,
     });
   }
@@ -324,6 +354,7 @@ export class GenerationService {
     locale?: string;
     sqlProvider?: SqlProvider | '';
     columnRules?: TableColumnRules;
+    columnOrder?: TableColumnOrder;
     schemaRelationshipsJson?: string;
   }): PreviewResult {
     const { tables, columnRules } = buildSchemaAndRules(input);
@@ -375,6 +406,7 @@ export class GenerationService {
     schemaSql: string;
     classificationJson: string;
     columnRules?: TableColumnRules;
+    columnOrder?: TableColumnOrder;
   }): { tables: TableSchema[]; columnRules: TableColumnRules } {
     return buildSchemaAndRules(input);
   }
@@ -400,6 +432,7 @@ export class GenerationService {
     locale?: string;
     sqlProvider?: SqlProvider | '';
     columnRules?: TableColumnRules;
+    columnOrder?: TableColumnOrder;
     schemaRelationshipsJson?: string;
   }): string {
     const preview = this.generatePreviewFromInput(input);

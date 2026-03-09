@@ -107,6 +107,7 @@ export interface ColumnGenerationRule {
 }
 
 export type TableColumnRules = Record<string, Record<string, ColumnGenerationRule>>;
+export type TableColumnOrder = Record<string, string[]>;
 
 export interface DataTypeDefinition {
   value: DataTypeCatalogValue;

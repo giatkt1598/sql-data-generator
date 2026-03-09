@@ -3,6 +3,7 @@ import type {
   ColumnDesignerModel,
   DataTypeDefinition,
   SupportedLocaleDefinition,
+  TableColumnOrder,
   TableColumnRules,
 } from '../models/apiModels';
 
@@ -28,6 +29,7 @@ export async function getColumnDesignerModel(payload: {
   schemaSql: string;
   classificationJson: string;
   columnRules?: TableColumnRules;
+  columnOrder?: TableColumnOrder;
 }): Promise<ColumnDesignerModel> {
   const response = await httpClient.post<ColumnDesignerModel>('/column-designer-model', payload);
   return response.data;
@@ -39,6 +41,7 @@ export async function generateSqlScript(payload: {
   locale?: string;
   sqlProvider?: 'sqlserver' | 'postgres' | 'mysql' | '';
   columnRules?: TableColumnRules;
+  columnOrder?: TableColumnOrder;
   schemaRelationshipsJson?: string;
 }): Promise<string> {
   const response = await httpClient.post('/download', payload, {

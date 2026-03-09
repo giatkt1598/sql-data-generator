@@ -4,6 +4,7 @@ import type { Dispatch, ReactNode, SetStateAction } from 'react';
 import type {
   DataTypeDefinition,
   SupportedLocaleDefinition,
+  TableColumnOrder,
   TableColumnRules,
   ColumnDesignerModel,
 } from '../../models/apiModels';
@@ -17,6 +18,7 @@ export interface RequestDetailContextValue {
   form: RequestDetailForm;
   setForm: Dispatch<SetStateAction<RequestDetailForm>>;
   columnRules: TableColumnRules;
+  columnOrder: TableColumnOrder;
   designerModel: ColumnDesignerModel | null;
   generalExpanded: boolean;
   setGeneralExpanded: (expanded: boolean) => void;
@@ -97,6 +99,7 @@ export interface RequestDetailContextValue {
     key: 'minLength' | 'maxLength' | 'unit',
     value: string,
   ) => void;
+  reorderColumns: (tableName: string, fromColumnName: string, toColumnName: string) => void;
   applyRule: (rule: TableColumnRules[string][string]) => void;
   applyCustomListRule: () => void;
   handleBack: () => void;

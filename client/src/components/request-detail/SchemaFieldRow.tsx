@@ -76,8 +76,26 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
   blankPercentage: number;
   customListText: string;
   fieldNameText: string;
+  draggable?: boolean;
+  onDragStart?: () => void;
+  onDragOver?: () => void;
+  onDrop?: () => void;
+  onDragEnd?: () => void;
+  isDragging?: boolean;
 }) {
-  const { tableName, column, blankPercentage, customListText, fieldNameText } = props;
+  const {
+    tableName,
+    column,
+    blankPercentage,
+    customListText,
+    fieldNameText,
+    draggable,
+    onDragStart,
+    onDragOver,
+    onDrop,
+    onDragEnd,
+    isDragging,
+  } = props;
   const context = useRequestDetailContext();
   const rule = context.columnRules[tableName]?.[column.name];
   const value = stringifyRule(context.semanticTypes, rule);
@@ -165,7 +183,26 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
           color: 'text.secondary',
         }}
       >
-        <DragIndicatorIcon fontSize="small" />
+        <IconButton
+          size="small"
+          draggable={draggable}
+          onDragStart={onDragStart}
+          onDragOver={(event) => {
+            event.preventDefault();
+            onDragOver?.();
+          }}
+          onDrop={(event) => {
+            event.preventDefault();
+            onDrop?.();
+          }}
+          onDragEnd={onDragEnd}
+          sx={{
+            cursor: draggable ? 'grab' : 'default',
+            opacity: isDragging ? 0.35 : 1,
+          }}
+        >
+          <DragIndicatorIcon fontSize="small" />
+        </IconButton>
       </Box>
       <Box sx={{ width: 160 }}>
         <TextField

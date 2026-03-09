@@ -1,9 +1,11 @@
 import { httpClient } from './httpClient';
-import type { GenerationRequestEntity, TableColumnRules } from '../models/apiModels';
+import type {
+  GenerationRequestEntity,
+  TableColumnOrder,
+  TableColumnRules,
+} from '../models/apiModels';
 
-export async function getGenerationRequests(
-  projectId: string,
-): Promise<GenerationRequestEntity[]> {
+export async function getGenerationRequests(projectId: string): Promise<GenerationRequestEntity[]> {
   const response = await httpClient.get<{ items: GenerationRequestEntity[] }>(
     '/generation-requests',
     {
@@ -21,6 +23,7 @@ export async function createGenerationRequest(payload: {
   locale?: string;
   sqlProvider?: 'sqlserver' | 'postgres' | 'mysql' | '';
   columnRules?: TableColumnRules;
+  columnOrder?: TableColumnOrder;
   schemaRelationshipsJson?: string;
 }): Promise<GenerationRequestEntity> {
   const response = await httpClient.post<GenerationRequestEntity>('/generation-requests', payload);
@@ -37,6 +40,7 @@ export async function updateGenerationRequest(
     locale?: string;
     sqlProvider?: 'sqlserver' | 'postgres' | 'mysql' | '';
     columnRules?: TableColumnRules;
+    columnOrder?: TableColumnOrder;
     schemaRelationshipsJson?: string;
   },
 ): Promise<GenerationRequestEntity> {
