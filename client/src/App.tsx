@@ -1,3 +1,4 @@
+import './App.css';
 import { useEffect, useState } from 'react';
 import { Container } from '@mui/material';
 import { Navigate, Route, Routes } from 'react-router-dom';
