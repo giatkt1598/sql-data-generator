@@ -1,0 +1,18 @@
+-- Active: 1758804183006@@localhost@5432@db1
+TRUNCATE public.roles,
+PUBLIC.users,
+PUBLIC.user_addresses,
+PUBLIC.brands,
+PUBLIC.categories,
+PUBLIC.products,
+PUBLIC.product_images,
+PUBLIC.product_variants,
+PUBLIC.warehouses,
+PUBLIC.inventory,
+PUBLIC.carts,
+PUBLIC.cart_items,
+PUBLIC.orders,
+PUBLIC.order_items,
+PUBLIC.payments,
+PUBLIC.shipments,
+PUBLIC.shipment_items RESTART IDENTITY CASCADE;
