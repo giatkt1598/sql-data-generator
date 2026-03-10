@@ -96,7 +96,7 @@ export function estimateRelationshipRows(
     const nextCount =
       typeof parentCount === 'number'
         ? buildChildCount(parentCount, sanitizeDistribution(node.distribution))
-        : Number.isInteger(node.count) && (node.count as number) > 0
+        : Number.isInteger(node.count)
           ? (node.count as number)
           : DEFAULT_TABLE_ROWS;
 
@@ -148,7 +148,7 @@ export function estimateRelationshipRows(
 
   for (const tableName of tableNames) {
     if ((rowCountByTable.get(tableName) ?? 0) === 0) {
-      rowCountByTable.set(tableName, DEFAULT_TABLE_ROWS);
+      rowCountByTable.set(tableName, 0);
     }
   }
 

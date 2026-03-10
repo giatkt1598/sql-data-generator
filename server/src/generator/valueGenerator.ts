@@ -1030,10 +1030,9 @@ function buildGenerationPlan(
     let ownIndexes: number[] = [];
 
     if (!parentTable) {
-      const rootCount =
-        Number.isInteger(node.count) && (node.count as number) > 0
-          ? (node.count as number)
-          : DEFAULT_TABLE_ROWS;
+      const rootCount = Number.isInteger(node.count)
+        ? (node.count as number)
+        : DEFAULT_TABLE_ROWS;
       rowCountByTable.set(tableName, rootCount);
       ownIndexes = Array.from({ length: rootCount }, (_value, index) => index);
     } else {
@@ -1080,7 +1079,7 @@ function buildGenerationPlan(
 
   for (const table of tables) {
     if ((rowCountByTable.get(table.name) ?? 0) === 0) {
-      rowCountByTable.set(table.name, DEFAULT_TABLE_ROWS);
+      rowCountByTable.set(table.name, 0);
     }
   }
 
