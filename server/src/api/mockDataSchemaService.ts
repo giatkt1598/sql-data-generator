@@ -488,7 +488,10 @@ export class MockDataSchemaService {
     const fullText = [
       header,
       ...transactionWrapper.prefix,
-      ...files.map((file) => `-- file: ${file.fileName}\n${file.content}`),
+      ...files.map(
+        (file) =>
+          `-- ${(file.orderIndex + 1).toString().padStart(3, '0')}: ${file.tableName}\n${file.content}`,
+      ),
       ...transactionWrapper.suffix,
     ].join('\n\n');
     const lines = fullText.split(/\r?\n/);

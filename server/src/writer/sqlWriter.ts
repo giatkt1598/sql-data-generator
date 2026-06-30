@@ -83,7 +83,7 @@ function buildInsertSql(tableData: GeneratedTableRows, sqlProvider?: SqlProvider
     ].join('\n');
   });
 
-  return insertStatements.join('\n\n') + '\n';
+  return insertStatements.join('\n\n');
 }
 
 export function buildTransactionWrapper(sqlProvider?: SqlProvider | ''): {
@@ -106,13 +106,13 @@ export function buildTransactionWrapper(sqlProvider?: SqlProvider | ''): {
       };
     case 'postgres':
       return {
-        prefix: ['BEGIN;', ''],
-        suffix: ['', 'COMMIT;'],
+        prefix: ['BEGIN;'],
+        suffix: ['COMMIT;'],
       };
     case 'mysql':
       return {
-        prefix: ['START TRANSACTION;', ''],
-        suffix: ['', 'COMMIT;'],
+        prefix: ['START TRANSACTION;'],
+        suffix: ['COMMIT;'],
       };
     default:
       return {
@@ -149,7 +149,8 @@ function buildFileHeader(
 }
 
 export interface SqlFileArtifact {
-  fileName: string;
+  orderIndex: number;
+  tableName: string;
   content: string;
 }
 
@@ -171,13 +172,13 @@ export function buildInsertFileArtifacts(
   const includeTransaction = options?.includeTransaction ?? true;
   const totalRecords = tableRows.reduce((sum, tableData) => sum + tableData.rows.length, 0);
   return tableRows.map((tableData, index) => {
-    const order = String(index + 1).padStart(3, '0');
     const insertSql = buildInsertSql(tableData, sqlProvider);
     const transactionWrapper = includeTransaction
       ? buildTransactionWrapper(sqlProvider)
       : { prefix: [], suffix: [] };
     return {
-      fileName: `${order}_${tableData.tableName}.sql`,
+      orderIndex: index,
+      tableName: tableData.tableName,
       content: [
         includeHeader ? buildFileHeader(createdAt, totalRecords, sqlProvider) : '',
         ...transactionWrapper.prefix,
@@ -188,18 +189,4 @@ export function buildInsertFileArtifacts(
         .join('\n'),
     };
   });
-}
-
-export function writeInsertFiles(tableRows: GeneratedTableRows[], outputDir: string): string[] {
-  fs.mkdirSync(outputDir, { recursive: true });
-  const files: string[] = [];
-
-  const artifacts = buildInsertFileArtifacts(tableRows);
-  artifacts.forEach((artifact) => {
-    const fullPath = path.join(outputDir, artifact.fileName);
-    fs.writeFileSync(fullPath, artifact.content, 'utf-8');
-    files.push(fullPath);
-  });
-
-  return files;
 }
