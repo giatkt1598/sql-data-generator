@@ -1,6 +1,9 @@
 import fs from 'fs';
 import path from 'path';
-import { buildDatabaseSchemaFromClassification, parseClassificationJson } from './ai/classificationLoader';
+import {
+  buildDatabaseSchemaFromClassification,
+  parseClassificationJson,
+} from './ai/classificationLoader';
 import { buildClassificationPrompt } from './ai/promptBuilder';
 import { buildDefaultColumnRules } from './schema/columnRules';
 import { resolveTableOrder } from './schema/dependencyResolver';

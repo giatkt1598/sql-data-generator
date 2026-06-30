@@ -73,9 +73,7 @@ function buildInsertSql(tableData: GeneratedTableRows, sqlProvider?: SqlProvider
   const rowChunks = chunkRows(tableData.rows, MAX_ROWS_PER_INSERT);
   const insertStatements = rowChunks.map((rowChunk) => {
     const valueLines = rowChunk.map((row) => {
-      const values = columns
-        .map((column) => sqlValue(row[column] ?? null, sqlProvider))
-        .join(', ');
+      const values = columns.map((column) => sqlValue(row[column] ?? null, sqlProvider)).join(', ');
       return `(${values})`;
     });
 
@@ -85,7 +83,7 @@ function buildInsertSql(tableData: GeneratedTableRows, sqlProvider?: SqlProvider
     ].join('\n');
   });
 
-  return [...insertStatements, ''].join('');
+  return insertStatements.join('\n\n') + '\n';
 }
 
 export function buildTransactionWrapper(sqlProvider?: SqlProvider | ''): {
