@@ -331,7 +331,10 @@ export function SchemaRelationshipsAccordion() {
   useEffect(() => {
     const calculateEstimate = () => {
       const currentText =
-        textareaRef.current?.value ?? lastTextRef.current ?? context.form.schemaRelationshipsJson ?? '';
+        textareaRef.current?.value ??
+        lastTextRef.current ??
+        context.form.schemaRelationshipsJson ??
+        '';
       lastTextRef.current = currentText;
       setEstimate(estimateRelationshipRows(currentText, context.designerModel));
       const nextVisualization = parseRelationshipsJson(currentText);
@@ -354,7 +357,7 @@ export function SchemaRelationshipsAccordion() {
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [context.designerModel]);
+  }, [context.designerModel, context.form.schemaRelationshipsJson, setEdges, setNodes]);
 
   const estimateTooltip = estimate
     ? estimate.error
@@ -422,9 +425,7 @@ export function SchemaRelationshipsAccordion() {
                 <Typography color="error.main">{visualization.error}</Typography>
               )}
               {!visualization.error && visualization.roots.length === 0 && (
-                <Typography color="text.secondary">
-                  No relationship data to visualize.
-                </Typography>
+                <Typography color="text.secondary">No relationship data to visualize.</Typography>
               )}
               {!visualization.error && visualization.roots.length > 0 && (
                 <Box sx={{ height: 420 }}>

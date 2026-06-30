@@ -51,7 +51,6 @@ function runGenerate(): void {
     throw new Error('Missing required args. Need --schema --classification --out.');
   }
 
-  const schemaSql = fs.readFileSync(schemaPath, 'utf-8');
   const classificationText = fs.readFileSync(classificationPath, 'utf-8');
 
   const classification = parseClassificationJson(classificationText);

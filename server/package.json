@@ -10,7 +10,7 @@
     "build:prompt": "ts-node src/cli.ts build-prompt",
     "generate:data": "ts-node src/cli.ts generate",
     "build": "tsup",
-    "lint": "eslint . --ext .ts --fix",
+    "lint": "eslint . --fix",
     "format": "prettier --write .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

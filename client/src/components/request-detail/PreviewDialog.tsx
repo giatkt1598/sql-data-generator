@@ -1,18 +1,20 @@
 import { Box, Button, Dialog, DialogContent, DialogTitle, Stack, Typography } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useMockDataSchemaDetailContext } from './MockDataSchemaDetailContext';
 
 export function PreviewDialog() {
   const context = useMockDataSchemaDetailContext();
   const [copied, setCopied] = useState(false);
+  const [prevOpen, setPrevOpen] = useState(context.previewOpen);
 
-  useEffect(() => {
+  if (context.previewOpen !== prevOpen) {
+    setPrevOpen(context.previewOpen);
     if (!context.previewOpen) {
       setCopied(false);
     }
-  }, [context.previewOpen]);
+  }
 
   async function handleCopy() {
     await context.handleCopyPreview();

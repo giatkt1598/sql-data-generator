@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Button,
   Card,
@@ -109,20 +109,20 @@ export function MockDataSchemasPage(props: MockDataSchemasPageProps) {
     [mockDataSchemas],
   );
 
-  async function reloadMockDataSchemas() {
+  const reloadMockDataSchemas = useCallback(async () => {
     if (!projectId) {
       return;
     }
     const data = await getMockDataSchemas(projectId);
     setMockDataSchemas(data);
-  }
+  }, [projectId]);
 
   useEffect(() => {
     if (!projectId) {
       return;
     }
     void reloadMockDataSchemas();
-  }, [projectId]);
+  }, [projectId, reloadMockDataSchemas]);
 
   function openEditDialog(mockDataSchema: MockDataSchemaEntity) {
     setEditingMockDataSchema(mockDataSchema);
@@ -276,7 +276,9 @@ export function MockDataSchemasPage(props: MockDataSchemasPageProps) {
                   }
                 >
                   <TableCell>{mockDataSchema.name}</TableCell>
-                  <TableCell>{formatTableNames(getTableNames(mockDataSchema.classificationJson))}</TableCell>
+                  <TableCell>
+                    {formatTableNames(getTableNames(mockDataSchema.classificationJson))}
+                  </TableCell>
                   <TableCell>{renderDateTimeWithRelative(mockDataSchema.createdAt)}</TableCell>
                   <TableCell>{renderDateTimeWithRelative(mockDataSchema.updatedAt)}</TableCell>
                   <TableCell align="right">
@@ -339,8 +341,7 @@ export function MockDataSchemasPage(props: MockDataSchemasPageProps) {
         <DialogTitle>Delete Mock Data Schema?</DialogTitle>
         <DialogContent>
           <Typography>
-            Do you want to delete{' '}
-            <strong>{deleteTarget?.name ?? 'this mock data schema'}</strong>?
+            Do you want to delete <strong>{deleteTarget?.name ?? 'this mock data schema'}</strong>?
           </Typography>
         </DialogContent>
         <DialogActions>

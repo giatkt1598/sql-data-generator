@@ -29,9 +29,14 @@ export function SchemasAccordion() {
     [context.designerModel],
   );
 
+  // Clear visibleTableNames during render if no designer model or tables
+  const hasDesignerTables = Boolean(context.designerModel && tableNames.length > 0);
+  if (!hasDesignerTables && visibleTableNames.size > 0) {
+    setVisibleTableNames(new Set());
+  }
+
   useEffect(() => {
     if (!context.designerModel || tableNames.length === 0) {
-      setVisibleTableNames(new Set());
       return;
     }
 
@@ -154,14 +159,14 @@ export function SchemasAccordion() {
                     table={table}
                     tableIndex={tableIndex}
                     columnRules={context.columnRules}
-                  columnOrder={context.columnOrder}
-                  dragState={dragState}
-                  onDragStateChange={setDragState}
-                  reorderColumns={context.reorderColumns}
-                  addField={context.addField}
-                  deleteField={context.deleteField}
-                />
-              ))}
+                    columnOrder={context.columnOrder}
+                    dragState={dragState}
+                    onDragStateChange={setDragState}
+                    reorderColumns={context.reorderColumns}
+                    addField={context.addField}
+                    deleteField={context.deleteField}
+                  />
+                ))}
               </Stack>
             </Box>
 

@@ -27,7 +27,9 @@ export async function getSupportedLocales(): Promise<SupportedLocaleDefinition[]
 }
 
 export async function getCustomListTypes(): Promise<CustomListTypeDefinition[]> {
-  const response = await httpClient.get<{ items: CustomListTypeDefinition[] }>('/custom-list-types');
+  const response = await httpClient.get<{ items: CustomListTypeDefinition[] }>(
+    '/custom-list-types',
+  );
   return response.data.items;
 }
 

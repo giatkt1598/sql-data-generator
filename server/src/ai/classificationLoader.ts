@@ -122,8 +122,8 @@ export function parseClassificationJson(jsonText: string): AiClassificationResul
   };
   const tableNames = new Set(Object.keys(result.tables));
 
-  for (const [tableName, tableValue] of Object.entries(result.tables)) {
-    for (const [columnName, columnValue] of Object.entries(tableValue.columns)) {
+  for (const [, tableValue] of Object.entries(result.tables)) {
+    for (const [, columnValue] of Object.entries(tableValue.columns)) {
       if (!columnValue.references) {
         continue;
       }

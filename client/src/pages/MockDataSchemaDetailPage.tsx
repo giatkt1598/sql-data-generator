@@ -88,6 +88,7 @@ function buildSavedSnapshot(
 }
 
 export function MockDataSchemaDetailPage(props: MockDataSchemaDetailPageProps) {
+  const { setLoading, setError } = props;
   const { projectId, requestId } = useParams();
   const navigate = useNavigate();
   const [request, setRequest] = useState<MockDataSchemaEntity | null>(null);
@@ -242,7 +243,7 @@ export function MockDataSchemaDetailPage(props: MockDataSchemaDetailPageProps) {
 
     void (async () => {
       try {
-        props.setLoading(true);
+        setLoading(true);
         const items = await getMockDataSchemas(projectId);
         const found = items.find((item) => item.id === requestId) ?? null;
         setRequest(found);
@@ -306,13 +307,13 @@ export function MockDataSchemaDetailPage(props: MockDataSchemaDetailPageProps) {
           );
         }
       } catch (exception) {
-        props.setError(getErrorMessage(exception, 'Failed to load mock data schema detail.'));
+        setError(getErrorMessage(exception, 'Failed to load mock data schema detail.'));
         console.error(exception);
       } finally {
-        props.setLoading(false);
+        setLoading(false);
       }
     })();
-  }, [projectId, requestId]);
+  }, [projectId, requestId, setError, setLoading]);
 
   useEffect(() => {
     document.title = hasUnsavedChanges
@@ -720,7 +721,9 @@ export function MockDataSchemaDetailPage(props: MockDataSchemaDetailPageProps) {
     setColumnOrder((prev) => {
       const currentOrder =
         prev[tableName] ??
-        designerModel?.tables.find((tableItem) => tableItem.name === tableName)?.columns.map((c) => c.name) ??
+        designerModel?.tables
+          .find((tableItem) => tableItem.name === tableName)
+          ?.columns.map((c) => c.name) ??
         Object.keys(table.columns).filter((columnName) => columnName !== nextColumnName);
 
       return {
@@ -788,7 +791,9 @@ export function MockDataSchemaDetailPage(props: MockDataSchemaDetailPageProps) {
     setColumnOrder((prev) => {
       const currentOrder =
         prev[tableName] ??
-        designerModel?.tables.find((tableItem) => tableItem.name === tableName)?.columns.map((c) => c.name) ??
+        designerModel?.tables
+          .find((tableItem) => tableItem.name === tableName)
+          ?.columns.map((c) => c.name) ??
         Object.keys(table.columns);
 
       return {
