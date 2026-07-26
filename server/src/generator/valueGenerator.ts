@@ -236,6 +236,19 @@ function randomDummyImageUrl(localeFaker: Faker): string {
   return `https://dummyimage.com/${width}x${height}`;
 }
 
+function randomJsonValue(localeFaker: Faker): string {
+  return JSON.stringify({
+    id: localeFaker.string.uuid(),
+    name: localeFaker.person.fullName(),
+    email: localeFaker.internet.email(),
+    active: localeFaker.datatype.boolean(),
+    tags: [
+      localeFaker.commerce.productAdjective(),
+      localeFaker.commerce.productAdjective(),
+    ],
+  });
+}
+
 function randomIpv4Cidr(localeFaker: Faker): string {
   return `${localeFaker.internet.ipv4()}/${localeFaker.number.int({ min: 8, max: 32 })}`;
 }
@@ -848,6 +861,8 @@ function generateScalarValue(
         });
       }
       return localeFaker.lorem.words(textLength);
+    case 'json':
+      return randomJsonValue(localeFaker);
     case 'unknown':
       return null;
     default:

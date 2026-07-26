@@ -101,6 +101,12 @@ export const DATA_TYPE_DEFINITIONS: DataTypeDefinition[] = [
     groups: ['Basic'],
   },
   {
+    value: 'json',
+    displayName: 'JSON',
+    description: 'Valid JSON object.\nExample: {"name":"Alice","active":true}',
+    groups: ['Basic', 'IT'],
+  },
+  {
     value: 'url',
     displayName: 'URL',
     description: 'Website URL.\nExample: https://example.com/product/1',
@@ -510,6 +516,8 @@ export const SQL_TYPE_DEFAULT_CLASSIFICATION: Record<string, SemanticDataType> =
   text: 'text',
   nchar: 'text',
   nvarchar: 'text',
+  json: 'json',
+  jsonb: 'json',
 };
 
 export function normalizeSqlType(dbType: string): string {

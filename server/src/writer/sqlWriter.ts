@@ -32,7 +32,7 @@ function resolveToolVersion(): string {
 
 const TOOL_VERSION = resolveToolVersion();
 
-function sqlBooleanValue(value: boolean, sqlProvider?: SqlProvider | ''): string {
+export function sqlBooleanValue(value: boolean, sqlProvider?: SqlProvider | ''): string {
   switch (sqlProvider) {
     case 'postgres':
     case 'mysql':

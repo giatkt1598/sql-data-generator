@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "types": ["jest"],
     "ignoreDeprecations": "6.0",
     "target": "ES2022",
     "module": "CommonJS",

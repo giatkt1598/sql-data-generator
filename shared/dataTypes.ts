@@ -78,6 +78,7 @@ export const SEMANTIC_DATA_TYPES = [
   'boolean',
   'number',
   'text',
+  'json',
 ] as const;
 
 export type SemanticDataType = (typeof SEMANTIC_DATA_TYPES)[number];
