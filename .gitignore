@@ -1,5 +1,5 @@
 node_modules
 dist
-server/data
-server/data-bak
-server/coverage
+coverage
+apps/server/data
+apps/server/data-bak

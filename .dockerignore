@@ -2,6 +2,6 @@
 **/dist
 **/.git
 **/.DS_Store
-server/data
-server/data-bak
+apps/server/data
+apps/server/data-bak
 client/.vite

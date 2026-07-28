@@ -1,5 +1,5 @@
 {
-  "name": "server",
+  "name": "@sql-data-generator/server",
   "version": "1.0.0",
   "description": "",
   "main": "dist/index.js",
@@ -38,6 +38,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@sql-data-generator/shared": "1.0.0",
     "@faker-js/faker": "^10.3.0",
     "cors": "^2.8.6",
     "dayjs": "^1.11.19",

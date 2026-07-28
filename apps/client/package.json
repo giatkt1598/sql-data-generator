@@ -1,5 +1,5 @@
 {
-  "name": "client",
+  "name": "@sql-data-generator/client",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -11,6 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@sql-data-generator/shared": "1.0.0",
     "@dagrejs/dagre": "^1.0.4",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",

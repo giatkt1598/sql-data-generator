@@ -3,28 +3,68 @@ import {
   SEMANTIC_DATA_TYPES,
   type DataTypeGroup,
   type SemanticDataType,
-} from '../../../shared/dataTypes';
+} from '@sql-data-generator/shared/dataTypes';
 
-export interface ProjectEntity {
-  id: string;
-  name: string;
-  description: string;
-  createdAt: string;
-  updatedAt: string;
-}
+export type SqlDialect = 'postgres' | 'mysql' | 'sqlserver' | 'generic';
+export type SqlProvider = Exclude<SqlDialect, 'generic'>;
 
 export type DataTypeCatalogValue = SemanticDataType | 'customList';
 export { DATA_TYPE_GROUPS, SEMANTIC_DATA_TYPES };
 export type { DataTypeGroup, SemanticDataType };
 
+export interface ColumnSchema {
+  name: string;
+  dbType: string;
+  nullable: boolean;
+  isPrimaryKey: boolean;
+}
+
+export interface ForeignKeySchema {
+  columns: string[];
+  referencedTable: string;
+  referencedColumns: string[];
+}
+
+export interface TableSchema {
+  name: string;
+  columns: ColumnSchema[];
+  primaryKeyColumns: string[];
+  foreignKeys: ForeignKeySchema[];
+}
+
+export interface DatabaseSchema {
+  tables: TableSchema[];
+}
+
+export interface ColumnClassification {
+  semanticType: SemanticDataType;
+  dbType: string | null;
+  nullable: boolean;
+  isPrimaryKey: boolean;
+  references: {
+    tableName: string;
+    columnName: string;
+  } | null;
+}
+
+export interface TableClassification {
+  columns: Record<string, ColumnClassification>;
+}
+
+export interface AiClassificationResult {
+  tables: Record<string, TableClassification>;
+}
+
+export interface ColumnReference {
+  tableName: string;
+  columnName: string;
+}
+
 export interface ColumnGenerationRule {
   kind: 'semantic' | 'reference' | 'customList';
   fieldName?: string;
   semanticType?: SemanticDataType;
-  reference?: {
-    tableName: string;
-    columnName: string;
-  };
+  reference?: ColumnReference;
   customTypeName?: string;
   customValues?: Array<string | number | boolean>;
   blankPercentage?: number;
@@ -79,54 +119,11 @@ export interface ColumnGenerationRule {
 export type TableColumnRules = Record<string, Record<string, ColumnGenerationRule>>;
 export type TableColumnOrder = Record<string, string[]>;
 
-export interface MockDataSchemaEntity {
-  id: string;
-  projectId: string;
-  name: string;
-  schemaSql: string;
-  classificationJson: string;
-  locale?: string;
-  sqlProvider?: 'sqlserver' | 'postgres' | 'mysql' | '';
-  columnRules?: TableColumnRules;
-  columnOrder?: TableColumnOrder;
-  schemaRelationshipsJson?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface ColumnDesignerModel {
-  tables: Array<{
-    name: string;
-    columns: Array<{
-      name: string;
-      dbType: string | null;
-      nullable: boolean;
-      isPrimaryKey: boolean;
-    }>;
-  }>;
-  columnRules: TableColumnRules;
-}
-
-export interface PreviewResult {
-  preview: string;
-  totalLines: number;
-}
-
 export interface DataTypeDefinition {
   value: DataTypeCatalogValue;
   displayName: string;
   description: string;
   groups: DataTypeGroup[];
-}
-
-export interface SupportedLocaleDefinition {
-  value: string;
-  label: string;
-}
-
-export interface SqlProviderDefinition {
-  value: 'sqlserver' | 'postgres' | 'mysql';
-  label: string;
 }
 
 export interface CustomListTypeDefinition {
@@ -135,4 +132,25 @@ export interface CustomListTypeDefinition {
   values: Array<string | number | boolean>;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface SchemaRelationshipNode {
+  count?: number;
+  distribution?: number[];
+  [childTableName: string]: SchemaRelationshipNode | number[] | number | undefined;
+}
+
+export type SchemaRelationshipsRoot = Record<string, SchemaRelationshipNode>;
+export type SchemaRelationshipsConfig = SchemaRelationshipsRoot[];
+
+export interface SqlRawValue {
+  kind: 'sqlRaw';
+  value: string;
+}
+
+export type GeneratedValue = string | number | boolean | null | SqlRawValue;
+
+export interface GeneratedTableRows {
+  tableName: string;
+  rows: Record<string, GeneratedValue>[];
 }

@@ -1,0 +1,10 @@
+{
+  "name": "@sql-data-generator/shared",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    "./dataTypes": "./dataTypes.ts"
+  }
+}

@@ -10,4 +10,5 @@ export default defineConfig({
   clean: true,
   splitting: false,
   minify: false,
+  noExternal: ['@sql-data-generator/shared'],
 });
