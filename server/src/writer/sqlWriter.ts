@@ -89,39 +89,52 @@ function buildInsertSql(tableData: GeneratedTableRows, sqlProvider?: SqlProvider
   return insertStatements.join('\n\n');
 }
 
-export function buildTransactionWrapper(sqlProvider?: SqlProvider | ''): {
-  prefix: string[];
-  suffix: string[];
-} {
+function indentSql(sql: string, spaces: number): string {
+  const indentation = ' '.repeat(spaces);
+  return sql
+    .split('\n')
+    .map((line) => (line.length > 0 ? `${indentation}${line}` : line))
+    .join('\n');
+}
+
+export function wrapSqlInTransaction(sql: string, sqlProvider?: SqlProvider | ''): string {
+  if (!sql.trim()) {
+    return sql;
+  }
+
   switch (sqlProvider) {
     case 'sqlserver':
-      return {
-        prefix: ['SET XACT_ABORT ON;', 'BEGIN TRY', 'BEGIN TRANSACTION;', ''],
-        suffix: [
-          '',
-          'COMMIT TRANSACTION;',
-          'END TRY',
-          'BEGIN CATCH',
-          'IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;',
-          'THROW;',
-          'END CATCH;',
-        ],
-      };
+      return [
+        'SET XACT_ABORT ON;',
+        'BEGIN TRY',
+        'BEGIN TRANSACTION;',
+        '',
+        sql,
+        '',
+        'COMMIT TRANSACTION;',
+        'END TRY',
+        'BEGIN CATCH',
+        'IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;',
+        'THROW;',
+        'END CATCH;',
+      ].join('\n');
     case 'postgres':
-      return {
-        prefix: ['BEGIN;'],
-        suffix: ['COMMIT;'],
-      };
+      return [
+        'DO $$',
+        'BEGIN',
+        '    BEGIN',
+        indentSql(sql, 8),
+        '',
+        '    EXCEPTION',
+        '        WHEN OTHERS THEN',
+        "            RAISE EXCEPTION 'ERROR: %', SQLERRM;",
+        '    END;',
+        'END $$;',
+      ].join('\n');
     case 'mysql':
-      return {
-        prefix: ['START TRANSACTION;'],
-        suffix: ['COMMIT;'],
-      };
+      return ['START TRANSACTION;', '', sql, '', 'COMMIT;'].join('\n');
     default:
-      return {
-        prefix: [],
-        suffix: [],
-      };
+      return sql;
   }
 }
 
@@ -176,17 +189,13 @@ export function buildInsertFileArtifacts(
   const totalRecords = tableRows.reduce((sum, tableData) => sum + tableData.rows.length, 0);
   return tableRows.map((tableData, index) => {
     const insertSql = buildInsertSql(tableData, sqlProvider);
-    const transactionWrapper = includeTransaction
-      ? buildTransactionWrapper(sqlProvider)
-      : { prefix: [], suffix: [] };
+    const content = includeTransaction ? wrapSqlInTransaction(insertSql, sqlProvider) : insertSql;
     return {
       orderIndex: index,
       tableName: tableData.tableName,
       content: [
         includeHeader ? buildFileHeader(createdAt, totalRecords, sqlProvider) : '',
-        ...transactionWrapper.prefix,
-        insertSql,
-        ...transactionWrapper.suffix,
+        content,
       ]
         .filter((part) => part.length > 0)
         .join('\n'),

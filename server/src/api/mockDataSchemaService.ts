@@ -18,7 +18,7 @@ import { resolveTableOrder } from '../schema/dependencyResolver';
 import {
   buildGeneratedSqlHeader,
   buildInsertFileArtifacts,
-  buildTransactionWrapper,
+  wrapSqlInTransaction,
   SqlFileArtifact,
 } from '../writer/sqlWriter';
 import { AppStorageState, MockDataSchemaEntity, ProjectEntity } from './models';
@@ -484,16 +484,15 @@ export class MockDataSchemaService {
       totalRecords,
       input.sqlProvider,
     );
-    const transactionWrapper = buildTransactionWrapper(input.sqlProvider);
-    const fullText = [
-      header,
-      ...transactionWrapper.prefix,
-      ...files.map(
+    const combinedInsertSql = files
+      .map(
         (file) =>
           `-- ${(file.orderIndex + 1).toString().padStart(3, '0')}: ${file.tableName}\n${file.content}`,
-      ),
-      ...transactionWrapper.suffix,
-    ].join('\n\n');
+      )
+      .join('\n\n');
+    const fullText = [header, wrapSqlInTransaction(combinedInsertSql, input.sqlProvider)]
+      .filter((part) => part.length > 0)
+      .join('\n\n');
     const lines = fullText.split(/\r?\n/);
 
     return {
