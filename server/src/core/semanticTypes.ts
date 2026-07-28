@@ -41,6 +41,12 @@ export const DATA_TYPE_DEFINITIONS: DataTypeDefinition[] = [
     groups: ['Basic'],
   },
   {
+    value: 'sequenceDateTime',
+    displayName: 'Sequence Date Time',
+    description: 'Incrementing date and time sequence.\nExample: 2026-01-01 00:00:00, 00:01:00',
+    groups: ['Basic'],
+  },
+  {
     value: 'dateTime',
     displayName: 'Date Time',
     description: 'Date or datetime value.\nExample: 2025-03-08',

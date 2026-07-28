@@ -658,6 +658,17 @@ function generateScalarValue(
       const repeat = Math.max(1, Math.floor(rule.sequenceOptions?.repeat ?? 1));
       return startAt + Math.floor(rowIndex / repeat) * step;
     }
+    case 'sequenceDateTime': {
+      const configuredStart = rule.sequenceDateTimeOptions?.start?.trim();
+      const start =
+        configuredStart && dayjs(configuredStart).isValid()
+          ? dayjs(configuredStart)
+          : dayjs().subtract(1, 'month').startOf('day');
+      const step = rule.sequenceDateTimeOptions?.step ?? 1;
+      const unit = rule.sequenceDateTimeOptions?.unit ?? 'days';
+      const format = rule.sequenceDateTimeOptions?.format?.trim() || 'yyyy-MM-dd HH:mm:ss';
+      return start.add(rowIndex * step, unit).format(toDayjsFormat(format));
+    }
     case 'appBundleId':
       return randomAppBundleId(localeFaker);
     case 'appName':

@@ -71,6 +71,12 @@ export interface MockDataSchemaDetailContextValue {
     key: 'startAt' | 'step' | 'repeat',
     value: string,
   ) => void;
+  onSequenceDateTimeOptionChange: (
+    tableName: string,
+    columnName: string,
+    key: 'start' | 'step' | 'unit' | 'format',
+    value: string,
+  ) => void;
   onDigitSequenceOptionChange: (
     tableName: string,
     columnName: string,

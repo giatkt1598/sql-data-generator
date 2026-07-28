@@ -5,6 +5,7 @@ export const SEMANTIC_DATA_TYPES = [
   'formula',
   'regularExpression',
   'sequence',
+  'sequenceDateTime',
   'appBundleId',
   'appName',
   'appVersion',

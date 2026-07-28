@@ -106,6 +106,8 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
   const isDateTimeRule = rule?.kind === 'semantic' && rule.semanticType === 'dateTime';
   const isTimeRule = rule?.kind === 'semantic' && rule.semanticType === 'time';
   const isSequenceRule = rule?.kind === 'semantic' && rule.semanticType === 'sequence';
+  const isSequenceDateTimeRule =
+    rule?.kind === 'semantic' && rule.semanticType === 'sequenceDateTime';
   const isDigitSequenceRule = rule?.kind === 'semantic' && rule.semanticType === 'digitSequence';
   const isFormulaRule = rule?.kind === 'semantic' && rule.semanticType === 'formula';
   const isRegularExpressionRule =
@@ -133,6 +135,12 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
     startAt: 1,
     step: 1,
     repeat: 1,
+  };
+  const sequenceDateTimeOptions = rule?.sequenceDateTimeOptions ?? {
+    start: '',
+    step: 1,
+    unit: 'days' as const,
+    format: 'yyyy-MM-dd HH:mm:ss',
   };
   const digitSequenceOptions = rule?.digitSequenceOptions ?? {
     format: '',
@@ -384,6 +392,80 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
               context.onSequenceOptionChange(tableName, column.name, 'repeat', event.target.value)
             }
             sx={{ width: 100 }}
+          />
+        </Stack>
+      )}
+      {isSequenceDateTimeRule && (
+        <Stack direction="row" spacing={1}>
+          <TextField
+            size="small"
+            label="Start Date"
+            type="datetime-local"
+            defaultValue={sequenceDateTimeOptions.start}
+            onBlur={(event) =>
+              context.onSequenceDateTimeOptionChange(
+                tableName,
+                column.name,
+                'start',
+                event.target.value,
+              )
+            }
+            sx={{ width: 205 }}
+            InputLabelProps={{ shrink: true }}
+          />
+          <TextField
+            size="small"
+            label="Step"
+            type="number"
+            defaultValue={sequenceDateTimeOptions.step}
+            onBlur={(event) =>
+              context.onSequenceDateTimeOptionChange(
+                tableName,
+                column.name,
+                'step',
+                event.target.value,
+              )
+            }
+            sx={{ width: 100 }}
+          />
+          <FormControl size="small" sx={{ minWidth: 125 }}>
+            <Select
+              value={sequenceDateTimeOptions.unit}
+              onChange={(event) =>
+                context.onSequenceDateTimeOptionChange(
+                  tableName,
+                  column.name,
+                  'unit',
+                  event.target.value,
+                )
+              }
+            >
+              <MenuItem value="seconds">Seconds</MenuItem>
+              <MenuItem value="minutes">Minutes</MenuItem>
+              <MenuItem value="hours">Hours</MenuItem>
+              <MenuItem value="days">Days</MenuItem>
+            </Select>
+          </FormControl>
+          <Autocomplete
+            freeSolo
+            options={dateTimeFormats}
+            defaultValue={sequenceDateTimeOptions.format}
+            sx={{ minWidth: 220 }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                size="small"
+                label="Format"
+                onBlur={(event) =>
+                  context.onSequenceDateTimeOptionChange(
+                    tableName,
+                    column.name,
+                    'format',
+                    event.target.value,
+                  )
+                }
+              />
+            )}
           />
         </Stack>
       )}

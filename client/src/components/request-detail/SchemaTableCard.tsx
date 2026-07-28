@@ -92,6 +92,12 @@ export function SchemaTableCard(props: {
                   step: 1,
                   repeat: 1,
                 },
+                sequenceDateTimeOptions: rule?.sequenceDateTimeOptions ?? {
+                  start: '',
+                  step: 1,
+                  unit: 'days',
+                  format: 'yyyy-MM-dd HH:mm:ss',
+                },
                 digitSequenceOptions: rule?.digitSequenceOptions ?? {
                   format: '',
                 },

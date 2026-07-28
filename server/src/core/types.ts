@@ -88,6 +88,12 @@ export interface ColumnGenerationRule {
     step?: number;
     repeat?: number;
   };
+  sequenceDateTimeOptions?: {
+    start?: string;
+    step?: number;
+    unit?: 'seconds' | 'minutes' | 'hours' | 'days';
+    format?: string;
+  };
   digitSequenceOptions?: {
     format?: string;
   };

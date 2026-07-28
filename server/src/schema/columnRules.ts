@@ -136,6 +136,34 @@ function normalizeSequenceOptions(
   return { startAt, step, repeat };
 }
 
+function normalizeSequenceDateTimeOptions(
+  rule: ColumnGenerationRule | undefined,
+  fallback:
+    | { start?: string; step?: number; unit?: 'seconds' | 'minutes' | 'hours' | 'days'; format?: string }
+    | undefined,
+) {
+  const start =
+    typeof rule?.sequenceDateTimeOptions?.start === 'string' &&
+    rule.sequenceDateTimeOptions.start.trim()
+      ? rule.sequenceDateTimeOptions.start
+      : (fallback?.start ?? dayjs().subtract(1, 'month').startOf('day').format('YYYY-MM-DDTHH:mm'));
+  const step = normalizeSequenceOptionValue(rule?.sequenceDateTimeOptions?.step, fallback?.step ?? 1);
+  const unit =
+    rule?.sequenceDateTimeOptions?.unit === 'seconds' ||
+    rule?.sequenceDateTimeOptions?.unit === 'minutes' ||
+    rule?.sequenceDateTimeOptions?.unit === 'hours' ||
+    rule?.sequenceDateTimeOptions?.unit === 'days'
+      ? rule.sequenceDateTimeOptions.unit
+      : (fallback?.unit ?? 'days');
+  const format =
+    typeof rule?.sequenceDateTimeOptions?.format === 'string' &&
+    rule.sequenceDateTimeOptions.format.trim()
+      ? rule.sequenceDateTimeOptions.format
+      : (fallback?.format ?? 'yyyy-MM-dd HH:mm:ss');
+
+  return { start, step, unit, format };
+}
+
 function normalizeDigitSequenceOptions(
   rule: ColumnGenerationRule | undefined,
   fallback: { format?: string } | undefined,
@@ -265,6 +293,12 @@ export function buildDefaultColumnRules(
           step: 1,
           repeat: 1,
         },
+        sequenceDateTimeOptions: {
+          start: dayjs().subtract(1, 'month').startOf('day').format('YYYY-MM-DDTHH:mm'),
+          step: 1,
+          unit: 'days',
+          format: 'yyyy-MM-dd HH:mm:ss',
+        },
         digitSequenceOptions: {
           format: '',
         },
@@ -357,6 +391,10 @@ export function sanitizeColumnRules(
             candidate,
             fallbackRules[table.name][column.name].sequenceOptions,
           ),
+          sequenceDateTimeOptions: normalizeSequenceDateTimeOptions(
+            candidate,
+            fallbackRules[table.name][column.name].sequenceDateTimeOptions,
+          ),
           digitSequenceOptions: normalizeDigitSequenceOptions(
             candidate,
             fallbackRules[table.name][column.name].digitSequenceOptions,
@@ -412,6 +450,10 @@ export function sanitizeColumnRules(
               candidate,
               fallbackRules[table.name][column.name].sequenceOptions,
             ),
+            sequenceDateTimeOptions: normalizeSequenceDateTimeOptions(
+              candidate,
+              fallbackRules[table.name][column.name].sequenceDateTimeOptions,
+            ),
             digitSequenceOptions: normalizeDigitSequenceOptions(
               candidate,
               fallbackRules[table.name][column.name].digitSequenceOptions,
@@ -461,6 +503,10 @@ export function sanitizeColumnRules(
           sequenceOptions: normalizeSequenceOptions(
             candidate,
             fallbackRules[table.name][column.name].sequenceOptions,
+          ),
+          sequenceDateTimeOptions: normalizeSequenceDateTimeOptions(
+            candidate,
+            fallbackRules[table.name][column.name].sequenceDateTimeOptions,
           ),
           digitSequenceOptions: normalizeDigitSequenceOptions(
             candidate,
@@ -512,6 +558,10 @@ export function sanitizeColumnRules(
         sequenceOptions: normalizeSequenceOptions(
           candidate,
           fallbackRules[table.name][column.name].sequenceOptions,
+        ),
+        sequenceDateTimeOptions: normalizeSequenceDateTimeOptions(
+          candidate,
+          fallbackRules[table.name][column.name].sequenceDateTimeOptions,
         ),
         digitSequenceOptions: normalizeDigitSequenceOptions(
           candidate,

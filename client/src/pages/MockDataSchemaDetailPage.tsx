@@ -70,6 +70,16 @@ function toLocalDateInputValue(value: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+function toLocalOneMonthAgoDateInputValue(value: Date): string {
+  const result = new Date(value);
+  const originalDay = result.getDate();
+  result.setDate(1);
+  result.setMonth(result.getMonth() - 1);
+  const lastDayOfMonth = new Date(result.getFullYear(), result.getMonth() + 1, 0).getDate();
+  result.setDate(Math.min(originalDay, lastDayOfMonth));
+  return toLocalDateInputValue(result);
+}
+
 function buildSavedSnapshot(
   form: MockDataSchemaDetailForm,
   columnRules: TableColumnRules,
@@ -127,6 +137,10 @@ export function MockDataSchemaDetailPage(props: MockDataSchemaDetailPageProps) {
     return toLocalDateInputValue(value);
   }, []);
   const defaultDateTimeEnd = useMemo(() => toLocalDateInputValue(new Date()), []);
+  const defaultSequenceDateTimeStart = useMemo(
+    () => `${toLocalOneMonthAgoDateInputValue(new Date())}T00:00`,
+    [],
+  );
   const defaultRuleOptions = useMemo(
     () => ({
       numberOptions: {
@@ -149,6 +163,12 @@ export function MockDataSchemaDetailPage(props: MockDataSchemaDetailPageProps) {
         step: 1,
         repeat: 1,
       },
+      sequenceDateTimeOptions: {
+        start: defaultSequenceDateTimeStart,
+        step: 1,
+        unit: 'days' as const,
+        format: 'yyyy-MM-dd HH:mm:ss',
+      },
       digitSequenceOptions: {
         format: '',
       },
@@ -167,7 +187,7 @@ export function MockDataSchemaDetailPage(props: MockDataSchemaDetailPageProps) {
         unit: 'words' as const,
       },
     }),
-    [defaultDateTimeEnd, defaultDateTimeStart],
+    [defaultDateTimeEnd, defaultDateTimeStart, defaultSequenceDateTimeStart],
   );
 
   function parseClassificationJsonOrNull(rawJson: string): LocalClassificationResult | null {
@@ -213,6 +233,8 @@ export function MockDataSchemaDetailPage(props: MockDataSchemaDetailPageProps) {
       dateTimeOptions: rule?.dateTimeOptions ?? fallbackRule.dateTimeOptions,
       timeOptions: rule?.timeOptions ?? fallbackRule.timeOptions,
       sequenceOptions: rule?.sequenceOptions ?? fallbackRule.sequenceOptions,
+      sequenceDateTimeOptions:
+        rule?.sequenceDateTimeOptions ?? fallbackRule.sequenceDateTimeOptions,
       digitSequenceOptions: rule?.digitSequenceOptions ?? fallbackRule.digitSequenceOptions,
       formulaOptions: rule?.formulaOptions ?? fallbackRule.formulaOptions,
       regularExpressionOptions:
@@ -1123,6 +1145,41 @@ export function MockDataSchemaDetailPage(props: MockDataSchemaDetailPageProps) {
     });
   }
 
+  function onSequenceDateTimeOptionChange(
+    tableName: string,
+    columnName: string,
+    key: 'start' | 'step' | 'unit' | 'format',
+    value: string,
+  ) {
+    const fallbackRule = mergeRuleDefaults(
+      columnRules[tableName]?.[columnName],
+      columnName,
+      'sequenceDateTime',
+    );
+    const currentOptions = fallbackRule.sequenceDateTimeOptions ?? {
+      start: defaultSequenceDateTimeStart,
+      step: 1,
+      unit: 'days' as const,
+      format: 'yyyy-MM-dd HH:mm:ss',
+    };
+    const nextValue =
+      key === 'step'
+        ? (() => {
+            const parsed = Number(value);
+            return Number.isFinite(parsed) ? parsed : currentOptions.step ?? 1;
+          })()
+        : value.trim() || currentOptions[key];
+
+    onRuleChange(tableName, columnName, {
+      ...fallbackRule,
+      fieldName: fallbackRule.fieldName ?? columnName,
+      sequenceDateTimeOptions: {
+        ...currentOptions,
+        [key]: nextValue,
+      },
+    });
+  }
+
   function onTimeOptionChange(
     tableName: string,
     columnName: string,
@@ -1357,6 +1414,7 @@ export function MockDataSchemaDetailPage(props: MockDataSchemaDetailPageProps) {
     onDateTimeOptionChange,
     onTimeOptionChange,
     onSequenceOptionChange,
+    onSequenceDateTimeOptionChange,
     onDigitSequenceOptionChange,
     onFormulaOptionChange,
     onRegularExpressionOptionChange,
