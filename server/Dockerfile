@@ -1,4 +1,4 @@
-FROM node:22-alpine AS client-builder
+FROM node:24-alpine AS client-builder
 WORKDIR /app/client
 
 ENV VITE_API_BASE_URL=http://localhost:32023/api
@@ -12,7 +12,7 @@ COPY shared /app/shared
 RUN npm run build
 
 
-FROM node:22-alpine AS server-builder
+FROM node:24-alpine AS server-builder
 WORKDIR /app/server
 
 COPY server/package*.json ./
@@ -24,7 +24,7 @@ COPY shared /app/shared
 RUN npm run build
 
 
-FROM node:22-alpine AS runner
+FROM node:24-alpine AS runner
 WORKDIR /app/server
 
 ENV NODE_ENV=production
