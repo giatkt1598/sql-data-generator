@@ -1,8 +1,9 @@
-import { Box, Button, Dialog, DialogContent, DialogTitle, Stack, Typography } from '@mui/material';
+import { Button, Dialog, DialogContent, DialogTitle, Stack, Typography } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
 import { useState } from 'react';
 import { useMockDataSchemaDetailContext } from './MockDataSchemaDetailContext';
+import { MonacoEditorField } from './MonacoEditorField';
 
 export function PreviewDialog() {
   const context = useMockDataSchemaDetailContext();
@@ -63,22 +64,13 @@ export function PreviewDialog() {
             </Button>
           </Stack>
         ) : (
-          <Box
-            component="pre"
-            sx={{
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word',
-              fontFamily: 'Consolas, Monaco, monospace',
-              fontSize: 13,
-              p: 1,
-              backgroundColor: 'rgba(2, 12, 27, 0.88)',
-              borderRadius: 1,
-              maxHeight: 650,
-              overflow: 'auto',
-            }}
-          >
-            {context.previewText}
-          </Box>
+          <MonacoEditorField
+            label="Generated SQL"
+            language="sql"
+            value={context.previewText}
+            height={620}
+            readOnly
+          />
         )}
       </DialogContent>
     </Dialog>
