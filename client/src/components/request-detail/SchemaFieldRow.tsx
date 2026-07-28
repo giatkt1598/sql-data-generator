@@ -19,7 +19,7 @@ import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import CloseIcon from '@mui/icons-material/Close';
 import { stringifyRule } from '../../utilities/ruleUtils';
-import { useMockDataSchemaDetailContext } from './MockDataSchemaDetailContext';
+import { useSchemaFieldRowContext } from './MockDataSchemaDetailContext';
 import type { ColumnDesignerModel } from '../../models/apiModels';
 
 function normalizeCustomListPaste(value: string): string {
@@ -99,7 +99,8 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
     isDragging,
     onDelete,
   } = props;
-  const context = useMockDataSchemaDetailContext();
+  const context = useSchemaFieldRowContext();
+  const actions = context.getActions;
   const rule = context.columnRules[tableName]?.[column.name];
   const value = stringifyRule(context.semanticTypes, context.customListTypes, rule);
   const isNumberRule = rule?.kind === 'semantic' && rule.semanticType === 'number';
@@ -243,7 +244,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
             defaultValue={fieldNameText}
             onBlur={(event) => {
               const nextValue = event.target.value.trim() || column.name;
-              context.onFieldNameChange(tableName, column.name, nextValue);
+              actions().onFieldNameChange(tableName, column.name, nextValue);
             }}
           />
         </Tooltip>
@@ -262,7 +263,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
             size="small"
             variant="outlined"
             value={value}
-            onClick={() => context.openTypePicker(tableName, column.name)}
+            onClick={() => actions().openTypePicker(tableName, column.name)}
             fullWidth
             readOnly
           >
@@ -278,7 +279,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
           placeholder="item 1, item 2, item 3"
           onPaste={handleCommaSeparatedPaste}
           onBlur={(event) => {
-            context.onCustomListValueChange(tableName, column.name, event.target.value);
+            actions().onCustomListValueChange(tableName, column.name, event.target.value);
           }}
         />
       )}
@@ -290,7 +291,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
             type="number"
             defaultValue={numberOptions.min}
             onBlur={(event) =>
-              context.onNumberOptionChange(tableName, column.name, 'min', event.target.value)
+              actions().onNumberOptionChange(tableName, column.name, 'min', event.target.value)
             }
             sx={{ width: 110 }}
           />
@@ -300,7 +301,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
             type="number"
             defaultValue={numberOptions.max}
             onBlur={(event) =>
-              context.onNumberOptionChange(tableName, column.name, 'max', event.target.value)
+              actions().onNumberOptionChange(tableName, column.name, 'max', event.target.value)
             }
             sx={{ width: 110 }}
           />
@@ -310,7 +311,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
             type="number"
             defaultValue={numberOptions.decimals}
             onBlur={(event) =>
-              context.onNumberOptionChange(tableName, column.name, 'decimals', event.target.value)
+              actions().onNumberOptionChange(tableName, column.name, 'decimals', event.target.value)
             }
             sx={{ width: 110 }}
           />
@@ -324,7 +325,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
             type="date"
             defaultValue={dateTimeOptions.start}
             onBlur={(event) =>
-              context.onDateTimeOptionChange(tableName, column.name, 'start', event.target.value)
+              actions().onDateTimeOptionChange(tableName, column.name, 'start', event.target.value)
             }
             sx={{ width: 150 }}
             InputLabelProps={{ shrink: true }}
@@ -335,7 +336,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
             type="date"
             defaultValue={dateTimeOptions.end}
             onBlur={(event) =>
-              context.onDateTimeOptionChange(tableName, column.name, 'end', event.target.value)
+              actions().onDateTimeOptionChange(tableName, column.name, 'end', event.target.value)
             }
             sx={{ width: 150 }}
             InputLabelProps={{ shrink: true }}
@@ -351,7 +352,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
                 size="small"
                 label="Format"
                 onBlur={(event) =>
-                  context.onDateTimeOptionChange(
+                  actions().onDateTimeOptionChange(
                     tableName,
                     column.name,
                     'format',
@@ -371,7 +372,12 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
             type="number"
             defaultValue={sequenceOptions.startAt}
             onBlur={(event) =>
-              context.onSequenceOptionChange(tableName, column.name, 'startAt', event.target.value)
+              actions().onSequenceOptionChange(
+                tableName,
+                column.name,
+                'startAt',
+                event.target.value,
+              )
             }
             sx={{ width: 120 }}
           />
@@ -381,7 +387,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
             type="number"
             defaultValue={sequenceOptions.step}
             onBlur={(event) =>
-              context.onSequenceOptionChange(tableName, column.name, 'step', event.target.value)
+              actions().onSequenceOptionChange(tableName, column.name, 'step', event.target.value)
             }
             sx={{ width: 100 }}
           />
@@ -391,7 +397,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
             type="number"
             defaultValue={sequenceOptions.repeat}
             onBlur={(event) =>
-              context.onSequenceOptionChange(tableName, column.name, 'repeat', event.target.value)
+              actions().onSequenceOptionChange(tableName, column.name, 'repeat', event.target.value)
             }
             sx={{ width: 100 }}
           />
@@ -405,7 +411,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
             type="datetime-local"
             defaultValue={sequenceDateTimeOptions.start}
             onBlur={(event) =>
-              context.onSequenceDateTimeOptionChange(
+              actions().onSequenceDateTimeOptionChange(
                 tableName,
                 column.name,
                 'start',
@@ -421,7 +427,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
             type="number"
             defaultValue={sequenceDateTimeOptions.step}
             onBlur={(event) =>
-              context.onSequenceDateTimeOptionChange(
+              actions().onSequenceDateTimeOptionChange(
                 tableName,
                 column.name,
                 'step',
@@ -434,7 +440,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
             <Select
               value={sequenceDateTimeOptions.unit}
               onChange={(event) =>
-                context.onSequenceDateTimeOptionChange(
+                actions().onSequenceDateTimeOptionChange(
                   tableName,
                   column.name,
                   'unit',
@@ -459,7 +465,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
                 size="small"
                 label="Format"
                 onBlur={(event) =>
-                  context.onSequenceDateTimeOptionChange(
+                  actions().onSequenceDateTimeOptionChange(
                     tableName,
                     column.name,
                     'format',
@@ -478,7 +484,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
           defaultValue={fixedValueOptions.value}
           placeholder="Empty value generates NULL"
           onBlur={(event) =>
-            context.onFixedValueOptionChange(tableName, column.name, event.target.value)
+            actions().onFixedValueOptionChange(tableName, column.name, event.target.value)
           }
           sx={{ minWidth: 320, flex: 1 }}
         />
@@ -491,7 +497,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
             defaultValue={digitSequenceOptions.format}
             placeholder="example: {first_name}+##\\@gmail.com"
             onBlur={(event) =>
-              context.onDigitSequenceOptionChange(
+              actions().onDigitSequenceOptionChange(
                 tableName,
                 column.name,
                 'format',
@@ -517,7 +523,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
             defaultValue={formulaOptions.expression}
             placeholder="example: quantity * unit_price"
             onBlur={(event) =>
-              context.onFormulaOptionChange(
+              actions().onFormulaOptionChange(
                 tableName,
                 column.name,
                 'expression',
@@ -543,7 +549,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
             type="time"
             defaultValue={timeOptions.from}
             onBlur={(event) =>
-              context.onTimeOptionChange(tableName, column.name, 'from', event.target.value)
+              actions().onTimeOptionChange(tableName, column.name, 'from', event.target.value)
             }
             sx={{ width: 150 }}
             InputLabelProps={{ shrink: true }}
@@ -554,7 +560,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
             type="time"
             defaultValue={timeOptions.to}
             onBlur={(event) =>
-              context.onTimeOptionChange(tableName, column.name, 'to', event.target.value)
+              actions().onTimeOptionChange(tableName, column.name, 'to', event.target.value)
             }
             sx={{ width: 150 }}
             InputLabelProps={{ shrink: true }}
@@ -570,7 +576,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
                 size="small"
                 label="Format"
                 onBlur={(event) =>
-                  context.onTimeOptionChange(tableName, column.name, 'format', event.target.value)
+                  actions().onTimeOptionChange(tableName, column.name, 'format', event.target.value)
                 }
               />
             )}
@@ -585,7 +591,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
             defaultValue={regularExpressionOptions.pattern}
             placeholder="example: [A-Z]{3}-\\d{4}"
             onBlur={(event) =>
-              context.onRegularExpressionOptionChange(
+              actions().onRegularExpressionOptionChange(
                 tableName,
                 column.name,
                 'pattern',
@@ -611,7 +617,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
           placeholder="example: outlook.com, gmail.com"
           onPaste={handleCommaSeparatedPaste}
           onBlur={(event) =>
-            context.onEmailOptionChange(tableName, column.name, 'domains', event.target.value)
+            actions().onEmailOptionChange(tableName, column.name, 'domains', event.target.value)
           }
           sx={{ minWidth: 300 }}
         />
@@ -624,7 +630,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
             type="number"
             defaultValue={textOptions.minLength}
             onBlur={(event) =>
-              context.onTextOptionChange(tableName, column.name, 'minLength', event.target.value)
+              actions().onTextOptionChange(tableName, column.name, 'minLength', event.target.value)
             }
             sx={{ width: 110 }}
           />
@@ -634,7 +640,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
             type="number"
             defaultValue={textOptions.maxLength}
             onBlur={(event) =>
-              context.onTextOptionChange(tableName, column.name, 'maxLength', event.target.value)
+              actions().onTextOptionChange(tableName, column.name, 'maxLength', event.target.value)
             }
             sx={{ width: 110 }}
           />
@@ -645,7 +651,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
               onChange={() => undefined}
               onBlur={(event) => {
                 const target = event.target as HTMLInputElement;
-                context.onTextOptionChange(tableName, column.name, 'unit', target.value);
+                actions().onTextOptionChange(tableName, column.name, 'unit', target.value);
               }}
             >
               <FormControlLabel value="words" control={<Radio size="small" />} label="Words" />
@@ -665,7 +671,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
           type="number"
           defaultValue={blankPercentage}
           onBlur={(event) =>
-            context.onBlankPercentageChange(tableName, column.name, event.target.value)
+            actions().onBlankPercentageChange(tableName, column.name, event.target.value)
           }
           slotProps={{
             htmlInput: { min: 0, max: 100 },

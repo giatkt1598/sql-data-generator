@@ -26,6 +26,8 @@ export const TypePickerCard = memo(function TypePickerCard(props: {
         borderRadius: 0,
         boxShadow: 'none',
         position: 'relative',
+        contentVisibility: 'auto',
+        containIntrinsicSize: '112px',
         '&:hover': {
           backgroundColor: 'rgba(57, 255, 136, 0.08)',
           transform: 'translateY(-1px)',

@@ -11,9 +11,13 @@ import {
   Typography,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { startTransition, useEffect, useMemo, useState } from 'react';
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { tableAnchorId } from '../../utilities/schemaAnchor';
-import { useMockDataSchemaDetailContext } from './MockDataSchemaDetailContext';
+import {
+  SchemaFieldRowProvider,
+  useMockDataSchemaDetailContext,
+} from './MockDataSchemaDetailContext';
+import type { SchemaFieldRowContextValue } from './MockDataSchemaDetailContext';
 import { SchemaTableCard } from './SchemaTableCard';
 
 const PRELOAD_BATCH_SIZE = 2;
@@ -30,6 +34,7 @@ function scheduleIdlePreload(callback: () => void): () => void {
 
 export function SchemasAccordion() {
   const context = useMockDataSchemaDetailContext();
+  const contextRef = useRef(context);
   const [visibleTableNames, setVisibleTableNames] = useState<Set<string>>(new Set());
   const [preloadedTableNames, setPreloadedTableNames] = useState<Set<string>>(new Set());
   const [dragState, setDragState] = useState<{ tableName: string; columnName: string } | null>(
@@ -40,6 +45,31 @@ export function SchemasAccordion() {
   const tableNames = useMemo(
     () => context.designerModel?.tables.map((table) => table.name) ?? [],
     [context.designerModel],
+  );
+
+  useEffect(() => {
+    contextRef.current = context;
+  }, [context]);
+
+  const getLatestActions = useCallback(() => contextRef.current, []);
+  const schemaFieldContextValue = useMemo<SchemaFieldRowContextValue>(
+    () => ({
+      columnRules: context.columnRules,
+      semanticTypes: context.semanticTypes,
+      customListTypes: context.customListTypes,
+      getActions: getLatestActions,
+    }),
+    [context.columnRules, context.customListTypes, context.semanticTypes, getLatestActions],
+  );
+  const tableActions = useMemo(
+    () => ({
+      reorderColumns: (tableName: string, fromColumnName: string, toColumnName: string) =>
+        getLatestActions().reorderColumns(tableName, fromColumnName, toColumnName),
+      addField: (tableName: string) => getLatestActions().addField(tableName),
+      deleteField: (tableName: string, columnName: string) =>
+        getLatestActions().deleteField(tableName, columnName),
+    }),
+    [getLatestActions],
   );
 
   useEffect(() => {
@@ -195,38 +225,40 @@ export function SchemasAccordion() {
         {context.designerModel && (
           <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} alignItems="flex-start">
             <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Stack spacing={1.5}>
-                {context.designerModel.tables.map((table, tableIndex) => {
-                  const isPreloaded = tableIndex === 0 || preloadedTableNames.has(table.name);
+              <SchemaFieldRowProvider value={schemaFieldContextValue}>
+                <Stack spacing={1.5}>
+                  {context.designerModel.tables.map((table, tableIndex) => {
+                    const isPreloaded = tableIndex === 0 || preloadedTableNames.has(table.name);
 
-                  return (
-                    <Box
-                      key={table.name}
-                      id={tableAnchorId(table.name)}
-                      data-table-name={table.name}
-                      sx={{
-                        minHeight: isPreloaded
-                          ? undefined
-                          : Math.max(160, 88 + table.columns.length * 58),
-                      }}
-                    >
-                      {isPreloaded && (
-                        <SchemaTableCard
-                          table={table}
-                          tableIndex={tableIndex}
-                          columnRules={context.columnRules}
-                          columnOrder={context.columnOrder}
-                          dragState={dragState}
-                          onDragStateChange={setDragState}
-                          reorderColumns={context.reorderColumns}
-                          addField={context.addField}
-                          deleteField={context.deleteField}
-                        />
-                      )}
-                    </Box>
-                  );
-                })}
-              </Stack>
+                    return (
+                      <Box
+                        key={table.name}
+                        id={tableAnchorId(table.name)}
+                        data-table-name={table.name}
+                        sx={{
+                          minHeight: isPreloaded
+                            ? undefined
+                            : Math.max(160, 88 + table.columns.length * 58),
+                        }}
+                      >
+                        {isPreloaded && (
+                          <SchemaTableCard
+                            table={table}
+                            tableIndex={tableIndex}
+                            columnRules={context.columnRules}
+                            columnOrder={context.columnOrder}
+                            dragState={dragState}
+                            onDragStateChange={setDragState}
+                            reorderColumns={tableActions.reorderColumns}
+                            addField={tableActions.addField}
+                            deleteField={tableActions.deleteField}
+                          />
+                        )}
+                      </Box>
+                    );
+                  })}
+                </Stack>
+              </SchemaFieldRowProvider>
             </Box>
 
             <Card

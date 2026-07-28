@@ -55,6 +55,19 @@ export const DataTypePickerDialog = memo(function DataTypePickerDialog() {
   const [deleteTarget, setDeleteTarget] = useState<CustomListTypeDefinition | null>(null);
   const deferredSearchText = useDeferredValue(searchText);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const pickerActionsRef = useRef({
+    setTypePickerOpen,
+    applyRule,
+    applyCustomListRule,
+  });
+
+  useEffect(() => {
+    pickerActionsRef.current = {
+      setTypePickerOpen,
+      applyRule,
+      applyCustomListRule,
+    };
+  }, [applyCustomListRule, applyRule, setTypePickerOpen]);
 
   useEffect(() => {
     if (!typePickerOpen) {
@@ -103,18 +116,23 @@ export const DataTypePickerDialog = memo(function DataTypePickerDialog() {
 
   const keyword = deferredSearchText.trim().toLowerCase();
   const hasSearchKeyword = keyword.length > 0;
+  const searchTextByItemKey = useMemo(
+    () =>
+      new Map(
+        items.map((item) => [
+          item.key,
+          [item.title, item.description, item.groups.join(' ')].join(' ').toLowerCase(),
+        ]),
+      ),
+    [items],
+  );
   const searchMatchedItems = useMemo(() => {
     if (!keyword) {
       return items;
     }
 
-    return items.filter((item) =>
-      [item.title, item.description, item.groups.join(' ')]
-        .join(' ')
-        .toLowerCase()
-        .includes(keyword),
-    );
-  }, [items, keyword]);
+    return items.filter((item) => searchTextByItemKey.get(item.key)?.includes(keyword));
+  }, [items, keyword, searchTextByItemKey]);
 
   const filteredItems = useMemo(() => {
     return searchMatchedItems.filter(
@@ -140,59 +158,61 @@ export const DataTypePickerDialog = memo(function DataTypePickerDialog() {
     return counts;
   }, [searchMatchedItems]);
 
-  const handleSelectItem = useCallback(
-    (item: PickerItem) => {
-      if (item.kind === 'reference') {
-        const [tableName, columnName] = item.value.split('.', 2);
-        applyRule({
-          kind: 'reference',
-          reference: { tableName, columnName },
-        });
-        return;
-      }
-
-      if (item.kind === 'customType') {
-        applyRule({
-          kind: 'customList',
-          customTypeName: item.customType.name,
-          customValues: item.customType.values,
-        });
-        setTypePickerOpen(false);
-        return;
-      }
-
-      if (item.value === 'customList') {
-        applyCustomListRule();
-        return;
-      }
-
-      applyRule({
-        kind: 'semantic',
-        semanticType: item.value as SemanticDataType,
+  const handleSelectItem = useCallback((item: PickerItem) => {
+    const actions = pickerActionsRef.current;
+    if (item.kind === 'reference') {
+      const [tableName, columnName] = item.value.split('.', 2);
+      actions.applyRule({
+        kind: 'reference',
+        reference: { tableName, columnName },
       });
-    },
-    [applyCustomListRule, applyRule, setTypePickerOpen],
-  );
+      return;
+    }
+
+    if (item.kind === 'customType') {
+      actions.applyRule({
+        kind: 'customList',
+        customTypeName: item.customType.name,
+        customValues: item.customType.values,
+      });
+      actions.setTypePickerOpen(false);
+      return;
+    }
+
+    if (item.value === 'customList') {
+      actions.applyCustomListRule();
+      return;
+    }
+
+    actions.applyRule({
+      kind: 'semantic',
+      semanticType: item.value as SemanticDataType,
+    });
+  }, []);
 
   const handleClose = useCallback(() => {
-    setTypePickerOpen(false);
-  }, [setTypePickerOpen]);
+    pickerActionsRef.current.setTypePickerOpen(false);
+  }, []);
 
-  function openCreateDialog() {
+  const openCreateDialog = useCallback(() => {
     setEditorMode('create');
     setEditingCustomType(null);
     setCustomTypeNameInput('');
     setCustomTypeValuesInput('');
     setEditorOpen(true);
-  }
+  }, []);
 
-  function openEditDialog(item: CustomListTypeDefinition) {
+  const openEditDialog = useCallback((item: CustomListTypeDefinition) => {
     setEditorMode('edit');
     setEditingCustomType(item);
     setCustomTypeNameInput(item.name.replace(/^Custom:/, ''));
     setCustomTypeValuesInput(stringifyCustomTypeValues(item.values));
     setEditorOpen(true);
-  }
+  }, []);
+
+  const requestDeleteCustomType = useCallback((target: CustomListTypeDefinition) => {
+    setDeleteTarget(target);
+  }, []);
 
   async function handleSubmitCustomType() {
     try {
@@ -377,7 +397,7 @@ export const DataTypePickerDialog = memo(function DataTypePickerDialog() {
                     item={item}
                     onSelect={handleSelectItem}
                     onEditCustomType={openEditDialog}
-                    onDeleteCustomType={(target) => setDeleteTarget(target)}
+                    onDeleteCustomType={requestDeleteCustomType}
                   />
                 ))}
               </Box>

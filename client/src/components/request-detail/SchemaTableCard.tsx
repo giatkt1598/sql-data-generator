@@ -1,5 +1,6 @@
 import { Box, Button, Card, CardContent, Stack, Typography } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import { memo } from 'react';
 import type {
   ColumnDesignerModel,
   TableColumnOrder,
@@ -7,7 +8,7 @@ import type {
 } from '../../models/apiModels';
 import { SchemaFieldRow } from './SchemaFieldRow';
 
-export function SchemaTableCard(props: {
+export const SchemaTableCard = memo(function SchemaTableCard(props: {
   table: ColumnDesignerModel['tables'][number];
   tableIndex: number;
   columnRules: TableColumnRules;
@@ -158,4 +159,4 @@ export function SchemaTableCard(props: {
       </CardContent>
     </Card>
   );
-}
+});

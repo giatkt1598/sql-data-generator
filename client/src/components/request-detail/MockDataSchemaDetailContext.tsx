@@ -125,7 +125,15 @@ export interface MockDataSchemaDetailContextValue {
   handleCopyPreview: () => Promise<void>;
 }
 
+export interface SchemaFieldRowContextValue {
+  columnRules: TableColumnRules;
+  semanticTypes: DataTypeDefinition[];
+  customListTypes: CustomListTypeDefinition[];
+  getActions: () => MockDataSchemaDetailContextValue;
+}
+
 const MockDataSchemaDetailContext = createContext<MockDataSchemaDetailContextValue | null>(null);
+const SchemaFieldRowContext = createContext<SchemaFieldRowContextValue | null>(null);
 
 export function MockDataSchemaDetailProvider(props: {
   value: MockDataSchemaDetailContextValue;
@@ -144,6 +152,25 @@ export function useMockDataSchemaDetailContext(): MockDataSchemaDetailContextVal
     throw new Error(
       'useMockDataSchemaDetailContext must be used within MockDataSchemaDetailProvider.',
     );
+  }
+  return context;
+}
+
+export function SchemaFieldRowProvider(props: {
+  value: SchemaFieldRowContextValue;
+  children: ReactNode;
+}) {
+  return (
+    <SchemaFieldRowContext.Provider value={props.value}>
+      {props.children}
+    </SchemaFieldRowContext.Provider>
+  );
+}
+
+export function useSchemaFieldRowContext(): SchemaFieldRowContextValue {
+  const context = useContext(SchemaFieldRowContext);
+  if (!context) {
+    throw new Error('useSchemaFieldRowContext must be used within SchemaFieldRowProvider.');
   }
   return context;
 }
