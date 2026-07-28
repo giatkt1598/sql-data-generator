@@ -11,14 +11,27 @@ import {
   Typography,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { useEffect, useMemo, useState } from 'react';
+import { startTransition, useEffect, useMemo, useState } from 'react';
 import { tableAnchorId } from '../../utilities/schemaAnchor';
 import { useMockDataSchemaDetailContext } from './MockDataSchemaDetailContext';
 import { SchemaTableCard } from './SchemaTableCard';
 
+const PRELOAD_BATCH_SIZE = 2;
+
+function scheduleIdlePreload(callback: () => void): () => void {
+  if (typeof window.requestIdleCallback === 'function') {
+    const idleCallbackId = window.requestIdleCallback(callback, { timeout: 250 });
+    return () => window.cancelIdleCallback(idleCallbackId);
+  }
+
+  const timeoutId = window.setTimeout(callback, 32);
+  return () => window.clearTimeout(timeoutId);
+}
+
 export function SchemasAccordion() {
   const context = useMockDataSchemaDetailContext();
   const [visibleTableNames, setVisibleTableNames] = useState<Set<string>>(new Set());
+  const [preloadedTableNames, setPreloadedTableNames] = useState<Set<string>>(new Set());
   const [dragState, setDragState] = useState<{ tableName: string; columnName: string } | null>(
     null,
   );
@@ -29,59 +42,89 @@ export function SchemasAccordion() {
     [context.designerModel],
   );
 
-  // Clear visibleTableNames during render if no designer model or tables
-  const hasDesignerTables = Boolean(context.designerModel && tableNames.length > 0);
-  if (!hasDesignerTables && visibleTableNames.size > 0) {
-    setVisibleTableNames(new Set());
-  }
+  useEffect(() => {
+    const nextTableNames = tableNames
+      .slice(1)
+      .filter((tableName) => !preloadedTableNames.has(tableName))
+      .slice(0, PRELOAD_BATCH_SIZE);
+
+    if (nextTableNames.length === 0) {
+      return;
+    }
+
+    return scheduleIdlePreload(() => {
+      startTransition(() => {
+        setPreloadedTableNames((current) => {
+          const next = new Set(current);
+          nextTableNames.forEach((tableName) => next.add(tableName));
+          return next;
+        });
+      });
+    });
+  }, [preloadedTableNames, tableNames]);
 
   useEffect(() => {
-    if (!context.designerModel || tableNames.length === 0) {
+    if (!context.designerModel || tableNames.length === 0 || !context.schemasExpanded) {
       return;
     }
 
-    const updateVisibleTables = () => {
-      const nextVisibleTableNames = new Set<string>();
-      const viewportTop = 100;
-      const viewportBottom = window.innerHeight;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        setVisibleTableNames((current) => {
+          const next = new Set(current);
+          let changed = false;
 
-      tableNames.forEach((tableName) => {
-        const element = document.getElementById(tableAnchorId(tableName));
-        if (!element) {
-          return;
-        }
+          entries.forEach((entry) => {
+            const tableName = (entry.target as HTMLElement).dataset.tableName;
+            if (!tableName) {
+              return;
+            }
 
-        const rect = element.getBoundingClientRect();
-        const isVisible = rect.bottom > viewportTop && rect.top < viewportBottom;
+            if (entry.isIntersecting && !next.has(tableName)) {
+              next.add(tableName);
+              changed = true;
+            } else if (!entry.isIntersecting && next.delete(tableName)) {
+              changed = true;
+            }
+          });
 
-        if (isVisible) {
-          nextVisibleTableNames.add(tableName);
-        }
-      });
+          return changed ? next : current;
+        });
+      },
+      { rootMargin: '-100px 0px 0px', threshold: 0 },
+    );
 
-      setVisibleTableNames(nextVisibleTableNames);
-    };
+    tableNames.forEach((tableName) => {
+      const element = document.getElementById(tableAnchorId(tableName));
+      if (element) {
+        observer.observe(element);
+      }
+    });
 
-    updateVisibleTables();
-    window.addEventListener('scroll', updateVisibleTables, { passive: true });
-    window.addEventListener('resize', updateVisibleTables);
-
-    return () => {
-      window.removeEventListener('scroll', updateVisibleTables);
-      window.removeEventListener('resize', updateVisibleTables);
-    };
-  }, [context.designerModel, tableNames]);
+    return () => observer.disconnect();
+  }, [context.designerModel, context.schemasExpanded, tableNames]);
 
   function scrollToTable(tableName: string) {
-    const element = document.getElementById(tableAnchorId(tableName));
-    if (!element) {
-      return;
-    }
+    setPreloadedTableNames((current) => {
+      if (current.has(tableName)) {
+        return current;
+      }
+      const next = new Set(current);
+      next.add(tableName);
+      return next;
+    });
 
-    const top = window.scrollY + element.getBoundingClientRect().top - 100;
-    window.scrollTo({
-      top: Math.max(0, top),
-      behavior: 'smooth',
+    window.requestAnimationFrame(() => {
+      const element = document.getElementById(tableAnchorId(tableName));
+      if (!element) {
+        return;
+      }
+
+      const top = window.scrollY + element.getBoundingClientRect().top - 100;
+      window.scrollTo({
+        top: Math.max(0, top),
+        behavior: 'smooth',
+      });
     });
   }
 
@@ -153,20 +196,36 @@ export function SchemasAccordion() {
           <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} alignItems="flex-start">
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Stack spacing={1.5}>
-                {context.designerModel.tables.map((table, tableIndex) => (
-                  <SchemaTableCard
-                    key={table.name}
-                    table={table}
-                    tableIndex={tableIndex}
-                    columnRules={context.columnRules}
-                    columnOrder={context.columnOrder}
-                    dragState={dragState}
-                    onDragStateChange={setDragState}
-                    reorderColumns={context.reorderColumns}
-                    addField={context.addField}
-                    deleteField={context.deleteField}
-                  />
-                ))}
+                {context.designerModel.tables.map((table, tableIndex) => {
+                  const isPreloaded = tableIndex === 0 || preloadedTableNames.has(table.name);
+
+                  return (
+                    <Box
+                      key={table.name}
+                      id={tableAnchorId(table.name)}
+                      data-table-name={table.name}
+                      sx={{
+                        minHeight: isPreloaded
+                          ? undefined
+                          : Math.max(160, 88 + table.columns.length * 58),
+                      }}
+                    >
+                      {isPreloaded && (
+                        <SchemaTableCard
+                          table={table}
+                          tableIndex={tableIndex}
+                          columnRules={context.columnRules}
+                          columnOrder={context.columnOrder}
+                          dragState={dragState}
+                          onDragStateChange={setDragState}
+                          reorderColumns={context.reorderColumns}
+                          addField={context.addField}
+                          deleteField={context.deleteField}
+                        />
+                      )}
+                    </Box>
+                  );
+                })}
               </Stack>
             </Box>
 

@@ -5,7 +5,6 @@ import type {
   TableColumnOrder,
   TableColumnRules,
 } from '../../models/apiModels';
-import { tableAnchorId } from '../../utilities/schemaAnchor';
 import { SchemaFieldRow } from './SchemaFieldRow';
 
 export function SchemaTableCard(props: {
@@ -32,7 +31,7 @@ export function SchemaTableCard(props: {
   } = props;
 
   return (
-    <Card id={tableAnchorId(table.name)} data-table-name={table.name} variant="outlined">
+    <Card variant="outlined">
       <CardContent>
         <Typography sx={{ fontWeight: 700, mb: 1 }}>
           {tableIndex + 1}.&nbsp;{table.name}
