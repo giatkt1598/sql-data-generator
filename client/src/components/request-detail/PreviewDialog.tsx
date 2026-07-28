@@ -71,7 +71,7 @@ export function PreviewDialog() {
               fontFamily: 'Consolas, Monaco, monospace',
               fontSize: 13,
               p: 1,
-              backgroundColor: '#f5f5f5',
+              backgroundColor: 'rgba(2, 12, 27, 0.88)',
               borderRadius: 1,
               maxHeight: 650,
               overflow: 'auto',

@@ -193,13 +193,13 @@ export function SchemasAccordion() {
                         minWidth: 0,
                         justifyContent: 'flex-start',
                         textAlign: 'left',
-                        color: visibleTableNames.has(table.name) ? 'primary.dark' : 'text.primary',
+                        color: visibleTableNames.has(table.name) ? 'primary.light' : 'text.primary',
                         backgroundColor: visibleTableNames.has(table.name)
-                          ? 'rgba(29, 78, 216, 0.12)'
+                          ? 'rgba(57, 255, 136, 0.14)'
                           : 'transparent',
                         '&:hover': {
                           backgroundColor: visibleTableNames.has(table.name)
-                            ? 'rgba(29, 78, 216, 0.18)'
+                            ? 'rgba(57, 255, 136, 0.22)'
                             : 'action.hover',
                         },
                       }}

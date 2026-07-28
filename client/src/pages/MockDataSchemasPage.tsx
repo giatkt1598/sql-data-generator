@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Button,
+  Box,
   Card,
   CardContent,
   Dialog,
@@ -21,6 +22,8 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import LightModeIcon from '@mui/icons-material/LightMode';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -108,6 +111,8 @@ export function MockDataSchemasPage(props: MockDataSchemasPageProps) {
       ),
     [mockDataSchemas],
   );
+
+  const isDarkMode = props.themeMode === 'dark';
 
   const reloadMockDataSchemas = useCallback(async () => {
     if (!projectId) {
@@ -245,13 +250,94 @@ export function MockDataSchemasPage(props: MockDataSchemasPageProps) {
           <Typography variant="h5" sx={{ fontWeight: 700 }}>
             Mock Data Schemas
           </Typography>
-          <Button
-            startIcon={<AddIcon />}
-            variant="contained"
-            onClick={() => void createDefaultMockDataSchema()}
-          >
-            New
-          </Button>
+          <Stack direction="row" alignItems="center" sx={{ gap: '12px' }}>
+            <Box
+              component="button"
+              type="button"
+              onClick={props.onToggleThemeMode}
+              aria-pressed={isDarkMode}
+              aria-label={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
+              sx={{
+                position: 'relative',
+                width: 72,
+                height: 36,
+                p: 0,
+                border: '1px solid',
+                borderColor: isDarkMode ? '#4a4a4a' : '#d0d0d0',
+                borderRadius: '999px',
+                backgroundColor: isDarkMode ? '#2d2d2d' : '#eeeeee',
+                boxShadow: isDarkMode
+                  ? 'inset 0 2px 5px rgba(0, 0, 0, 0.32), 0 2px 5px rgba(0, 0, 0, 0.18)'
+                  : 'inset 0 2px 5px rgba(0, 0, 0, 0.1), 0 2px 5px rgba(0, 0, 0, 0.12)',
+                cursor: 'pointer',
+                overflow: 'hidden',
+                transition: 'background-color 180ms ease, border-color 180ms ease',
+                '&:focus-visible': {
+                  outline: '3px solid rgba(57, 255, 136, 0.45)',
+                  outlineOffset: 2,
+                },
+                '&:hover': {
+                  borderColor: isDarkMode ? '#666666' : '#b7b7b7',
+                },
+              }}
+            >
+              <LightModeIcon
+                sx={{
+                  position: 'absolute',
+                  left: 9,
+                  top: 9,
+                  zIndex: 1,
+                  fontSize: 18,
+                  color: isDarkMode ? '#8a8a8a' : '#ffffff',
+                  transition: 'color 180ms ease',
+                }}
+              />
+              <DarkModeIcon
+                sx={{
+                  position: 'absolute',
+                  right: 9,
+                  top: 9,
+                  zIndex: 1,
+                  fontSize: 18,
+                  color: isDarkMode ? '#ffffff' : '#888888',
+                  transition: 'color 180ms ease',
+                }}
+              />
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: 3,
+                  left: isDarkMode ? 41 : 3,
+                  width: 28,
+                  height: 28,
+                  display: 'grid',
+                  placeItems: 'center',
+                  borderRadius: '50%',
+                  color: isDarkMode ? '#ffffff' : '#ffffff',
+                  background: isDarkMode
+                    ? 'linear-gradient(145deg, #777777 0%, #454545 100%)'
+                    : 'linear-gradient(145deg, #ffc15c 0%, #e89400 100%)',
+                  boxShadow: isDarkMode
+                    ? '0 2px 6px rgba(0, 0, 0, 0.42), inset 0 1px 1px rgba(255, 255, 255, 0.22)'
+                    : '0 2px 6px rgba(184, 111, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.45)',
+                  transition: 'left 220ms ease, background 220ms ease, box-shadow 220ms ease',
+                }}
+              >
+                {isDarkMode ? (
+                  <DarkModeIcon sx={{ fontSize: 20 }} />
+                ) : (
+                  <LightModeIcon sx={{ fontSize: 20 }} />
+                )}
+              </Box>
+            </Box>
+            <Button
+              startIcon={<AddIcon />}
+              variant="contained"
+              onClick={() => void createDefaultMockDataSchema()}
+            >
+              New
+            </Button>
+          </Stack>
         </Stack>
 
         <TableContainer>

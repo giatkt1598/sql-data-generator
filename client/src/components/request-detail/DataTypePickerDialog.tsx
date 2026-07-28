@@ -235,8 +235,8 @@ export const DataTypePickerDialog = memo(function DataTypePickerDialog() {
         keepMounted
         PaperProps={{
           sx: {
-            backgroundColor: '#ffffff',
-            color: '#1f2933',
+            backgroundColor: 'background.paper',
+            color: 'text.primary',
             minHeight: 620,
             borderRadius: 0,
           },
@@ -250,8 +250,8 @@ export const DataTypePickerDialog = memo(function DataTypePickerDialog() {
             sx={{
               px: 3,
               py: 1.75,
-              borderBottom: '1px solid rgba(15, 23, 42, 0.08)',
-              backgroundColor: '#ffffff',
+              borderBottom: '1px solid rgba(57, 255, 136, 0.14)',
+              backgroundColor: 'background.paper',
             }}
           >
             <Typography sx={{ fontSize: 18, fontWeight: 700, lineHeight: 1.2 }}>
@@ -267,22 +267,18 @@ export const DataTypePickerDialog = memo(function DataTypePickerDialog() {
                 sx={{
                   minWidth: 280,
                   '& .MuiOutlinedInput-root': {
-                    color: '#1f2933',
-                    backgroundColor: '#ffffff',
-                    '& fieldset': { borderColor: '#cbd5e1' },
-                    '&:hover fieldset': { borderColor: '#94a3b8' },
-                    '&.Mui-focused fieldset': { borderColor: '#2563eb' },
+                    color: 'text.primary',
                   },
                 }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <SearchIcon sx={{ color: '#64748b' }} />
+                      <SearchIcon sx={{ color: 'text.secondary' }} />
                     </InputAdornment>
                   ),
                 }}
               />
-              <IconButton onClick={handleClose} sx={{ color: '#64748b' }}>
+              <IconButton onClick={handleClose} sx={{ color: 'text.secondary' }}>
                 <CloseIcon />
               </IconButton>
             </Stack>
@@ -294,9 +290,9 @@ export const DataTypePickerDialog = memo(function DataTypePickerDialog() {
             <Box
               sx={{
                 width: { xs: '100%', md: 220 },
-                backgroundColor: '#ffffff',
-                borderRight: { md: '1px solid rgba(15, 23, 42, 0.08)' },
-                borderBottom: { xs: '1px solid rgba(15, 23, 42, 0.08)', md: 'none' },
+                backgroundColor: 'background.paper',
+                borderRight: { md: '1px solid rgba(57, 255, 136, 0.14)' },
+                borderBottom: { xs: '1px solid rgba(57, 255, 136, 0.14)', md: 'none' },
               }}
             >
               <List disablePadding>
@@ -311,23 +307,23 @@ export const DataTypePickerDialog = memo(function DataTypePickerDialog() {
                         alignItems: 'flex-start',
                         py: 1.5,
                         px: 2,
-                        borderLeft: selected ? '3px solid #2563eb' : '3px solid transparent',
-                        backgroundColor: selected ? 'rgba(37, 99, 235, 0.08)' : 'transparent',
+                        borderLeft: selected ? '3px solid #39ff88' : '3px solid transparent',
+                        backgroundColor: selected ? 'rgba(57, 255, 136, 0.12)' : 'transparent',
                         '&.Mui-selected': {
-                          backgroundColor: 'rgba(37, 99, 235, 0.08)',
+                          backgroundColor: 'rgba(57, 255, 136, 0.12)',
                         },
                         '&.Mui-selected:hover': {
-                          backgroundColor: 'rgba(37, 99, 235, 0.12)',
+                          backgroundColor: 'rgba(57, 255, 136, 0.18)',
                         },
                       }}
                     >
                       <ListItemText
                         primary={
-                          <Typography sx={{ color: '#1f2933', fontWeight: 700, fontSize: 15 }}>
+                          <Typography sx={{ color: 'text.primary', fontWeight: 700, fontSize: 15 }}>
                             {group}
                             <Typography
                               component="span"
-                              sx={{ color: '#64748b', ml: 0.75, fontSize: 14 }}
+                              sx={{ color: 'text.secondary', ml: 0.75, fontSize: 14 }}
                             >
                               ({countsByGroup.get(group) ?? 0})
                             </Typography>
@@ -347,7 +343,7 @@ export const DataTypePickerDialog = memo(function DataTypePickerDialog() {
                 py: 1.5,
                 maxHeight: 540,
                 overflow: 'auto',
-                backgroundColor: '#ffffff',
+                backgroundColor: 'background.paper',
               }}
             >
               {selectedGroup === 'Custom List' && (
@@ -359,7 +355,7 @@ export const DataTypePickerDialog = memo(function DataTypePickerDialog() {
               )}
 
               {filteredItems.length === 0 && (
-                <Typography sx={{ color: '#64748b' }}>
+                <Typography sx={{ color: 'text.secondary' }}>
                   {hasSearchKeyword ? 'No types matched your search.' : 'No data'}
                 </Typography>
               )}

@@ -1,5 +1,5 @@
 import Editor from '@monaco-editor/react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, useTheme } from '@mui/material';
 
 export function MonacoEditorField(props: {
   label: string;
@@ -10,6 +10,7 @@ export function MonacoEditorField(props: {
   height?: number;
 }) {
   const { label, language, value, onChange, helperText, height = 300 } = props;
+  const theme = useTheme();
 
   return (
     <Box>
@@ -20,7 +21,7 @@ export function MonacoEditorField(props: {
         <Editor
           height={height}
           language={language}
-          theme="vs"
+          theme={theme.palette.mode === 'dark' ? 'vs-dark' : 'vs'}
           value={value}
           onChange={(nextValue) => onChange(nextValue ?? '')}
           options={{

@@ -19,15 +19,15 @@ export const TypePickerCard = memo(function TypePickerCard(props: {
       onClick={() => onSelect(item)}
       sx={{
         cursor: 'pointer',
-        backgroundColor: '#ffffff',
-        borderColor: 'rgba(15, 23, 42, 0.08)',
-        color: '#1f2933',
+        backgroundColor: 'rgba(8, 22, 43, 0.84)',
+        borderColor: 'rgba(57, 255, 136, 0.18)',
+        color: 'text.primary',
         transition: 'background-color 120ms ease, transform 120ms ease',
         borderRadius: 0,
         boxShadow: 'none',
         position: 'relative',
         '&:hover': {
-          backgroundColor: '#f8fafc',
+          backgroundColor: 'rgba(57, 255, 136, 0.08)',
           transform: 'translateY(-1px)',
         },
         '&:hover .custom-type-actions': {
@@ -83,7 +83,7 @@ export const TypePickerCard = memo(function TypePickerCard(props: {
           <Stack spacing={0.5}>
             <Typography
               sx={{
-                color: '#475569',
+                color: 'text.secondary',
                 fontSize: 13,
                 fontStyle: 'italic',
                 lineHeight: 1.35,
@@ -97,14 +97,14 @@ export const TypePickerCard = memo(function TypePickerCard(props: {
             >
               {item.description}
             </Typography>
-            <Typography sx={{ color: '#64748b', fontSize: 12, lineHeight: 1.35 }}>
+            <Typography sx={{ color: 'text.secondary', fontSize: 12, lineHeight: 1.35 }}>
               Total item(s): {item.customType.values.length}
             </Typography>
           </Stack>
         ) : (
           <Typography
             sx={{
-              color: '#475569',
+              color: 'text.secondary',
               fontSize: 13,
               fontStyle: 'italic',
               lineHeight: 1.35,

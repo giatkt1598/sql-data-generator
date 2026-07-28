@@ -291,8 +291,10 @@ function buildGraphData(roots: VisualNode[]): GraphData {
       style: {
         padding: '8px 12px',
         borderRadius: 8,
-        border: '1px solid #cbd5f5',
-        background: '#f8fafc',
+        border: '1px solid rgba(57, 255, 136, 0.42)',
+        background: '#0b1c35',
+        color: '#e6f4ff',
+        boxShadow: '0 0 18px rgba(57, 255, 136, 0.12)',
         fontSize: 12,
         whiteSpace: 'pre-line',
       },
@@ -406,7 +408,7 @@ export function SchemaRelationshipsAccordion() {
                     nodesConnectable={false}
                     panOnDrag
                   >
-                    <Background gap={16} size={0.6} />
+                    <Background gap={16} size={0.6} color="rgba(57, 255, 136, 0.2)" />
                     <Controls />
                   </ReactFlow>
                 </Box>

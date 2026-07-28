@@ -4,6 +4,7 @@ import type {
   ProjectEntity,
   SupportedLocaleDefinition,
 } from '../models/apiModels';
+import type { PaletteMode } from '@mui/material';
 
 export interface AppPageBaseProps {
   loading: boolean;
@@ -19,6 +20,8 @@ export interface ProjectsPageProps extends AppPageBaseProps {
 
 export interface MockDataSchemasPageProps extends AppPageBaseProps {
   projects: ProjectEntity[];
+  themeMode: PaletteMode;
+  onToggleThemeMode: () => void;
 }
 
 export interface MockDataSchemaDetailPageProps extends AppPageBaseProps {

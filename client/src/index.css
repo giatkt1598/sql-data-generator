@@ -8,4 +8,33 @@ body {
     'Helvetica Neue',
     Arial,
     sans-serif;
+  color: #e6f4ff;
+}
+
+.react-flow__controls {
+  --xy-controls-button-background-color: #0b1c35;
+  --xy-controls-button-background-color-hover: #12334d;
+  --xy-controls-button-color: #8cffb5;
+  --xy-controls-button-color-hover: #39ff88;
+  --xy-controls-button-border-color: rgba(57, 255, 136, 0.18);
+  overflow: hidden;
+  border: 1px solid rgba(57, 255, 136, 0.26);
+  border-radius: 8px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.3);
+}
+
+.react-flow__controls-button {
+  width: 28px;
+  height: 28px;
+  border-bottom: 1px solid rgba(57, 255, 136, 0.18) !important;
+  background: #0b1c35;
+  color: #8cffb5;
+}
+
+.react-flow__controls-button:hover {
+  background: rgba(57, 255, 136, 0.14);
+}
+
+.react-flow__controls-button svg {
+  fill: currentColor;
 }

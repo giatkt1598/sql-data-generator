@@ -11,13 +11,15 @@ export function MockDataSchemaDetailHeader() {
         position: 'sticky',
         top: 0,
         zIndex: 100,
-        backgroundColor: 'background.default',
+        backgroundColor: 'background.paper',
+        color: 'text.primary',
+        backdropFilter: 'blur(14px)',
         borderBottom: '1px solid',
         borderColor: 'divider',
         py: 1,
       }}
     >
-      <Stack direction="row" alignItems="center" spacing={1}>
+      <Stack direction="row" alignItems="center" spacing={1} sx={{ pr: '12px' }}>
         <IconButton onClick={context.handleBack}>
           <ArrowBackIcon />
         </IconButton>

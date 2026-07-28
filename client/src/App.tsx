@@ -1,6 +1,7 @@
 import './App.css';
 import { useEffect, useState } from 'react';
 import { Container } from '@mui/material';
+import type { PaletteMode } from '@mui/material';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { getCustomListTypes, getProjects, getSemanticTypes, getSupportedLocales } from './apis';
 import { FeedbackSnackbars } from './components/FeedbackSnackbars';
@@ -16,7 +17,12 @@ import { getErrorMessage } from './utilities/errorUtils';
 
 const DEFAULT_PROJECT_ID = 'local';
 
-function App() {
+interface AppProps {
+  themeMode: PaletteMode;
+  onToggleThemeMode: () => void;
+}
+
+function App({ themeMode, onToggleThemeMode }: AppProps) {
   const [projects, setProjects] = useState<ProjectEntity[]>([]);
   const [semanticTypes, setSemanticTypes] = useState<DataTypeDefinition[]>([]);
   const [supportedLocales, setSupportedLocales] = useState<SupportedLocaleDefinition[]>([]);
@@ -59,7 +65,7 @@ function App() {
     DEFAULT_PROJECT_ID;
 
   return (
-    <Container maxWidth="xl" sx={{ py: 3 }}>
+    <Container maxWidth="xl" sx={{ py: 3, minHeight: '100vh' }}>
       <Routes>
         <Route
           path="/projects"
@@ -74,6 +80,8 @@ function App() {
               setLoading={setLoading}
               setSnack={setSnack}
               setError={setError}
+              themeMode={themeMode}
+              onToggleThemeMode={onToggleThemeMode}
             />
           }
         />
