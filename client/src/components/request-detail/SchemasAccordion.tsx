@@ -189,7 +189,10 @@ export function SchemasAccordion() {
                       key={`toc-${table.name}`}
                       size="small"
                       sx={{
+                        width: '100%',
+                        minWidth: 0,
                         justifyContent: 'flex-start',
+                        textAlign: 'left',
                         color: visibleTableNames.has(table.name) ? 'primary.dark' : 'text.primary',
                         backgroundColor: visibleTableNames.has(table.name)
                           ? 'rgba(29, 78, 216, 0.12)'
@@ -200,9 +203,23 @@ export function SchemasAccordion() {
                             : 'action.hover',
                         },
                       }}
+                      title={`${index + 1}. ${table.name}`}
                       onClick={() => scrollToTable(table.name)}
                     >
-                      {index + 1}. {table.name}
+                      <Box
+                        component="span"
+                        sx={{
+                          display: 'block',
+                          width: '100%',
+                          minWidth: 0,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          textAlign: 'left',
+                        }}
+                      >
+                        {index + 1}. {table.name}
+                      </Box>
                     </Button>
                   ))}
                 </Stack>
