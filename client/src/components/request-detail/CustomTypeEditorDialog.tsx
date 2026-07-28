@@ -9,15 +9,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-
-function normalizeCommaSeparatedPaste(text: string): string {
-  return text
-    .replace(/\r\n|\r|\n/g, ',')
-    .split(',')
-    .map((item) => item.trim())
-    .filter((item) => item.length > 0)
-    .join(', ');
-}
+import { MonacoEditorField } from './MonacoEditorField';
 
 function countItems(text: string): number {
   return text
@@ -53,22 +45,12 @@ export function CustomTypeEditorDialog(props: {
               startAdornment: <InputAdornment position="start">Custom:</InputAdornment>,
             }}
           />
-          <TextField
+          <MonacoEditorField
             label="List item"
-            multiline
-            rows={6}
+            language="plaintext"
             value={valuesText}
-            onChange={(event) => onValuesChange(event.target.value)}
-            onPaste={(event) => {
-              const pastedText = event.clipboardData.getData('text');
-              if (!/[\r\n]/.test(pastedText)) {
-                return;
-              }
-
-              event.preventDefault();
-              onValuesChange(normalizeCommaSeparatedPaste(pastedText));
-            }}
-            placeholder="item 1, item 2, item 3"
+            height={180}
+            onChange={onValuesChange}
           />
           <Typography variant="caption" sx={{ color: 'text.secondary', mt: '0 !important' }}>
             Total item(s): {totalItems}

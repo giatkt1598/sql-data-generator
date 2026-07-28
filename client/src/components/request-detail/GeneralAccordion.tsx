@@ -16,6 +16,7 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { useMockDataSchemaDetailContext } from './MockDataSchemaDetailContext';
+import { MonacoEditorField } from './MonacoEditorField';
 
 export function GeneralAccordion() {
   const context = useMockDataSchemaDetailContext();
@@ -98,14 +99,11 @@ export function GeneralAccordion() {
             sx={{ display: 'grid', alignItems: 'center', gap: 2, gridTemplateColumns: '1fr 1fr' }}
           >
             <Stack direction={'column'} gap={2}>
-              <TextField
+              <MonacoEditorField
                 label="Create Table SQL"
-                defaultValue={context.form.schemaSql}
-                multiline
-                rows={12}
-                onBlur={(event) =>
-                  context.setForm((prev) => ({ ...prev, schemaSql: event.target.value }))
-                }
+                language="sql"
+                value={context.form.schemaSql}
+                onChange={(value) => context.setForm((prev) => ({ ...prev, schemaSql: value }))}
               />
               <Button
                 variant="outlined"
@@ -116,13 +114,12 @@ export function GeneralAccordion() {
               </Button>
             </Stack>
             <Stack direction={'column'} gap={2}>
-              <TextField
+              <MonacoEditorField
                 label="AI Classification JSON"
-                defaultValue={context.form.classificationJson}
-                multiline
-                rows={12}
-                onBlur={(event) =>
-                  context.setForm((prev) => ({ ...prev, classificationJson: event.target.value }))
+                language="json"
+                value={context.form.classificationJson}
+                onChange={(value) =>
+                  context.setForm((prev) => ({ ...prev, classificationJson: value }))
                 }
               />
               <Button

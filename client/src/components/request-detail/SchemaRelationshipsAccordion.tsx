@@ -6,7 +6,6 @@ import {
   Stack,
   Tab,
   Tabs,
-  TextField,
   Tooltip,
   Typography,
 } from '@mui/material';
@@ -25,6 +24,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import { estimateRelationshipRows } from '../../utilities/relationshipEstimate';
 import { useMockDataSchemaDetailContext } from './MockDataSchemaDetailContext';
+import { MonacoEditorField } from './MonacoEditorField';
 
 type RelationshipNode = {
   count?: number;
@@ -304,7 +304,6 @@ function buildGraphData(roots: VisualNode[]): GraphData {
 
 export function SchemaRelationshipsAccordion() {
   const context = useMockDataSchemaDetailContext();
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [activeTab, setActiveTab] = useState(0);
   const [estimate, setEstimate] = useState(() =>
     estimateRelationshipRows(context.form.schemaRelationshipsJson, context.designerModel),
@@ -313,49 +312,23 @@ export function SchemaRelationshipsAccordion() {
     parseRelationshipsJson(context.form.schemaRelationshipsJson),
   );
   const lastGraphSignatureRef = useRef('');
-  const lastTextRef = useRef(context.form.schemaRelationshipsJson ?? '');
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
   useEffect(() => {
-    const textarea = textareaRef.current;
-    if (!textarea) {
-      return;
-    }
+    const currentText = context.form.schemaRelationshipsJson ?? '';
+    setEstimate(estimateRelationshipRows(currentText, context.designerModel));
+    const nextVisualization = parseRelationshipsJson(currentText);
+    setVisualization(nextVisualization);
 
-    if (textarea.value !== context.form.schemaRelationshipsJson) {
-      textarea.value = context.form.schemaRelationshipsJson;
-    }
-  }, [context.form.schemaRelationshipsJson]);
-
-  useEffect(() => {
-    const calculateEstimate = () => {
-      const currentText =
-        textareaRef.current?.value ??
-        lastTextRef.current ??
-        context.form.schemaRelationshipsJson ??
-        '';
-      lastTextRef.current = currentText;
-      setEstimate(estimateRelationshipRows(currentText, context.designerModel));
-      const nextVisualization = parseRelationshipsJson(currentText);
-      setVisualization(nextVisualization);
-
-      const nextSignature = currentText.trim();
-      if (nextSignature !== lastGraphSignatureRef.current) {
-        lastGraphSignatureRef.current = nextSignature;
-        const nextGraphData = nextVisualization.error
-          ? { nodes: [], edges: [], error: nextVisualization.error }
-          : buildGraphData(nextVisualization.roots);
-        setNodes(nextGraphData.nodes);
-        setEdges(nextGraphData.edges);
-      }
-    };
-
-    calculateEstimate();
-    const intervalId = window.setInterval(calculateEstimate, 1000);
-
-    return () => {
-      window.clearInterval(intervalId);
+    const nextSignature = currentText.trim();
+    if (nextSignature !== lastGraphSignatureRef.current) {
+      lastGraphSignatureRef.current = nextSignature;
+      const nextGraphData = nextVisualization.error
+        ? { nodes: [], edges: [], error: nextVisualization.error }
+        : buildGraphData(nextVisualization.roots);
+      setNodes(nextGraphData.nodes);
+      setEdges(nextGraphData.edges);
     };
   }, [context.designerModel, context.form.schemaRelationshipsJson, setEdges, setNodes]);
 
@@ -383,9 +356,6 @@ export function SchemaRelationshipsAccordion() {
           <Tabs
             value={activeTab}
             onChange={(_event, value) => {
-              if (activeTab === 0 && textareaRef.current) {
-                lastTextRef.current = textareaRef.current.value;
-              }
               setActiveTab(value);
             }}
           >
@@ -393,21 +363,18 @@ export function SchemaRelationshipsAccordion() {
             <Tab label="Visualization View" />
           </Tabs>
           {activeTab === 0 && (
-            <TextField
+            <MonacoEditorField
               label="Schema Relationships JSON"
-              defaultValue={context.form.schemaRelationshipsJson}
-              multiline
-              minRows={6}
-              maxRows={12}
-              inputRef={textareaRef}
-              onBlur={(event) =>
+              language="json"
+              value={context.form.schemaRelationshipsJson}
+              height={420}
+              onChange={(value) =>
                 context.setForm((prev) => ({
                   ...prev,
-                  schemaRelationshipsJson: event.target.value,
+                  schemaRelationshipsJson: value,
                 }))
               }
               helperText="Use strict JSON array format (no comments). Default distribution is [1]."
-              fullWidth
             />
           )}
           {activeTab === 1 && (

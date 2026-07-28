@@ -11,11 +11,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@dagrejs/dagre": "^1.0.4",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
+    "@monaco-editor/react": "^4.7.0",
     "@mui/icons-material": "^7.3.5",
     "@mui/material": "^7.3.9",
-    "@dagrejs/dagre": "^1.0.4",
     "@xyflow/react": "^12.10.1",
     "axios": "^1.12.2",
     "dayjs": "^1.11.19",
