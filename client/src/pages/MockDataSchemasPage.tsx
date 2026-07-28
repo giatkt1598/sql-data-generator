@@ -295,7 +295,7 @@ export function MockDataSchemasPage(props: MockDataSchemasPageProps) {
               <DarkModeIcon
                 sx={{
                   position: 'absolute',
-                  right: 9,
+                  right: 6,
                   top: 9,
                   zIndex: 1,
                   fontSize: 18,
