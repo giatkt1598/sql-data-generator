@@ -54,6 +54,9 @@ export interface ColumnGenerationRule {
     unit?: 'seconds' | 'minutes' | 'hours' | 'days';
     format?: string;
   };
+  fixedValueOptions?: {
+    value?: string;
+  };
   digitSequenceOptions?: {
     format?: string;
   };

@@ -47,6 +47,12 @@ export const DATA_TYPE_DEFINITIONS: DataTypeDefinition[] = [
     groups: ['Basic'],
   },
   {
+    value: 'fixedValue',
+    displayName: 'Fixed Value',
+    description: 'Fixed value parsed from the column database type.\nExample: 1, true, {"name":"Alice"}',
+    groups: ['Basic'],
+  },
+  {
     value: 'dateTime',
     displayName: 'Date Time',
     description: 'Date or datetime value.\nExample: 2025-03-08',

@@ -169,6 +169,9 @@ export function MockDataSchemaDetailPage(props: MockDataSchemaDetailPageProps) {
         unit: 'days' as const,
         format: 'yyyy-MM-dd HH:mm:ss',
       },
+      fixedValueOptions: {
+        value: '',
+      },
       digitSequenceOptions: {
         format: '',
       },
@@ -235,6 +238,7 @@ export function MockDataSchemaDetailPage(props: MockDataSchemaDetailPageProps) {
       sequenceOptions: rule?.sequenceOptions ?? fallbackRule.sequenceOptions,
       sequenceDateTimeOptions:
         rule?.sequenceDateTimeOptions ?? fallbackRule.sequenceDateTimeOptions,
+      fixedValueOptions: rule?.fixedValueOptions ?? fallbackRule.fixedValueOptions,
       digitSequenceOptions: rule?.digitSequenceOptions ?? fallbackRule.digitSequenceOptions,
       formulaOptions: rule?.formulaOptions ?? fallbackRule.formulaOptions,
       regularExpressionOptions:
@@ -1180,6 +1184,20 @@ export function MockDataSchemaDetailPage(props: MockDataSchemaDetailPageProps) {
     });
   }
 
+  function onFixedValueOptionChange(tableName: string, columnName: string, value: string) {
+    const fallbackRule = mergeRuleDefaults(
+      columnRules[tableName]?.[columnName],
+      columnName,
+      'fixedValue',
+    );
+
+    onRuleChange(tableName, columnName, {
+      ...fallbackRule,
+      fieldName: fallbackRule.fieldName ?? columnName,
+      fixedValueOptions: { value },
+    });
+  }
+
   function onTimeOptionChange(
     tableName: string,
     columnName: string,
@@ -1415,6 +1433,7 @@ export function MockDataSchemaDetailPage(props: MockDataSchemaDetailPageProps) {
     onTimeOptionChange,
     onSequenceOptionChange,
     onSequenceDateTimeOptionChange,
+    onFixedValueOptionChange,
     onDigitSequenceOptionChange,
     onFormulaOptionChange,
     onRegularExpressionOptionChange,

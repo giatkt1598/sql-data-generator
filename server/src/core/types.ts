@@ -94,6 +94,9 @@ export interface ColumnGenerationRule {
     unit?: 'seconds' | 'minutes' | 'hours' | 'days';
     format?: string;
   };
+  fixedValueOptions?: {
+    value?: string;
+  };
   digitSequenceOptions?: {
     format?: string;
   };
@@ -140,7 +143,14 @@ export interface SchemaRelationshipNode {
 export type SchemaRelationshipsRoot = Record<string, SchemaRelationshipNode>;
 export type SchemaRelationshipsConfig = SchemaRelationshipsRoot[];
 
+export interface SqlRawValue {
+  kind: 'sqlRaw';
+  value: string;
+}
+
+export type GeneratedValue = string | number | boolean | null | SqlRawValue;
+
 export interface GeneratedTableRows {
   tableName: string;
-  rows: Record<string, string | number | boolean | null>[];
+  rows: Record<string, GeneratedValue>[];
 }

@@ -108,6 +108,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
   const isSequenceRule = rule?.kind === 'semantic' && rule.semanticType === 'sequence';
   const isSequenceDateTimeRule =
     rule?.kind === 'semantic' && rule.semanticType === 'sequenceDateTime';
+  const isFixedValueRule = rule?.kind === 'semantic' && rule.semanticType === 'fixedValue';
   const isDigitSequenceRule = rule?.kind === 'semantic' && rule.semanticType === 'digitSequence';
   const isFormulaRule = rule?.kind === 'semantic' && rule.semanticType === 'formula';
   const isRegularExpressionRule =
@@ -142,6 +143,7 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
     unit: 'days' as const,
     format: 'yyyy-MM-dd HH:mm:ss',
   };
+  const fixedValueOptions = rule?.fixedValueOptions ?? { value: '' };
   const digitSequenceOptions = rule?.digitSequenceOptions ?? {
     format: '',
   };
@@ -468,6 +470,18 @@ export const SchemaFieldRow = memo(function SchemaFieldRow(props: {
             )}
           />
         </Stack>
+      )}
+      {isFixedValueRule && (
+        <TextField
+          size="small"
+          label="Value"
+          defaultValue={fixedValueOptions.value}
+          placeholder="Empty value generates NULL"
+          onBlur={(event) =>
+            context.onFixedValueOptionChange(tableName, column.name, event.target.value)
+          }
+          sx={{ minWidth: 320, flex: 1 }}
+        />
       )}
       {isDigitSequenceRule && (
         <Stack direction="row" spacing={1}>

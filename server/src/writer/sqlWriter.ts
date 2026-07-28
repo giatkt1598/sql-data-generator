@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { GeneratedTableRows, SqlProvider } from '../core/types';
+import { GeneratedTableRows, GeneratedValue, SqlProvider } from '../core/types';
 import dayjs from 'dayjs';
 
 const MAX_ROWS_PER_INSERT = 1000;
@@ -43,7 +43,7 @@ export function sqlBooleanValue(value: boolean, sqlProvider?: SqlProvider | ''):
   }
 }
 
-function sqlValue(value: string | number | boolean | null, sqlProvider?: SqlProvider | ''): string {
+function sqlValue(value: GeneratedValue, sqlProvider?: SqlProvider | ''): string {
   if (value === null) {
     return 'NULL';
   }
@@ -52,6 +52,9 @@ function sqlValue(value: string | number | boolean | null, sqlProvider?: SqlProv
   }
   if (typeof value === 'boolean') {
     return sqlBooleanValue(value, sqlProvider);
+  }
+  if (typeof value !== 'string') {
+    return value.value;
   }
   return `'${value.replace(/'/g, "''")}'`;
 }

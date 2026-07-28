@@ -98,6 +98,9 @@ export function SchemaTableCard(props: {
                   unit: 'days',
                   format: 'yyyy-MM-dd HH:mm:ss',
                 },
+                fixedValueOptions: rule?.fixedValueOptions ?? {
+                  value: '',
+                },
                 digitSequenceOptions: rule?.digitSequenceOptions ?? {
                   format: '',
                 },

@@ -77,6 +77,7 @@ export interface MockDataSchemaDetailContextValue {
     key: 'start' | 'step' | 'unit' | 'format',
     value: string,
   ) => void;
+  onFixedValueOptionChange: (tableName: string, columnName: string, value: string) => void;
   onDigitSequenceOptionChange: (
     tableName: string,
     columnName: string,

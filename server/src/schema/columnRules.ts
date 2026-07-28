@@ -164,6 +164,18 @@ function normalizeSequenceDateTimeOptions(
   return { start, step, unit, format };
 }
 
+function normalizeFixedValueOptions(
+  rule: ColumnGenerationRule | undefined,
+  fallback: { value?: string } | undefined,
+) {
+  const configuredValue = rule?.fixedValueOptions?.value;
+  const value =
+    typeof configuredValue === 'string'
+      ? configuredValue
+      : (fallback?.value ?? '');
+  return { value };
+}
+
 function normalizeDigitSequenceOptions(
   rule: ColumnGenerationRule | undefined,
   fallback: { format?: string } | undefined,
@@ -299,6 +311,9 @@ export function buildDefaultColumnRules(
           unit: 'days',
           format: 'yyyy-MM-dd HH:mm:ss',
         },
+        fixedValueOptions: {
+          value: '',
+        },
         digitSequenceOptions: {
           format: '',
         },
@@ -395,6 +410,10 @@ export function sanitizeColumnRules(
             candidate,
             fallbackRules[table.name][column.name].sequenceDateTimeOptions,
           ),
+          fixedValueOptions: normalizeFixedValueOptions(
+            candidate,
+            fallbackRules[table.name][column.name].fixedValueOptions,
+          ),
           digitSequenceOptions: normalizeDigitSequenceOptions(
             candidate,
             fallbackRules[table.name][column.name].digitSequenceOptions,
@@ -454,6 +473,10 @@ export function sanitizeColumnRules(
               candidate,
               fallbackRules[table.name][column.name].sequenceDateTimeOptions,
             ),
+            fixedValueOptions: normalizeFixedValueOptions(
+              candidate,
+              fallbackRules[table.name][column.name].fixedValueOptions,
+            ),
             digitSequenceOptions: normalizeDigitSequenceOptions(
               candidate,
               fallbackRules[table.name][column.name].digitSequenceOptions,
@@ -507,6 +530,10 @@ export function sanitizeColumnRules(
           sequenceDateTimeOptions: normalizeSequenceDateTimeOptions(
             candidate,
             fallbackRules[table.name][column.name].sequenceDateTimeOptions,
+          ),
+          fixedValueOptions: normalizeFixedValueOptions(
+            candidate,
+            fallbackRules[table.name][column.name].fixedValueOptions,
           ),
           digitSequenceOptions: normalizeDigitSequenceOptions(
             candidate,
@@ -562,6 +589,10 @@ export function sanitizeColumnRules(
         sequenceDateTimeOptions: normalizeSequenceDateTimeOptions(
           candidate,
           fallbackRules[table.name][column.name].sequenceDateTimeOptions,
+        ),
+        fixedValueOptions: normalizeFixedValueOptions(
+          candidate,
+          fallbackRules[table.name][column.name].fixedValueOptions,
         ),
         digitSequenceOptions: normalizeDigitSequenceOptions(
           candidate,

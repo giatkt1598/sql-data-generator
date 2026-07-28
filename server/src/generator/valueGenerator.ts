@@ -18,9 +18,11 @@ import {
   ColumnGenerationRule,
   ColumnSchema,
   GeneratedTableRows,
+  GeneratedValue,
   SchemaRelationshipNode,
   SchemaRelationshipsConfig,
   SemanticDataType,
+  SqlRawValue,
   TableColumnRules,
   TableSchema,
 } from '../core/types';
@@ -374,7 +376,11 @@ function extractFormulaDependencies(expression: string): string[] {
   return Array.from(new Set(expression.match(/[A-Za-z_][A-Za-z0-9_]*/g) ?? []));
 }
 
-function stringifyReferencedValue(value: string | number | boolean | null | undefined): string {
+function isSqlRawValue(value: GeneratedValue | undefined): value is SqlRawValue {
+  return Boolean(value && typeof value === 'object' && value.kind === 'sqlRaw');
+}
+
+function stringifyReferencedValue(value: GeneratedValue | undefined): string {
   if (typeof value === 'string') {
     return value
       .normalize('NFKD')
@@ -389,12 +395,16 @@ function stringifyReferencedValue(value: string | number | boolean | null | unde
     return value ? 'true' : 'false';
   }
 
+  if (isSqlRawValue(value)) {
+    return value.value;
+  }
+
   return String(value);
 }
 
 function generateDigitSequenceValue(
   format: string,
-  row: Record<string, string | number | boolean | null>,
+  row: Record<string, GeneratedValue>,
   tableName: string,
   columnName: string,
   localeFaker: Faker,
@@ -430,7 +440,7 @@ function escapeRegExp(value: string): string {
 }
 
 function coerceFormulaReferenceValue(
-  value: string | number | boolean | null | undefined,
+  value: GeneratedValue | undefined,
   tableName: string,
   columnName: string,
   dependencyName: string,
@@ -453,6 +463,12 @@ function coerceFormulaReferenceValue(
   if (typeof value === 'boolean') {
     return value ? 1 : 0;
   }
+  if (isSqlRawValue(value)) {
+    const normalizedRawValue = Number(value.value);
+    if (Number.isFinite(normalizedRawValue)) {
+      return normalizedRawValue;
+    }
+  }
   const normalized = Number(value);
   if (Number.isFinite(normalized)) {
     return normalized;
@@ -465,7 +481,7 @@ function coerceFormulaReferenceValue(
 
 function evaluateFormulaExpression(
   expression: string,
-  row: Record<string, string | number | boolean | null>,
+  row: Record<string, GeneratedValue>,
   tableName: string,
   columnName: string,
 ): number {
@@ -534,6 +550,70 @@ function generateRegularExpressionValue(
       `Regular Expression in '${tableName}.${columnName}' is invalid. Check the regex pattern.`,
     );
   }
+}
+
+const HARD_VALUE_NUMERIC_TYPES = new Set([
+  'tinyint',
+  'smallint',
+  'int',
+  'integer',
+  'bigint',
+  'serial',
+  'bigserial',
+  'decimal',
+  'numeric',
+  'money',
+  'smallmoney',
+  'float',
+  'real',
+  'double',
+]);
+const HARD_VALUE_BOOLEAN_TYPES = new Set(['bit', 'bool', 'boolean']);
+const HARD_VALUE_JSON_TYPES = new Set(['json', 'jsonb']);
+const HARD_VALUE_NUMBER_PATTERN = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/;
+
+function fixedValueError(tableName: string, columnName: string, dbType: string, message: string): Error {
+  return new Error(`Fixed Value in '${tableName}.${columnName}' for dbType '${dbType}' ${message}.`);
+}
+
+function generateFixedValue(
+  value: string,
+  tableName: string,
+  column: ColumnSchema,
+): GeneratedValue {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const normalizedDbType = normalizeSqlType(column.dbType);
+  if (HARD_VALUE_NUMERIC_TYPES.has(normalizedDbType)) {
+    if (!HARD_VALUE_NUMBER_PATTERN.test(trimmed)) {
+      throw fixedValueError(tableName, column.name, column.dbType, 'must be a valid numeric literal');
+    }
+    return { kind: 'sqlRaw', value: trimmed };
+  }
+
+  if (HARD_VALUE_BOOLEAN_TYPES.has(normalizedDbType)) {
+    const normalizedValue = trimmed.toLowerCase();
+    if (normalizedValue === 'true' || normalizedValue === '1') {
+      return true;
+    }
+    if (normalizedValue === 'false' || normalizedValue === '0') {
+      return false;
+    }
+    throw fixedValueError(tableName, column.name, column.dbType, 'must be true, false, 1, or 0');
+  }
+
+  if (HARD_VALUE_JSON_TYPES.has(normalizedDbType)) {
+    try {
+      return JSON.stringify(JSON.parse(trimmed));
+    } catch {
+      throw fixedValueError(tableName, column.name, column.dbType, 'must be valid JSON');
+    }
+  }
+
+  return value;
 }
 
 function extractSameRowDependencies(rule: ColumnGenerationRule): string[] {
@@ -623,9 +703,9 @@ function generateScalarValue(
   column: ColumnSchema,
   rowIndex: number,
   runSalt: string,
-  row: Record<string, string | number | boolean | null>,
+  row: Record<string, GeneratedValue>,
   localeFaker: Faker,
-): string | number | boolean | null {
+): GeneratedValue {
   const salt = runSalt.slice(0, 8).toLowerCase();
 
   switch (semanticType) {
@@ -669,6 +749,8 @@ function generateScalarValue(
       const format = rule.sequenceDateTimeOptions?.format?.trim() || 'yyyy-MM-dd HH:mm:ss';
       return start.add(rowIndex * step, unit).format(toDayjsFormat(format));
     }
+    case 'fixedValue':
+      return generateFixedValue(rule.fixedValueOptions?.value ?? '', tableName, column);
     case 'appBundleId':
       return randomAppBundleId(localeFaker);
     case 'appName':
@@ -922,7 +1004,7 @@ function shouldGenerateNull(
 function generateCustomListValue(
   customValues: Array<string | number | boolean> | undefined,
   rowIndex: number,
-): string | number | boolean | null {
+): GeneratedValue {
   if (!customValues || customValues.length === 0) {
     return null;
   }
@@ -1118,8 +1200,8 @@ function findReferenceValueForTable(
   rule: ColumnGenerationRule,
   rowIndex: number,
   context: GenerateContext,
-  currentRows: Record<string, string | number | boolean | null>[],
-): string | number | boolean | null {
+  currentRows: Record<string, GeneratedValue>[],
+): GeneratedValue {
   if (rule.kind !== 'reference' || !rule.reference) {
     return null;
   }
@@ -1146,7 +1228,7 @@ function findReferenceValueForTable(
         return null;
       }
       const parentRow = parentRows[parentIndex];
-      return (parentRow[rule.reference.columnName] as string | number | boolean | null) ?? null;
+      return (parentRow[rule.reference.columnName] as GeneratedValue) ?? null;
     }
   }
 
@@ -1156,7 +1238,7 @@ function findReferenceValueForTable(
     ?.at(rowIndex);
   const targetIndex = plannedIndex ?? rowIndex;
   const parentRow = parentRows[targetIndex % parentRows.length];
-  return (parentRow[rule.reference.columnName] as string | number | boolean | null) ?? null;
+  return (parentRow[rule.reference.columnName] as GeneratedValue) ?? null;
 }
 
 function generateRowsForTable(
@@ -1166,10 +1248,10 @@ function generateRowsForTable(
 ): GeneratedTableRows {
   const rowCount = context.plan.rowCountByTable.get(table.name) ?? 0;
   const orderedColumns = resolveColumnGenerationOrder(table, rules);
-  const rows: Record<string, string | number | boolean | null>[] = [];
+  const rows: Record<string, GeneratedValue>[] = [];
 
   for (let rowIndex = 0; rowIndex < rowCount; rowIndex += 1) {
-    const row: Record<string, string | number | boolean | null> = {};
+    const row: Record<string, GeneratedValue> = {};
 
     for (const column of orderedColumns) {
       const rule = getColumnRule(table.name, column, rules);

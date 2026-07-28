@@ -6,6 +6,7 @@ export const SEMANTIC_DATA_TYPES = [
   'regularExpression',
   'sequence',
   'sequenceDateTime',
+  'fixedValue',
   'appBundleId',
   'appName',
   'appVersion',
